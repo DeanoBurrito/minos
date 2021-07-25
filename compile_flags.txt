@@ -1,0 +1,5 @@
+-xc++
+-Ikernel/include
+-I../cx-tools/lib/gcc/x86_64-elf/11.1.0/include
+-I../gnu-efi/inc
+-Ibootloader

@@ -1,0 +1,36 @@
+Memory management:
+    -Page management, lazy allocation, and reserving sections for kernel/programs that request it.
+    -malloc/free() and the associated implementations
+    -Allocators: linked list heap, slab(8, 16, 32, 64 byte versions), stack frame allocator
+
+Interrupts:
+    -Keyboard/mouse handlers
+    -Schedulers
+
+File system:
+    -VFS base, in memory
+    -Mounting/unmounting
+    -Ext2 driver
+    -FAT32 driver
+    -proc/sys parameter dumps into filesystem
+    -proper kernel logging infrastructure, ditch the krenderer.
+
+Init disk:
+    -Dont rely on bootloader to load font/other early data. Just take in a single ramdisk.
+Bootloader:
+    -Multiboot1 formatted bootloader for direct loading in qemu, speed up dev cycles.
+
+Userland:
+    -syscall infrastructure
+    -POSIX libc implementation
+    -Shell
+    -Windowing system
+
+Drivers:
+    -ACPI
+    -APIC
+    -Multi-processor booting (see intel/amd manuals on this). Sortix and serenityOS as well.
+    -QEMU gpu driver
+    -Networking
+
+Audit of existing code for possible missed bugs and unfinished features.
