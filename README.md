@@ -4,7 +4,7 @@
 # Building
 Minos requires a few things to build properly:
 - A linux-like environment. I use WSL personally, I imagine cygwin would work as well.
-- A cross compiler, preferably one in your `$PATH`. Minos is built with GCC 11, but this can be edited in kernel/makefile under CXX and LD vars. If you're unsure of how to get a hold of one, the os dev wiki have a great guide [here](https://wiki.osdev.org/)GCC_Cross-Compiler
+- A cross compiler, preferably one in your `$PATH`. Minos is built with GCC 11, but this can be edited in kernel/makefile under CXX and LD vars. If you're unsure of how to get a hold of one, the os dev wiki have a great guide [here](https://wiki.osdev.org/GCC_Cross-Compiler)
 - GNU make (any recent version), mtools, xorriso
 - If you want to build and run using the default makefile, you'll need QEMU and ovmfd.
 
