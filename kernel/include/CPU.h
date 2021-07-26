@@ -12,8 +12,8 @@ namespace Kernel
     public:
         static void Init();
  
-        static void EnableMaskableInterrupts();
-        static void DisableMaskableInterrupts();
+        static void EnableInterrupts();
+        static void DisableInterrupts();
 
         static void LoadPageTableMap(void* toplevelAddress);
         static void LoadGDT(GDTDescriptor* address);

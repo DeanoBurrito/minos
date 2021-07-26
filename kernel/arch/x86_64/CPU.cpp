@@ -6,12 +6,12 @@ namespace Kernel
     {
     }
 
-    void CPU::EnableMaskableInterrupts()
+    void CPU::EnableInterrupts()
     {
         asm volatile("sti");
     }
 
-    void CPU::DisableMaskableInterrupts()
+    void CPU::DisableInterrupts()
     {
         asm volatile("cli");
     }
