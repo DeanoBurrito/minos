@@ -76,14 +76,15 @@ namespace Kernel
         CPU::PortWrite8(PORT_PIC1_DATA, 0b11111101); //2nd bit is keyboard interrupt, enable it
         CPU::PortIOWait();
         CPU::PortWrite8(PORT_PIC2_DATA, 0b11111111);
-        CPU::EnableMaskableInterrupts();
 
-        IDTDescriptorEntry* interruptPs2Keyboard = (IDTDescriptorEntry*)(idtr.offset + 0x21 * sizeof(IDTDescriptorEntry));
+        IDTDescriptorEntry* interruptPs2Keyboard = (IDTDescriptorEntry*)(idtr.offset + (PIC1_IDT_OFFSET + 0x1) * sizeof(IDTDescriptorEntry));
         interruptPs2Keyboard->SetOffset((uint64_t)InterruptHandlers::PS2KeyboardHandler);
         interruptPs2Keyboard->attributes = IDT_ATTRIBS_InterruptGate;
         interruptPs2Keyboard->selector = 0x08;
 
         CPU::LoadIDT(&idtr);
+        CPU::EnableInterrupts();
+
         Log("Interrupt Descriptor Table with offset: 0x", false);
         Log(ToStrHex((uint64_t)idtr.offset));
     }

@@ -10,23 +10,26 @@ ASSETS_DIR = assets
 TARGET_NAME = kernel-$(ARCH).elf
 TARGET = $(BUILD_DIR)/$(TARGET_NAME)
 
-#architecture settings
-ARCH_DIR = arch/$(ARCH)
-include $(ARCH_DIR)/make.cfg
-
 #flags
 CXX_INC_DIRS = $(EXT_INCLUDE_DIRS) -I ./include
 CXX_FLAGS = $(ARCH_CXX_FLAGS) -ffreestanding -O2 -fno-rtti -fno-exceptions -mno-red-zone -mcmodel=large -ggdb -Wall
 LD_FLAGS = $(ARCH_LD_FLAGS) -ffreestanding -O2 -nostdlib -lgcc -g -zmax-page-size=0x1000
 LD_SCRIPT = $(ARCH_DIR)/linker.lds
 CPP_SRCS = $(shell find -path ./arch -prune -false -o -path ./$(ASSETS_DIR) -prune -false -o -name "*.cpp") $(ARCH_CPP_SRCS)
+ASM_SRCS = 
+
+#architecture settings
+ARCH_DIR = arch/$(ARCH)
+include $(ARCH_DIR)/make.cfg
 
 #toolchain selection
 CXX = x86_64-elf-g++
+ASM = x86_64-elf-as
 LD = x86_64-elf-gcc
 
 #auto populated vars
 CPP_OBJS = $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(CPP_SRCS))
+ASM_OBJS = $(patsubst %.asm, $(BUILD_DIR)/%_asm.o, $(ASM_SRCS))
 
 .PHONY: all clean iso run fun
 
@@ -62,14 +65,19 @@ iso-img: all
 	@mcopy -i $(TARGET).img $(ASSETS_DIR) ::/assets
 	@rm $(BUILD_DIR)/BOOTX64.EFI
 
-$(TARGET): $(CPP_OBJS) $(LD_SCRIPT)
+$(TARGET): $(CPP_OBJS) $(ASM_OBJS) $(LD_SCRIPT)
 	@echo LINKING $@
-	@$(LD) $(LD_FLAGS) -T $(LD_SCRIPT) $(CPP_OBJS) -o $@
+	@$(LD) $(LD_FLAGS) -T $(LD_SCRIPT) $(CPP_OBJS) $(ASM_OBJS) -o $@
 
 $(BUILD_DIR)/./Interrupts.o: Interrupts.cpp
 	@echo COMPILING $< with special flags
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXX_INC_DIRS) $(CPP_FLAGS) -mno-sse -mgeneral-regs-only -c $< -o $@
+
+$(BUILD_DIR)/%_asm.o: %.asm
+	@echo ASSEMBLING $<
+	@mkdir -p $(shell dirname $@)
+	@$(ASM) $(ASM_FLAGS) $< --64 -o $@
 
 $(BUILD_DIR)/%.o: %.cpp
 	@echo COMPILING $<

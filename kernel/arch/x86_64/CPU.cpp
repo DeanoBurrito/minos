@@ -23,19 +23,14 @@ namespace Kernel
                      : "r"(topLevelAddress));
     }
 
-    void CPU::LoadGDT(GDTDescriptor *address)
+    extern "C" 
     {
-        asm volatile("     \
-    lgdt 0(%0) \n         \
-    mov $0x10, %%ax \n   \
-    mov %%ax, %%ds \n   \
-    mov %%ax, %%es \n   \
-    mov %%ax, %%fs \n   \
-    mov %%ax, %%gs \n   \
-    mov %%ax, %%ss \n   \
-    "
-                     :
-                     : "r"(address));
+        extern void LoadGDT_impl(GDTDescriptor* address);
+    }
+    
+    void CPU::LoadGDT(GDTDescriptor* address)
+    {
+        LoadGDT_impl(address);
     }
 
     void CPU::LoadIDT(IDTR *idtr)
