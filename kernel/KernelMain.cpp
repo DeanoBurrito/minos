@@ -61,20 +61,10 @@ namespace Kernel
         idtr.limit = 0x0fff;
         idtr.offset = (uint64_t)PageFrameAllocator::The()->RequestPage();
 
-        IDTDescriptorEntry* interruptDoubleFault = (IDTDescriptorEntry*)(idtr.offset + 0x8 * sizeof(IDTDescriptorEntry));
-        interruptDoubleFault->SetOffset((uint64_t)InterruptHandlers::DoubleFault);
-        interruptDoubleFault->attributes = IDT_ATTRIBS_InterruptGate;
-        interruptDoubleFault->selector = 0x08;
-
-        IDTDescriptorEntry* interruptGeneralProtection = (IDTDescriptorEntry*)(idtr.offset + 0xD * sizeof(IDTDescriptorEntry));
-        interruptGeneralProtection->SetOffset((uint64_t)InterruptHandlers::GeneralProtectionFault);
-        interruptGeneralProtection->attributes = IDT_ATTRIBS_InterruptGate;
-        interruptGeneralProtection->selector = 0x08;
-        
-        IDTDescriptorEntry* interruptPageFault = (IDTDescriptorEntry*)(idtr.offset + 0xE * sizeof(IDTDescriptorEntry));
-        interruptPageFault->SetOffset((uint64_t)InterruptHandlers::PageFault);
-        interruptPageFault->attributes = IDT_ATTRIBS_InterruptGate;
-        interruptPageFault->selector = 0x08; //kernel code
+        //CPU interrupts
+        idtr.SetEntry((void*)InterruptHandlers::DoubleFault, 0x8, IDT_ATTRIBS_InterruptGate, 0x08);
+        idtr.SetEntry((void*)InterruptHandlers::GeneralProtectionFault, 0xD, IDT_ATTRIBS_InterruptGate, 0x08);
+        idtr.SetEntry((void*)InterruptHandlers::PageFault, 0xE, IDT_ATTRIBS_InterruptGate, 0x8);
 
         //getting ready for PIC interrupts
         PIC::Remap();
@@ -82,10 +72,8 @@ namespace Kernel
         CPU::PortIOWait();
         CPU::PortWrite8(PORT_PIC2_DATA, 0b11111111);
 
-        IDTDescriptorEntry* interruptPs2Keyboard = (IDTDescriptorEntry*)(idtr.offset + (PIC1_IDT_OFFSET + 0x1) * sizeof(IDTDescriptorEntry));
-        interruptPs2Keyboard->SetOffset((uint64_t)InterruptHandlers::PS2KeyboardHandler);
-        interruptPs2Keyboard->attributes = IDT_ATTRIBS_InterruptGate;
-        interruptPs2Keyboard->selector = 0x08;
+        //PIC interrupts
+        idtr.SetEntry((void*)InterruptHandlers::PS2KeyboardHandler, PIC1_IDT_OFFSET + 0x1, IDT_ATTRIBS_InterruptGate, 0x08);
 
         CPU::LoadIDT(&idtr);
         CPU::EnableInterrupts();

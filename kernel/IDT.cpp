@@ -19,4 +19,12 @@ namespace Kernel
 
         return offset;
     }
+
+    void IDTR::SetEntry(void* handler, uint64_t vector, uint8_t typesAttribs, uint16_t selector)
+    {
+        IDTDescriptorEntry* entry = (IDTDescriptorEntry*)(offset + vector * sizeof(IDTDescriptorEntry));
+        entry->SetOffset((uint64_t)handler);
+        entry->attributes = typesAttribs;
+        entry->selector = selector;
+    }
 }

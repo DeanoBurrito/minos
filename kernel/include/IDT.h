@@ -27,5 +27,7 @@ namespace Kernel
     {
         uint16_t limit;
         uint64_t offset;
+
+        void SetEntry(void* handler, uint64_t vector, uint8_t typesAttribs, uint16_t selector);
     } __attribute__((packed));
 }
