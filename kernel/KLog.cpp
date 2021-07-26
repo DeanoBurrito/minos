@@ -34,7 +34,12 @@ namespace Kernel
         }
 
         if (renderedLogEnabled)
-            KRenderer::The()->WriteLine(message);
+        {
+            if (endLine)
+                KRenderer::The()->WriteLine(message);
+            else
+                KRenderer::The()->Write(message);
+        }
     }
 
     void LogError(const char* message, bool endLine)

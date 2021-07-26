@@ -3,8 +3,11 @@ Memory management:
     -malloc/free() and the associated implementations
     -Allocators: linked list heap, slab(8, 16, 32, 64 byte versions), stack frame allocator
 
+Globals:
+    -Keyboard handler and KRenderer both use static memory for instances, once heap is implemented, use dyanmically allocated versions.
+
 Interrupts:
-    -Keyboard/mouse handlers
+    -mouse handlers
     -Schedulers
 
 File system:

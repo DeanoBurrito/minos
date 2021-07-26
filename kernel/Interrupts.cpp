@@ -4,6 +4,7 @@
 #include "KRenderer.h"
 #include "CPU.h"
 #include "PIC.h"
+#include "drivers/Ps2Keyboard.h"
 
 namespace InterruptHandlers
 {
@@ -29,10 +30,10 @@ namespace InterruptHandlers
     }
 
     __attribute__((interrupt)) void PS2KeyboardHandler(interrupt_frame* frame)
-    {
-        Kernel::KRenderer::The()->Write("KeyPressed! ");
-        uint8_t scancode = Kernel::CPU::PortRead8(0x60);
-
+    {   
+        uint8_t scancode = Kernel::CPU::PortRead8(0x60); //magic number TODO:
+        Kernel::Drivers::Ps2Keyboard::The()->HandlePacketByte(scancode);
+        
         Kernel::PIC::EndMaster();
     }
 }
