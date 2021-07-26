@@ -2,7 +2,7 @@
 #include "KRenderer.h"
 #include "PageFrameAllocator.h"
 #include "PageTableManager.h"
-#include "Memory.h"
+#include <memory/Utilities.h>
 #include "CPU.h"
 #include "IDT.h"
 #include "Interrupts.h"
