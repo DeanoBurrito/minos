@@ -11,13 +11,13 @@
 #include "StringUtil.h"
 #include "Panic.h"
 #include "PIC.h"
+#include "memory/KHeap.h"
 
 extern uint64_t _KernelStart;
 extern uint64_t _KernelEnd;
 
 namespace Kernel
 {
-
     void PrepareMemory(BootInfo* bootInfo)
     {
         PageFrameAllocator::The()->Init(bootInfo);
@@ -30,12 +30,13 @@ namespace Kernel
         PageTable* plm4 = (PageTable*)PageFrameAllocator::The()->RequestPage();
         memset(plm4, 0, PAGE_SIZE);
 
-        PageTableManager kernelPageManager = PageTableManager(plm4);
+        PageTableManager* kernelPageTableManager = PageTableManager::The();
+        kernelPageTableManager->Init(plm4); 
 
         //identity map all pages (for now)
         for (uint64_t i = 0; i < PageFrameAllocator::The()->GetTotalMemory(); i += PAGE_SIZE)
         {
-            kernelPageManager.MapMemory((void*)i, (void*)i);
+            kernelPageTableManager->MapMemory((void*)i, (void*)i);
         }
 
         //ensure GOP framebuffer is still mapped where we expect it to be (TODO: this may be useless if we switch to another graphics driver)
@@ -45,9 +46,13 @@ namespace Kernel
 
         for (uint64_t i = fbBase; i < fbBase + fbSize; i += PAGE_SIZE)
         {
-            kernelPageManager.MapMemory((void*)i, (void*)i);
+            kernelPageTableManager->MapMemory((void*)i, (void*)i);
         }
-        kernelPageManager.MakeCurrentMap();
+        kernelPageTableManager->MakeCurrentMap();
+
+        //initialize kernel heap at arbitrarily large address to stay out of the way of everything else
+        //"the beauty of virtual memory"
+        KHeap::The()->Init((void*)0x100000000, 0x1000);
     }
 
     IDTR idtr;

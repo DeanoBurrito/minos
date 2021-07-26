@@ -44,7 +44,9 @@ namespace Kernel
         PageTable* pml4Addr;
 
     public:
-        PageTableManager(PageTable* pml4Address);
+        static PageTableManager* The();
+
+        void Init(PageTable* pml4Address);
         void MapMemory(void* virtualAddr, void* physicalAddr);
 
         void MakeCurrentMap();

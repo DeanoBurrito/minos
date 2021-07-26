@@ -31,7 +31,13 @@ namespace Kernel
         return (value & 0x000FFFFFFFFFF000) >> 12;
     }
 
-    PageTableManager::PageTableManager(PageTable* pml4Address)
+    PageTableManager globalPageTableManager;
+    PageTableManager* PageTableManager::The()
+    {
+        return &globalPageTableManager;
+    }
+
+    void PageTableManager::Init(PageTable* pml4Address)
     {
         pml4Addr = pml4Address;
     }
