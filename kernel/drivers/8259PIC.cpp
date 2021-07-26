@@ -1,5 +1,5 @@
 #include "CPU.h"
-#include "PIC.h"
+#include <drivers/8259PIC.h>
 
 namespace Kernel
 {

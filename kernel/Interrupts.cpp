@@ -3,7 +3,7 @@
 #include "Panic.h"
 #include "KRenderer.h"
 #include "CPU.h"
-#include "PIC.h"
+#include <drivers/8259PIC.h>
 #include "drivers/Ps2Keyboard.h"
 
 namespace InterruptHandlers
