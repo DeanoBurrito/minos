@@ -11,7 +11,7 @@
 #include "StringUtil.h"
 #include "Panic.h"
 #include <drivers/8259PIC.h>
-#include "memory/KHeap.h"
+#include <memory/KHeap.h>
 
 extern uint64_t _KernelStart;
 extern uint64_t _KernelEnd;
