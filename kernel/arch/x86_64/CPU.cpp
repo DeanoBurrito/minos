@@ -16,6 +16,17 @@ namespace Kernel
         asm volatile("cli");
     }
 
+    bool CPU::InterruptsEnabled()
+    {
+        uint64_t flags;
+        asm volatile("pushf; pop %0" 
+                    : "=rm" (flags)
+                    :
+                    : "memory");
+
+        return (flags & 0b1'000'000'000) != 0;
+    }
+
     void CPU::LoadPageTableMap(void *topLevelAddress)
     {
         asm volatile("mov %0, %%cr3"

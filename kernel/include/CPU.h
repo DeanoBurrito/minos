@@ -14,6 +14,7 @@ namespace Kernel
  
         static void EnableInterrupts();
         static void DisableInterrupts();
+        static bool InterruptsEnabled();
 
         static void LoadPageTableMap(void* toplevelAddress);
         static void LoadGDT(GDTDescriptor* address);
