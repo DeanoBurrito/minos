@@ -39,6 +39,30 @@ namespace Syslib
             return count;
         }
 
+        LinkedListEntry<Value>* Head()
+        {
+            return head;
+        }
+
+        LinkedListEntry<Value>* Tail()
+        {
+            return tail;
+        }
+
+        Value PeekBack()
+        {
+            if (tail == nullptr)
+                return Value();
+            return tail->val;
+        }
+
+        Value PeekFront()
+        {
+            if (head == nullptr)
+                return Value();
+            return head->val;
+        }
+
         void PushBack(const Value val)
         {
             InsertAfter(tail, val);
@@ -143,6 +167,9 @@ namespace Syslib
 
         void Remove(LinkedListEntry<Value>* const entry)
         {
+            if (entry == nullptr)
+                return;
+            
             if (entry->next != nullptr)
                 entry->next->prev = entry->prev;
             if (entry->prev != nullptr)

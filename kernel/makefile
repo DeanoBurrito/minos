@@ -11,9 +11,9 @@ TARGET_NAME = kernel-$(ARCH).elf
 TARGET = $(BUILD_DIR)/$(TARGET_NAME)
 
 #flags
-CXX_INC_DIRS = $(EXT_INCLUDE_DIRS) -I ./include
+CXX_INC_DIRS = $(EXT_INCLUDE_DIRS) -I ./include -I ../syslib/include
 CXX_FLAGS = $(ARCH_CXX_FLAGS) -ffreestanding -O2 -fno-rtti -fno-exceptions -mno-red-zone -mcmodel=large -ggdb -Wall
-LD_FLAGS = $(ARCH_LD_FLAGS) -ffreestanding -O2 -nostdlib -lgcc -g -zmax-page-size=0x1000
+LD_FLAGS = $(ARCH_LD_FLAGS) -ffreestanding -O2 -nostdlib -fno-rtti -fno-exceptions -lgcc -g -zmax-page-size=0x1000
 LD_SCRIPT = $(ARCH_DIR)/linker.lds
 CPP_SRCS = $(shell find -path ./arch -prune -false -o -path ./$(ASSETS_DIR) -prune -false -o -name "*.cpp") $(ARCH_CPP_SRCS)
 ASM_SRCS = 
