@@ -39,12 +39,12 @@ namespace Syslib
             return count;
         }
 
-        void PushBack(Value val)
+        void PushBack(const Value val)
         {
             InsertAfter(tail, val);
         }
 
-        void PushFront(Value val)
+        void PushFront(const Value val)
         {
             InsertBefore(head, val);
         }
@@ -102,18 +102,16 @@ namespace Syslib
             if (head == nullptr)
                 return;
             
-            LinkedListEntry<Value>* next = head->next;
             while (head != nullptr)
             {
-                delete head;
-                head = next;
+                LinkedListEntry<Value>* deleteMe = head;
+                head = head->next;
+                delete deleteMe;
             }
-
             count = 0;
-            //TODO: asset that end is also nullptr
         }
 
-        LinkedListEntry<Value>* Find(Value value)
+        LinkedListEntry<Value>* Find(const Value value)
         {
             if (head == nullptr)
                 return nullptr;
@@ -128,7 +126,7 @@ namespace Syslib
             return nullptr;
         }
 
-        LinkedListEntry<Value>* FindR(Value value)
+        LinkedListEntry<Value>* FindR(const Value value)
         {
             if (tail == nullptr)
                 return nullptr;
@@ -143,7 +141,7 @@ namespace Syslib
             return nullptr;
         }
 
-        void Remove(LinkedListEntry<Value>* entry)
+        void Remove(LinkedListEntry<Value>* const entry)
         {
             if (entry->next != nullptr)
                 entry->next->prev = entry->prev;
@@ -159,15 +157,16 @@ namespace Syslib
             delete entry;
         }
 
-        void InsertBefore(LinkedListEntry<Value>* entry, Value val)
+        void InsertBefore(LinkedListEntry<Value>* const entry, const Value val)
         {
             if (entry == nullptr)
             {
                 //if entry is null, do nothing UNLESS the head is also null, then we set it as the head.
                 if (head == nullptr)
                 {
-                    head = entry;
-                    head->next = tail;
+                    LinkedListEntry<Value>* newEntry = new LinkedListEntry<Value>(val);
+                    head = newEntry;
+                    tail = newEntry;
 
                     count++;
                     return;
@@ -189,15 +188,16 @@ namespace Syslib
             count++;
         }
 
-        void InsertAfter(LinkedListEntry<Value>* entry, Value val)
+        void InsertAfter(LinkedListEntry<Value>* const entry, const Value val)
         {
             if (entry == nullptr)
             {
                 //if tail is null, set this to the tail
                 if (tail == nullptr)
                 {
-                    tail = entry;
-                    tail->prev = head;
+                    LinkedListEntry<Value>* newEntry = new LinkedListEntry<Value>(val);        
+                    tail = newEntry;
+                    head = newEntry;
 
                     count++;
                     return;
@@ -211,6 +211,7 @@ namespace Syslib
                 entry->next->prev = newEntry;
             newEntry->next = entry->next;
             newEntry->prev = entry;
+            entry->next = newEntry;
 
             if (entry == tail)
                 tail = newEntry;
