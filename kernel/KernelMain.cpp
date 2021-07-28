@@ -99,6 +99,7 @@ extern "C" __attribute__((noreturn)) void KernelMain(BootInfo* bootInfo)
     gdtDescriptor.offset = (uint64_t)&defaultGdt;
     CPU::LoadGDT(&gdtDescriptor);
 
+    CPU::Init();
     PrepareMemory(bootInfo);
 
     SerialPort::COM1()->Init(PORT_COM1_ADDRESS); //COM1 gets initialized here so we have logging output.

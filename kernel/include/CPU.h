@@ -7,6 +7,67 @@
 
 namespace Kernel
 {
+    //These flags are platform independant, they get translated to platform-specific offsets in CPU.cpp for that platform.
+    enum class CpuFeatureFlag : uint32_t
+    {
+        SSE3,
+        PCLMUL,
+        DTES64,
+        MONITOR,
+        DS_CPL,
+        VMX,
+        SMX,
+        EST,
+        TM2,
+        SSSE3,
+        CID,
+        FMA,
+        CX16,
+        ETPRD,
+        PDCM,
+        PCIDE,
+        DCA,
+        SSE4_1,
+        SSE4_2,
+        x2APIC,
+        MOVBE,
+        POPCNT,
+        AES,
+        XSAVE,
+        OSXSAVE,
+        AVX,
+        FPU,
+        VME,
+        DE,
+        PSE,
+        TSC,
+        MSR,
+        PAE,
+        MCE,
+        CX8,
+        APIC,
+        SEP,
+        MTRR,
+        PGE,
+        MCA,
+        CMOV,
+        PAT,
+        PSE36,
+        PSN,
+        CLF,
+        DTES,
+        ACPI,
+        MMX,
+        FXSR,
+        SSE,
+        SSE2,
+        SS,
+        HTT,
+        TM1,
+        IA64,
+        PBE,
+    };
+    
     class CPU
     {
     public:
@@ -15,6 +76,8 @@ namespace Kernel
         static void EnableInterrupts();
         static void DisableInterrupts();
         static bool InterruptsEnabled();
+
+        static bool FeatureSupported(CpuFeatureFlag flag);
 
         static void LoadPageTableMap(void* toplevelAddress);
         static void LoadGDT(GDTDescriptor* address);
@@ -32,5 +95,6 @@ namespace Kernel
         static void PortIOWait(); //waits until IO bus has completed any outstanding operations.
 
         static char* GetArchitectureName();
+        static char* GetVendorName();
     };
 }
