@@ -30,6 +30,22 @@ const char* ToStr(uint64_t value)
     return toStr_uint64_buf;
 }
 
+const char* ToStr(uint32_t value)
+{
+    return ToStr(static_cast<uint64_t>(value));
+}
+
+const char* ToStr(uint16_t value)
+{
+    return ToStr(static_cast<uint64_t>(value));
+}
+
+const char* ToStr(uint8_t value)
+{
+    return ToStr(static_cast<uint64_t>(value));
+}
+
+
 char toStr_int64_buf[STATIC_OUTPUT_BUFFER_SIZE];
 const char* ToStr(int64_t value)
 {
@@ -65,6 +81,22 @@ const char* ToStr(int64_t value)
 
     return toStr_int64_buf;
 }
+
+const char* ToStr(int32_t value)
+{
+    return ToStr(static_cast<int64_t>(value));
+}
+
+const char* ToStr(int16_t value)
+{
+    return ToStr(static_cast<int64_t>(value));
+}
+
+const char* ToStr(int8_t value)
+{
+    return ToStr(static_cast<int64_t>(value));
+}
+
 
 char toStr_double_buf[STATIC_OUTPUT_BUFFER_SIZE];
 const char* ToStr(double value, uint8_t decimalPlaces)
@@ -134,4 +166,19 @@ const char* ToStrHex(uint64_t value, uint8_t size)
 
     toStr_hex64_buf[size + 1] = 0;
     return toStr_hex64_buf;
+}
+
+const char* ToStrHex(uint32_t value, uint8_t size)
+{
+    return ToStrHex(static_cast<uint64_t>(value), size);
+}
+
+const char* ToStrHex(uint16_t value, uint8_t size)
+{
+    return ToStrHex(static_cast<uint64_t>(value), size);
+}
+
+const char* ToStrHex(uint8_t value, uint8_t size)
+{
+    return ToStrHex(static_cast<uint64_t>(value), size);
 }
