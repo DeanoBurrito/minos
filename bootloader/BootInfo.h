@@ -44,4 +44,6 @@ typedef struct
         uint64_t key;
         uint32_t descriptorVersion;
     } memoryMap;
+
+    void* rsdp;
 } BootInfo;

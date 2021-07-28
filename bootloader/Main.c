@@ -132,6 +132,16 @@ int memcmp(const void* aPtr, const void* bPtr, size_t n)
     return 0;
 }
 
+int strcmp(CHAR8* a, CHAR8* b, UINTN len)
+{
+    for (UINTN i = 0; i < len; i++)
+    {
+        if (a[0] != b[0])
+            return 0;
+    }
+    return 1;
+}
+
 EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
 {
     InitializeLib(imageHandle, systemTable);
@@ -200,6 +210,25 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable
         }
     }
 
+    //Get RSDP so we can use ACPI and other goodies in the kernel
+    EFI_CONFIGURATION_TABLE* configTable = systemTable->ConfigurationTable;
+    void* rsdp = NULL;
+    EFI_GUID acpiTableGuid = ACPI_20_TABLE_GUID;
+    for (UINTN index = 0; index < systemTable->NumberOfTableEntries; index++)
+    {
+        if (CompareGuid(&configTable[index].VendorGuid, &acpiTableGuid))
+        {
+            if (strcmp((CHAR8*)"RSD PTR ", (CHAR8*)configTable->VendorTable, 8))
+            {
+                rsdp = configTable->VendorTable;
+                Print(L"RSDP: 0x%x\r\n", rsdp);
+                break;
+            }
+        }
+
+        configTable++;
+    }
+    
     EFI_FILE* assetsDirectory = load_file(NULL, L"assets", imageHandle, systemTable);
 
     PSF1_Font* font = load_font(assetsDirectory, L"zap-light16.psf", imageHandle, systemTable);
@@ -211,6 +240,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable
 
     BootInfo bootInfo;
     bootInfo.font = font;
+    bootInfo.rsdp = rsdp;
 
     init_gop(&bootInfo);
     Print(L"GOP: base=0x%x size=0x%x width=%d height=%d pps=%d format=%d\n\r", bootInfo.gop.baseAddress, bootInfo.gop.bufferSize, bootInfo.gop.width, bootInfo.gop.height, bootInfo.gop.pixelsPerScanline, bootInfo.gop.pixelFormat);
