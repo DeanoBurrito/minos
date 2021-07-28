@@ -15,6 +15,6 @@ const char* ToStr(int8_t value);
 const char* ToStr(double value, uint8_t decimalPlaces = 2);
 
 const char* ToStrHex(uint64_t value, uint8_t size = 15);
-const char* ToStrHex(uint32_t value, uint8_t size = 8);
-const char* ToStrHex(uint16_t value, uint8_t size = 4);
-const char* ToStrHex(uint8_t value, uint8_t size = 2);
+const char* ToStrHex(uint32_t value, uint8_t size = 7);
+const char* ToStrHex(uint16_t value, uint8_t size = 3);
+const char* ToStrHex(uint8_t value, uint8_t size = 1);
