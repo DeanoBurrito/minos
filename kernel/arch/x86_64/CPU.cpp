@@ -232,6 +232,24 @@ namespace Kernel
     ");
     }
 
+    void CPU::WriteMSR(uint32_t id, uint64_t value)
+    {
+        uint32_t hi = (value & 0xffff0000) >> 16;
+        uint32_t lo = (value & 0x0000ffff);
+        asm volatile("wrmsr"
+                    :
+                    : "a"(lo), "d"(hi), "c"(id));
+    }
+
+    uint64_t CPU::ReadMSR(uint32_t id)
+    {
+        uint32_t hi, lo;
+        asm volatile("rdmsr"
+                    : "=a"(lo), "=d"(hi)
+                    : "c"(id));
+        return lo | (hi << 16);
+    }
+
     void CPU::PortWrite8(uint16_t port, uint8_t data)
     {
         asm volatile("outb %0, %1"
