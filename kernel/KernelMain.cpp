@@ -13,6 +13,7 @@
 #include <drivers/8259PIC.h>
 #include <memory/KHeap.h>
 #include <drivers/ACPI.h>
+#include <drivers/APIC.h>
 
 extern uint64_t _KernelStart;
 extern uint64_t _KernelEnd;
@@ -80,12 +81,13 @@ namespace Kernel
         CPU::EnableInterrupts();
 
         Log("Interrupt Descriptor Table with offset: 0x", false);
-        Log(ToStrHex((uint64_t)idtr.offset));
+        Log(ToStrHex(idtr.offset));
     }
 
     void PrepareDrivers(BootInfo* bootInfo)
     {   
         Drivers::ACPI::The()->Init(bootInfo->rsdp);
+        Drivers::APIC::Local()->Init();
         
         KRenderer::The()->Init(bootInfo);
         SetRenderedLogging(true);
