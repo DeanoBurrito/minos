@@ -30,7 +30,6 @@ namespace Kernel::Drivers
 
         Log("ACPI subsystem intializing with RSDP=0x", false);
         Log(ToStrHex((uint64_t)rsdp));
-        PrintTables();
 
         //https://uefi.org/htmlspecs/ACPI_Spec_6_4_html/
     }
