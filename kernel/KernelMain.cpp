@@ -12,6 +12,7 @@
 #include "Panic.h"
 #include <drivers/8259PIC.h>
 #include <memory/KHeap.h>
+#include <drivers/ACPI.h>
 
 extern uint64_t _KernelStart;
 extern uint64_t _KernelEnd;
@@ -84,6 +85,8 @@ namespace Kernel
 
     void PrepareDrivers(BootInfo* bootInfo)
     {   
+        Drivers::ACPI::The()->Init(bootInfo->rsdp);
+        
         KRenderer::The()->Init(bootInfo);
         SetRenderedLogging(true);
         Log("KRenderer initialized.");

@@ -4,6 +4,7 @@ Memory management:
 
 Globals:
     -Keyboard handler and KRenderer both use static memory for instances, once heap is implemented, use dyanmically allocated versions.
+    -printf()/sprinf() implementations. It's about time we had some better string formatting.
 
 Interrupts:
     -mouse handlers
@@ -29,7 +30,6 @@ Userland:
     -Windowing system
 
 Drivers:
-    -ACPI
     -APIC
     -Multi-processor booting (see intel/amd manuals on this). Sortix and serenityOS as well.
     -QEMU gpu driver
