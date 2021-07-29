@@ -1,6 +1,7 @@
 #include <drivers/APIC.h>
 #include <drivers/ACPI.h>
 #include <drivers/8259PIC.h>
+#include <PageTableManager.h>
 #include <KLog.h>
 #include <StringUtil.h>
 #include <CPU.h>
@@ -42,9 +43,16 @@ namespace Kernel::Drivers
 
         Log("Local APIC found at: 0x", false);
         Log(ToStrHex(madt->localAddress));
-        localApicAddr = madt->localAddress;
+        localApicAddr = reinterpret_cast<uint32_t*>(madt->localAddress);
 
-        PrintTablesInfo();
+        //ensure page that contains LAPIC registers is locked and identity mapped
+        PageTableManager::The()->MapMemory(localApicAddr, localApicAddr);
+
+        //This 'refreshes' the LAPIC, enabling the hardware if it was disabled at boot for some reason.
+        SetLocalBase(GetLocalBase());
+
+        //setting bit 8 spurious interrupt vector fully enables the APIC, now it's active and will register interrupts
+        WriteRegister(LocalApicRegisters::SpuriousInterruptVector, 0x100);
     }
 
     void APIC::PrintTablesInfo()
@@ -56,17 +64,59 @@ namespace Kernel::Drivers
             return;
         }
 
+        uint64_t totalProcessors = 0;
         uint64_t madtLength = (uint64_t)madt + madt->header.length;
-        MADTEntry* entry = reinterpret_cast<MADTEntry*>((uint64_t)madt + 0x2C);
+        MADTEntry* entry = reinterpret_cast<MADTEntry*>((uint64_t)madt + 0x2C); //0x2C is the end of the MADT header, there is some reserved space after the known fields.
         while ((uint64_t)entry < madtLength)
         {
-            Log("Entry type: ", false);
-            Log(ToStrHex(entry->type));
-            Log("Entry length: ", false);
-            Log(ToStrHex(entry->length));
+            switch (entry->type) 
+            {
+                case MADTEntryType::LocalAPIC:
+                    Log("Entry Type: Local APIC");
+                    totalProcessors++;
+                    break;
+                case MADTEntryType::IOAPIC:
+                    Log("Entry Type: IO APIC");
+                    break;
+                case MADTEntryType::IOAPIC_SourceOverride:
+                    Log("Entry Type: IO APIC, source override");
+                    break;
+                case MADTEntryType::IOAPIC_NonMaskableSourceOverride:
+                    Log("Entry Type: IO APIC, NM source override");
+                    break;
+                case MADTEntryType::LocalAPIC_NonMaskableInterrupts:
+                    Log("Entry Type: LAPIC, NMI");
+                    break;
+                case MADTEntryType::LocalAPIC_AddressOverride:
+                    Log("Entry Type: LAPIC, addr override");
+                    break;
+                case MADTEntryType::Localx2APIC:
+                    Log("Entry Type: Local x2APIC");
+                    break;
+            }
+            Log("Entry Length: 0x", false);
+            Log(ToStr(entry->length));
 
             entry = (MADTEntry*)((uint64_t)entry + entry->length);
         }
+
+        Log("Total processors: ", false);
+        Log(ToStr(totalProcessors));
+    }
+
+    void APIC::SetLocalBase(uint64_t addr)
+    {
+        
+    }
+
+    uint32_t APIC::ReadRegister(LocalApicRegisters reg)
+    {
+        return *(localApicAddr + ((uint64_t)reg * 4));
+    }
+
+    void APIC::WriteRegister(LocalApicRegisters reg, uint32_t value)
+    {
+        localApicAddr[((uint64_t)reg) * 4] = value;
     }
 
     uint64_t APIC::GetLocalBase()
