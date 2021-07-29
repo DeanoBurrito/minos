@@ -44,7 +44,7 @@ fun: run
 	@echo fun fun fun!
 
 run: iso
-	@qemu-system-x86_64 -serial mon:stdio -m 256M -drive if=pflash,format=raw,readonly,file=$(OVMF_DIR) -cdrom $(TARGET).iso
+	@qemu-system-x86_64 -machine q35 -serial mon:stdio -m 256M -drive if=pflash,format=raw,readonly,file=$(OVMF_DIR) -cdrom $(TARGET).iso
 
 iso: iso-img
 	@echo CREATING ISO
