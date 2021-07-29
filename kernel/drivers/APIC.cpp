@@ -104,11 +104,6 @@ namespace Kernel::Drivers
         Log(ToStr(totalProcessors));
     }
 
-    void APIC::SetLocalBase(uint64_t addr)
-    {
-        
-    }
-
     uint32_t APIC::ReadRegister(LocalApicRegisters reg)
     {
         return *(localApicAddr + ((uint64_t)reg * 4));
@@ -121,6 +116,12 @@ namespace Kernel::Drivers
 
     uint64_t APIC::GetLocalBase()
     {
-        return 0;
+        return CPU::ReadMSR(APIC_BASE_MSR) & 0xffff'f000; //filter out control bits
+    }
+
+    void APIC::SetLocalBase(uint64_t addr)
+    {
+        CPU::WriteMSR(APIC_BASE_MSR, addr & 0xffff'f000);
+        localApicAddr = (uint32_t*)addr;
     }
 }

@@ -4,6 +4,7 @@
 
 //MADT doesnt always specify that we need to, but we probably should before enabled LAPIC.
 #define FORCE_DISABLE_LEGACY_PIC true
+#define APIC_BASE_MSR 0x1B
 
 namespace Kernel::Drivers
 {
