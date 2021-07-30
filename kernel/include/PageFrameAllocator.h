@@ -1,8 +1,8 @@
 #pragma once
 
 #include <stdint-gcc.h>
-#include "BootInfo.h"
-#include "Bitmap.h"
+#include <BootInfo.h>
+#include <Bitmap.h>
 
 #define PAGE_SIZE 4096
 

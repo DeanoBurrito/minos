@@ -1,6 +1,6 @@
-#include "Panic.h"
-#include "KRenderer.h"
-#include "CPU.h"
+#include <Panic.h>
+#include <KRenderer.h>
+#include <CPU.h>
 
 namespace Kernel
 {

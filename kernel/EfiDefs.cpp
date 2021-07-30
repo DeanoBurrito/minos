@@ -1,4 +1,4 @@
-#include "EfiDefs.h"
+#include <EfiDefs.h>
 
 const char *EFI_MEMORY_TYPE_STRINGS[]{
     "EfiReservedMemoryType",

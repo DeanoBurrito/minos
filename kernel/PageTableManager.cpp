@@ -1,7 +1,7 @@
-#include "PageTableManager.h"
-#include "PageFrameAllocator.h"
+#include <PageTableManager.h>
+#include <PageFrameAllocator.h>
 #include <memory/Utilities.h>
-#include "CPU.h"
+#include <CPU.h>
 
 namespace Kernel
 {

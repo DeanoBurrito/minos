@@ -1,7 +1,7 @@
 #pragma once
 
-#include "GDT.h"
-#include "IDT.h"
+#include <GDT.h>
+#include <IDT.h>
 
 #define PORT_USUALLY_EMPTY 0x80
 

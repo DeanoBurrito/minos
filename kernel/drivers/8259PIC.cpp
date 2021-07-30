@@ -1,4 +1,4 @@
-#include "CPU.h"
+#include <CPU.h>
 #include <drivers/8259PIC.h>
 
 namespace Kernel

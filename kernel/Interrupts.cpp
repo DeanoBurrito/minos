@@ -1,9 +1,9 @@
-#include "Interrupts.h"
-#include "Serial.h"
-#include "Panic.h"
-#include "KRenderer.h"
-#include "CPU.h"
-#include "drivers/Ps2Keyboard.h"
+#include <Interrupts.h>
+#include <Serial.h>
+#include <Panic.h>
+#include <KRenderer.h>
+#include <CPU.h>
+#include <drivers/Ps2Keyboard.h>
 #include <drivers/APIC.h>
 
 namespace InterruptHandlers

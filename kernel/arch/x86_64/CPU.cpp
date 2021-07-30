@@ -1,8 +1,5 @@
 #include <cpuid.h>
-#include "CPU.h"
-
-#include <KLog.h>
-#include <StringUtil.h>
+#include <CPU.h>
 
 namespace Kernel
 {   

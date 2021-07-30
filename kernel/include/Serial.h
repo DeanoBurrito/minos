@@ -1,6 +1,6 @@
 #pragma once
 
-#include "stdint-gcc.h"
+#include <stdint-gcc.h>
 
 #define PORT_COM1_ADDRESS 0x03F8
 

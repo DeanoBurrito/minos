@@ -1,7 +1,7 @@
-#include "StringUtil.h"
-#include "EfiDefs.h"
-#include "KRenderer.h"
-#include "PageFrameAllocator.h"
+#include <StringUtil.h>
+#include <EfiDefs.h>
+#include <KRenderer.h>
+#include <PageFrameAllocator.h>
 
 namespace Kernel
 {
