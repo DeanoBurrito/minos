@@ -3,7 +3,6 @@
 #include "Panic.h"
 #include "KRenderer.h"
 #include "CPU.h"
-#include <drivers/8259PIC.h>
 #include "drivers/Ps2Keyboard.h"
 #include <drivers/APIC.h>
 
@@ -35,13 +34,11 @@ namespace InterruptHandlers
         uint8_t scancode = Kernel::CPU::PortRead8(0x60); //magic number TODO:
         Kernel::Drivers::Ps2Keyboard::The()->HandlePacketByte(scancode);
         
-        Kernel::PIC::EndMaster();
+        Kernel::Drivers::APIC::Local()->SendEOI();
     }
 
     __attribute__((interrupt)) void TimerHandler(interrupt_frame* frame)
     {
-        Kernel::KRenderer::The()->Write("Timer");
-
         Kernel::Drivers::APIC::Local()->SendEOI();
     }
 }

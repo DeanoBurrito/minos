@@ -147,6 +147,7 @@ namespace Kernel::Drivers
     {
     private:
         uint32_t* localApicAddr;
+        uint8_t id;
 
         void SetLocalBase(uint64_t addr);
         uint32_t ReadRegister(LocalApicRegisters reg);
@@ -161,5 +162,6 @@ namespace Kernel::Drivers
 
         void SendEOI();
         void StartTimer(uint8_t interruptVectorNumber);
+        uint8_t GetID();
     };
 }

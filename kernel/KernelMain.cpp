@@ -71,8 +71,18 @@ namespace Kernel
         idtr.SetEntry((void*)InterruptHandlers::GeneralProtectionFault, 0xD, IDT_ATTRIBS_InterruptGate, 0x08);
         idtr.SetEntry((void*)InterruptHandlers::PageFault, 0xE, IDT_ATTRIBS_InterruptGate, 0x8);
 
+        //write redirect entry for irq2 (ps2 keyboard)
+        Drivers::IOApicRedirectEntry ps2RedirectEntry;
+        ps2RedirectEntry.vector = 0x21;
+        ps2RedirectEntry.deliveryMode = IOAPIC_DELIVERY_MODE_FIXED;
+        ps2RedirectEntry.destinationMode = IOAPIC_DESTINATION_PHYSICAL;
+        ps2RedirectEntry.pinPolarity = IOAPIC_PIN_POLARITY_ACTIVE_HIGH;
+        ps2RedirectEntry.triggerMode = IOAPIC_TRIGGER_MODE_EDGE;
+        ps2RedirectEntry.mask = IOAPIC_MASK_ENABLE;
+        ps2RedirectEntry.destination = Drivers::APIC::Local()->GetID();
+        Drivers::IOAPIC::ioApics.PeekFront()->WriteRedirectEntry(2, ps2RedirectEntry);
         //PIC interrupts
-        //idtr.SetEntry((void*)InterruptHandlers::PS2KeyboardHandler, PIC1_IDT_OFFSET + 0x1, IDT_ATTRIBS_InterruptGate, 0x08);
+        idtr.SetEntry((void*)InterruptHandlers::PS2KeyboardHandler, 0x21, IDT_ATTRIBS_InterruptGate, 0x08);
         idtr.SetEntry((void*)InterruptHandlers::TimerHandler, 0x20, IDT_ATTRIBS_InterruptGate, 0x8);
 
         CPU::LoadIDT(&idtr);

@@ -214,4 +214,9 @@ namespace Kernel::Drivers
         WriteRegister(LocalApicRegisters::LvtTimer, 0x20'000 | interruptVectorNum); //0x20000 = period mode, 0x20 = irq0
         WriteRegister(LocalApicRegisters::TimerInitialCount, 0x2000); //TODO: use external clock to set this to a known value.
     }
+
+    uint8_t APIC::GetID()
+    {
+        return (uint8_t)ReadRegister(LocalApicRegisters::ID);
+    }
 }
