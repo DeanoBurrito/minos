@@ -124,4 +124,17 @@ namespace Kernel::Drivers
         CPU::WriteMSR(APIC_BASE_MSR, addr & 0xffff'f000);
         localApicAddr = (uint32_t*)addr;
     }
+
+    void APIC::SendEOI()
+    {
+        WriteRegister(LocalApicRegisters::EOI, 1);
+    }
+
+    void APIC::StartTimer(uint8_t interruptVectorNum)
+    {
+        WriteRegister(LocalApicRegisters::TimerDivideConfig, 0x3);
+        //TODO: implement a nice way to r/w LVTs
+        WriteRegister(LocalApicRegisters::LvtTimer, 0x20'000 | interruptVectorNum); //0x20000 = period mode, 0x20 = irq0
+        WriteRegister(LocalApicRegisters::TimerInitialCount, 0x2000); //TODO: use external clock to set this to a known value.
+    }
 }

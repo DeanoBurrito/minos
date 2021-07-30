@@ -100,5 +100,8 @@ namespace Kernel::Drivers
         void Init();
         void PrintTablesInfo();
         uint64_t GetLocalBase(); //useful for identity mapping and locking.
+
+        void SendEOI();
+        void StartTimer(uint8_t interruptVectorNumber);
     };
 }

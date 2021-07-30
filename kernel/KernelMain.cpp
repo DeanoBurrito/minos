@@ -14,7 +14,6 @@
 #include <memory/KHeap.h>
 #include <drivers/ACPI.h>
 #include <drivers/APIC.h>
-#include <Hello.h>
 
 extern uint64_t _KernelStart;
 extern uint64_t _KernelEnd;
@@ -76,7 +75,8 @@ namespace Kernel
         CPU::PortWrite8(PORT_PIC2_DATA, 0b11111111);
 
         //PIC interrupts
-        idtr.SetEntry((void*)InterruptHandlers::PS2KeyboardHandler, PIC1_IDT_OFFSET + 0x1, IDT_ATTRIBS_InterruptGate, 0x08);
+        //idtr.SetEntry((void*)InterruptHandlers::PS2KeyboardHandler, PIC1_IDT_OFFSET + 0x1, IDT_ATTRIBS_InterruptGate, 0x08);
+        idtr.SetEntry((void*)InterruptHandlers::TimerHandler, 0x20, IDT_ATTRIBS_InterruptGate, 0x8);
 
         CPU::LoadIDT(&idtr);
         CPU::EnableInterrupts();
@@ -118,8 +118,7 @@ extern "C" __attribute__((noreturn)) void KernelMain(BootInfo* bootInfo)
     //setup logging for the rest of the boot process (we should do this sooner rather than later)
     Log("Kernel booted.");
 
-    Log("Syslib add says 1 + 1=", false);
-    Log(ToStr(add(1, 1)));
+    Drivers::APIC::Local()->StartTimer(0x20);
 
     while (1);
 

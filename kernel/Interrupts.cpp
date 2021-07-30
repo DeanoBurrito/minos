@@ -5,6 +5,7 @@
 #include "CPU.h"
 #include <drivers/8259PIC.h>
 #include "drivers/Ps2Keyboard.h"
+#include <drivers/APIC.h>
 
 namespace InterruptHandlers
 {
@@ -35,5 +36,12 @@ namespace InterruptHandlers
         Kernel::Drivers::Ps2Keyboard::The()->HandlePacketByte(scancode);
         
         Kernel::PIC::EndMaster();
+    }
+
+    __attribute__((interrupt)) void TimerHandler(interrupt_frame* frame)
+    {
+        Kernel::KRenderer::The()->Write("Timer");
+
+        Kernel::Drivers::APIC::Local()->SendEOI();
     }
 }
