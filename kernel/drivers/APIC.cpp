@@ -30,6 +30,9 @@ namespace Kernel::Drivers
                     uint32_t* apicAddress = reinterpret_cast<uint32_t*>((uint64_t)entry + 0x4);
                     uint32_t* gsiBase = reinterpret_cast<uint32_t*>((uint64_t)entry + 0x8);
 
+                    //TODO: dont identity map this, virtual addr can be obtained through RequestPage(), and we just write to that.
+                    PageTableManager::The()->MapMemory(apicAddress, apicAddress);
+
                     IOAPIC* ioApic = new IOAPIC();
                     ioApic->Init(apicId, apicAddress, gsiBase);
                     ioApics.PushBack(ioApic);
