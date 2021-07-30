@@ -15,8 +15,12 @@
 #include <drivers/ACPI.h>
 #include <drivers/APIC.h>
 
+extern "C"
+{
 extern uint64_t _KernelStart;
 extern uint64_t _KernelEnd;
+extern void _init();
+}
 
 namespace Kernel
 {
@@ -89,6 +93,7 @@ namespace Kernel
     {   
         Drivers::ACPI::The()->Init(bootInfo->rsdp);
         Drivers::APIC::Local()->Init();
+        Drivers::IOAPIC::InitAll();
         
         KRenderer::The()->Init(bootInfo);
         SetRenderedLogging(true);
@@ -107,6 +112,9 @@ extern "C" __attribute__((noreturn)) void KernelMain(BootInfo* bootInfo)
 
     CPU::Init();
     PrepareMemory(bootInfo);
+    
+    //call any non trivial global constructors now that we have memory setup.
+    _init();
 
     SerialPort::COM1()->Init(PORT_COM1_ADDRESS); //COM1 gets initialized here so we have logging output.
     SetSerialLogging(true);

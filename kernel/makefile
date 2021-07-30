@@ -14,9 +14,10 @@ TARGET = $(BUILD_DIR)/$(TARGET_NAME)
 #flags
 CXX_INC_DIRS = $(EXT_INCLUDE_DIRS) -I ./include -I ../syslib/include
 CXX_FLAGS = $(ARCH_CXX_FLAGS) -ffreestanding -O2 -fno-rtti -fno-exceptions -mno-red-zone -mcmodel=large -ggdb -Wall
-LD_FLAGS = $(ARCH_LD_FLAGS) -ffreestanding -O2 -nostdlib -fno-rtti -fno-exceptions -lgcc -g -zmax-page-size=0x1000
-LD_LIBS = -L $(SYSLIB_DIR)/$(BUILD_DIR) -lsyslib
+LD_FLAGS = $(ARCH_LD_FLAGS) -ffreestanding -O2 -nostdlib -fno-rtti -fno-exceptions -g -zmax-page-size=0x1000
+LD_LIBS = -L $(SYSLIB_DIR)/$(BUILD_DIR) -lsyslib -lgcc
 LD_SCRIPT = $(ARCH_DIR)/linker.lds
+ASM_FLAGS =
 CPP_SRCS = $(shell find -path ./arch -prune -false -o -path ./$(ASSETS_DIR) -prune -false -o -name "*.cpp") $(ARCH_CPP_SRCS)
 ASM_SRCS = 
 
@@ -32,6 +33,9 @@ LD = x86_64-elf-gcc
 #auto populated vars
 CPP_OBJS = $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(CPP_SRCS))
 ASM_OBJS = $(patsubst %.asm, $(BUILD_DIR)/%_asm.o, $(ASM_SRCS))
+CRTBEGIN_OBJ = $(shell $(CXX) $(CXX_FLAGS) -print-file-name=crtbegin.o)
+CRTEND_OBJ = $(shell $(CXX) $(CXX_FLAGS) -print-file-name=crtend.o)
+CRT_OBJS = $(CRTBEGIN_OBJ) $(CRTEND_OBJ) $(BUILD_DIR)/crti.o $(BUILD_DIR)/crtn.o
 
 .PHONY: all clean iso run fun $(TARGET)
 
@@ -68,10 +72,18 @@ iso-img: all
 	@mcopy -i $(TARGET).img $(ASSETS_DIR) ::/assets
 	@rm $(BUILD_DIR)/BOOTX64.EFI
 
-$(TARGET): $(CPP_OBJS) $(ASM_OBJS) $(LD_SCRIPT)
+$(TARGET): $(CPP_OBJS) $(ASM_OBJS) $(LD_SCRIPT) $(CRT_OBJS)
 	@cd $(SYSLIB_DIR); make all;
 	@echo LINKING $@
-	@$(LD) $(LD_FLAGS) -T $(LD_SCRIPT) $(CPP_OBJS) $(ASM_OBJS) -o $@ $(LD_LIBS)
+	@$(LD) $(LD_FLAGS) -T $(LD_SCRIPT) $(BUILD_DIR)/crti.o $(CRTBEGIN_OBJ) $(CPP_OBJS) $(ASM_OBJS) $(CRTEND_OBJ) $(BUILD_DIR)/crtn.o -o $@ $(LD_LIBS)
+
+$(BUILD_DIR)/crti.o: $(ARCH_DIR)/crti.S
+	@echo ASSEMBLING $<
+	@$(ASM) $(ASM_FLAGS) $< --64 -o $@
+
+$(BUILD_DIR)/crtn.o: $(ARCH_DIR)/crtn.S
+	@echo ASSEMBLING $<
+	@$(ASM) $(ASM_FLAGS) $< --64 -o $@
 
 $(BUILD_DIR)/./Interrupts.o: Interrupts.cpp
 	@echo COMPILING $< with special flags

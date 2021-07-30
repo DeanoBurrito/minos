@@ -8,6 +8,50 @@
 
 namespace Kernel::Drivers
 {
+    Syslib::LinkedList<IOAPIC*> ioApics;
+    
+    void IOAPIC::InitAll()
+    {
+        MADTHeader* madt = reinterpret_cast<MADTHeader*>(ACPI::The()->FindHeader("APIC"));
+        if (madt == nullptr)
+        {
+            LogError("Unable to locate MADT, cannot initialize IOAPICs.");
+            return;
+        }
+
+        uint64_t madtLength = (uint64_t)madt + madt->header.length;
+        MADTEntry* entry = reinterpret_cast<MADTEntry*>((uint64_t)madt + 0x2C);
+        while ((uint64_t)entry < madtLength)
+        {
+            switch (entry->type)
+            {
+                case MADTEntryType::IOAPIC:
+                    uint8_t apicId = reinterpret_cast<uint8_t>(*(uint8_t*)((uint64_t)entry + 0x2));
+                    uint32_t* apicAddress = reinterpret_cast<uint32_t*>((uint64_t)entry + 0x4);
+                    uint32_t* gsiBase = reinterpret_cast<uint32_t*>((uint64_t)entry + 0x8);
+
+                    IOAPIC* ioApic = new IOAPIC();
+                    ioApic->Init(apicId, apicAddress, gsiBase);
+                    ioApics.PushBack(ioApic);
+                    break;
+            }
+
+            entry = reinterpret_cast<MADTEntry*>((uint64_t)entry + entry->length);
+        }
+    }
+    
+    void IOAPIC::Init(uint8_t apicId, uint32_t* address, uint32_t* gsiBase)
+    {
+        id = apicId;
+        baseAddress = address;
+        globalInterruptBase = gsiBase;
+
+        Log("IOAPIC initialized at: 0x", false);
+        Log(ToStrHex((uint64_t)address), false);
+        Log(", id=0x", false);
+        Log(ToStrHex(apicId));
+    }
+    
     APIC localApic;
     APIC* APIC::Local()
     {
