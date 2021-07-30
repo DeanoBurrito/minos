@@ -33,7 +33,7 @@ LD = x86_64-elf-gcc
 CPP_OBJS = $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(CPP_SRCS))
 ASM_OBJS = $(patsubst %.asm, $(BUILD_DIR)/%_asm.o, $(ASM_SRCS))
 
-.PHONY: all clean iso run fun
+.PHONY: all clean iso run fun $(TARGET)
 
 all: $(TARGET)
 
