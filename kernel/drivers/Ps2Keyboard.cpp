@@ -1,6 +1,6 @@
 #include <drivers/Ps2Keyboard.h>
 #include <KLog.h>
-#include <StringUtil.h>
+#include <CPU.h>
 
 namespace Kernel::Drivers
 {
@@ -101,5 +101,25 @@ namespace Kernel::Drivers
     ScancodeSet Ps2Keyboard::GetScancodeSet()
     {
         return currentSet;
+    }
+
+    void Ps2Keyboard::SetKeyRepeat(uint8_t repeatRate, uint8_t delay)
+    {
+        uint8_t packed = (repeatRate & 0b0001'1111) | ((delay & 0b11) << 5);
+
+        bool interruptsEnabled = CPU::InterruptsEnabled();
+        CPU::DisableInterrupts();
+
+        //send command byte, then data, ensure we get an ACK response
+        CPU::PortWrite8(PORT_PS2_KEYBOARD, 0xF3); //0xF3 = set typematic rate and delay command
+        CPU::PortIOWait();
+        CPU::PortWrite8(PORT_PS2_KEYBOARD, packed);
+        CPU::PortIOWait();
+        uint8_t response = CPU::PortRead8(PORT_PS2_KEYBOARD);
+        if (interruptsEnabled)
+            CPU::EnableInterrupts();
+
+        if (response != 0xFA) //0xFA = ACK
+            LogError("PS2 keyboard was not happy with key repeat values sent.");
     }
 }

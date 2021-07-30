@@ -31,7 +31,7 @@ namespace InterruptHandlers
 
     __attribute__((interrupt)) void PS2KeyboardHandler(interrupt_frame* frame)
     {   
-        uint8_t scancode = Kernel::CPU::PortRead8(0x60); //magic number TODO:
+        uint8_t scancode = Kernel::CPU::PortRead8(PORT_PS2_KEYBOARD);
         Kernel::Drivers::Ps2Keyboard::The()->HandlePacketByte(scancode);
         
         Kernel::Drivers::APIC::Local()->SendEOI();
