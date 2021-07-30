@@ -72,19 +72,15 @@ namespace Kernel::Drivers
         TimerDivideConfig = 0x3E,
     };
 
-    enum class IOApicRegisters : uint64_t
-    {
-        //read/write the apic's id (bits 24-27 only, rest are ignored)
-        ID = 0x0,
-        //bits 0-7 contain revision, max redirection entries count in 16-23
-        Version_MaxRedirects = 0x1,
-        //read-only, bits 24-27
-        ArbitrationPriority = 0x2,
-
-        //read/write, redirect entries are at address pairs (0x10 + 0x11 = int0)
-        RedirectionListStart = 0x10,
-        RedirectionListEnd = 0x3F,
-    };
+//read/write the apic's id (bits 24-27 only, rest are ignored)
+#define IOAPIC_REGISTER_ID 0x0
+//bits 0-7 contain revision, max redirection entries count in 16-23
+#define IOAPIC_REGISTER_VERSION_MAXREDIRECTS 0x1
+//read-only, bits 24-27
+#define IOAPIC_REGISTER_ARTBITRATION_PRIORITY 0x2
+//read/write, redirect entries are at address pairs (0x10 + 0x11 = int0)
+#define IOAPIC_REGISTER_REDIRECT_START 0x10
+#define IOAPIC_REGISTER_REDIRECT_END 0x3F
 
 #define IOAPIC_DELIVERY_MODE_FIXED 0b000
 #define IOAPIC_DELIVERY_MODE_LOWEST_PRIORITY 0b001
@@ -122,8 +118,8 @@ namespace Kernel::Drivers
         } __attribute__((packed));
         struct
         {
-            uint32_t packedUpperHalf;;
             uint32_t packedLowerHalf;
+            uint32_t packedUpperHalf;
         } __attribute__((packed));
     } __attribute__((packed));
 
@@ -131,13 +127,20 @@ namespace Kernel::Drivers
     {
     private:
         uint8_t id;
-        uint32_t* baseAddress;
-        uint32_t* globalInterruptBase;
+        uint64_t physicalAddr;
+        uint64_t virtualAddr;
+        uint32_t globalInterruptBase;
+
+        uint32_t ReadRegister(uint64_t offset);
+        void WriteRegister(uint64_t offset, uint32_t value);
 
     public:
+        static Syslib::LinkedList<IOAPIC*> ioApics;
         static void InitAll();
 
-        void Init(uint8_t apicId, uint32_t* address, uint32_t* gsiBase);
+        void Init(uint8_t apicId, uint32_t physAddr, uint32_t gsiBase);
+        void WriteRedirectEntry(uint8_t entryNum, const IOApicRedirectEntry& entry);
+        IOApicRedirectEntry ReadRedirectEntry(uint8_t entryNum);
     };
     
     class APIC

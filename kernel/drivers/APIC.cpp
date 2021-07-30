@@ -2,13 +2,31 @@
 #include <drivers/ACPI.h>
 #include <drivers/8259PIC.h>
 #include <PageTableManager.h>
+#include <PageFrameAllocator.h>
 #include <KLog.h>
 #include <StringUtil.h>
 #include <CPU.h>
 
 namespace Kernel::Drivers
 {
-    Syslib::LinkedList<IOAPIC*> ioApics;
+    Syslib::LinkedList<IOAPIC*> IOAPIC::ioApics;
+
+    uint32_t IOAPIC::ReadRegister(uint64_t offset)
+    {
+        /*  NOTE:
+            The way this works is we have a select and read/write byte for interacting with the ioapic.
+            The base address where we select what register to access, base + 0x10 is where we do i/o with the selected register.
+            The same is true for reading the register
+        */
+        *(uint32_t*)virtualAddr = offset;
+        return *(uint32_t*)(virtualAddr + 0x10);
+    }
+
+    void IOAPIC::WriteRegister(uint64_t offset, uint32_t value)
+    {
+        *(uint32_t*)virtualAddr = offset;
+        *(uint32_t*)(virtualAddr + 0x10) = value;
+    }
     
     void IOAPIC::InitAll()
     {
@@ -27,14 +45,11 @@ namespace Kernel::Drivers
             {
                 case MADTEntryType::IOAPIC:
                     uint8_t apicId = reinterpret_cast<uint8_t>(*(uint8_t*)((uint64_t)entry + 0x2));
-                    uint32_t* apicAddress = reinterpret_cast<uint32_t*>((uint64_t)entry + 0x4);
-                    uint32_t* gsiBase = reinterpret_cast<uint32_t*>((uint64_t)entry + 0x8);
-
-                    //TODO: dont identity map this, virtual addr can be obtained through RequestPage(), and we just write to that.
-                    PageTableManager::The()->MapMemory(apicAddress, apicAddress);
+                    uint32_t physicalAddr = reinterpret_cast<uint32_t>(*(uint32_t*)((uint64_t)entry + 0x4));
+                    uint32_t gsiBase = reinterpret_cast<uint32_t>(*(uint32_t*)((uint64_t)entry + 0x8));
 
                     IOAPIC* ioApic = new IOAPIC();
-                    ioApic->Init(apicId, apicAddress, gsiBase);
+                    ioApic->Init(apicId, physicalAddr, gsiBase);
                     ioApics.PushBack(ioApic);
                     break;
             }
@@ -43,16 +58,31 @@ namespace Kernel::Drivers
         }
     }
     
-    void IOAPIC::Init(uint8_t apicId, uint32_t* address, uint32_t* gsiBase)
+    void IOAPIC::Init(uint8_t apicId, uint32_t physAddr, uint32_t gsiBase)
     {
         id = apicId;
-        baseAddress = address;
-        globalInterruptBase = gsiBase;
+        virtualAddr = (uint64_t)PageFrameAllocator::The()->RequestPage();
+        physicalAddr = physAddr;
+        PageTableManager::The()->MapMemory((void*)virtualAddr, (void*)physicalAddr);
 
         Log("IOAPIC initialized at: 0x", false);
-        Log(ToStrHex((uint64_t)address), false);
+        Log(ToStrHex(physAddr), false);
         Log(", id=0x", false);
         Log(ToStrHex(apicId));
+    }
+
+    void IOAPIC::WriteRedirectEntry(uint8_t entryNum, const IOApicRedirectEntry& entry)
+    {
+        WriteRegister(IOAPIC_REGISTER_REDIRECT_START + (entryNum * 2), entry.packedLowerHalf);
+        WriteRegister(IOAPIC_REGISTER_REDIRECT_START + (entryNum * 2) + 1, entry.packedUpperHalf);
+    }
+
+    IOApicRedirectEntry IOAPIC::ReadRedirectEntry(uint8_t entryNum)
+    {
+        IOApicRedirectEntry entry;
+        entry.packedLowerHalf = ReadRegister(IOAPIC_REGISTER_REDIRECT_START + (entryNum * 2));
+        entry.packedUpperHalf = ReadRegister(IOAPIC_REGISTER_REDIRECT_START + (entryNum * 2) + 1);        
+        return entry;
     }
     
     APIC localApic;
