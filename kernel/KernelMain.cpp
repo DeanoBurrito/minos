@@ -14,6 +14,7 @@
 #include <memory/KHeap.h>
 #include <drivers/ACPI.h>
 #include <drivers/APIC.h>
+#include <Hello.h>
 
 extern uint64_t _KernelStart;
 extern uint64_t _KernelEnd;
@@ -116,6 +117,9 @@ extern "C" __attribute__((noreturn)) void KernelMain(BootInfo* bootInfo)
 
     //setup logging for the rest of the boot process (we should do this sooner rather than later)
     Log("Kernel booted.");
+
+    Log("Syslib add says 1 + 1=", false);
+    Log(ToStr(add(1, 1)));
 
     while (1);
 
