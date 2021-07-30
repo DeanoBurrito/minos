@@ -1,7 +1,6 @@
 #include <Interrupts.h>
 #include <Serial.h>
 #include <Panic.h>
-#include <KRenderer.h>
 #include <CPU.h>
 #include <drivers/Ps2Keyboard.h>
 #include <drivers/APIC.h>
@@ -33,7 +32,7 @@ namespace InterruptHandlers
     {   
         uint8_t scancode = Kernel::CPU::PortRead8(PORT_PS2_KEYBOARD);
         Kernel::Drivers::Ps2Keyboard::The()->HandlePacketByte(scancode);
-        
+
         Kernel::Drivers::APIC::Local()->SendEOI();
     }
 

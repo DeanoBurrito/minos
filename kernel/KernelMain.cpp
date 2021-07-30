@@ -80,7 +80,7 @@ namespace Kernel
         ps2RedirectEntry.triggerMode = IOAPIC_TRIGGER_MODE_EDGE;
         ps2RedirectEntry.mask = IOAPIC_MASK_ENABLE;
         ps2RedirectEntry.destination = Drivers::APIC::Local()->GetID();
-        Drivers::IOAPIC::ioApics.PeekFront()->WriteRedirectEntry(2, ps2RedirectEntry);
+        Drivers::IOAPIC::ioApics.PeekFront()->WriteRedirectEntry(1, ps2RedirectEntry);
         //PIC interrupts
         idtr.SetEntry((void*)InterruptHandlers::PS2KeyboardHandler, 0x21, IDT_ATTRIBS_InterruptGate, 0x08);
         idtr.SetEntry((void*)InterruptHandlers::TimerHandler, 0x20, IDT_ATTRIBS_InterruptGate, 0x8);
