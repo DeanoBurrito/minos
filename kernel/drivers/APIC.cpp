@@ -204,7 +204,7 @@ namespace Kernel::Drivers
 
     void APIC::SendEOI()
     {
-        WriteRegister(LocalApicRegisters::EOI, 1);
+        WriteRegister(LocalApicRegisters::EOI, 0);
     }
 
     void APIC::StartTimer(uint8_t interruptVectorNum)
