@@ -74,7 +74,7 @@ namespace Kernel
 
         //write redirect entry for irq2 (ps2 keyboard)
         Drivers::IOApicRedirectEntry ps2RedirectEntry;
-        ps2RedirectEntry.vector = 0x21;
+        ps2RedirectEntry.vector = INTERRUPT_VECTOR_PS2KEYBOARD;
         ps2RedirectEntry.deliveryMode = IOAPIC_DELIVERY_MODE_FIXED;
         ps2RedirectEntry.destinationMode = IOAPIC_DESTINATION_PHYSICAL;
         ps2RedirectEntry.pinPolarity = IOAPIC_PIN_POLARITY_ACTIVE_HIGH;
@@ -84,7 +84,7 @@ namespace Kernel
         Drivers::IOAPIC::ioApics.PeekFront()->WriteRedirectEntry(1, ps2RedirectEntry);
         //PIC interrupts
         idtr.SetEntry((void*)InterruptHandlers::PS2KeyboardHandler, INTERRUPT_VECTOR_PS2KEYBOARD, IDT_ATTRIBS_InterruptGate, 0x08);
-        //idtr.SetEntry((void*)InterruptHandlers::DefaultTimerHandler, INTERRUPT_VECTOR_TIMER, IDT_ATTRIBS_InterruptGate, 0x8); TODO: install scheduler handler only after its been intialized
+        //idtr.SetEntry((void*)InterruptHandlers::DefaultTimerHandler, INTERRUPT_VECTOR_TIMER, IDT_ATTRIBS_InterruptGate, 0x8); //TODO: install scheduler handler only after its been intialized
         idtr.SetEntry((void*)SchedulerTimerInterruptHandler, INTERRUPT_VECTOR_TIMER, IDT_ATTRIBS_InterruptGate, 0x08);
 
         CPU::LoadIDT(&idtr);
@@ -127,11 +127,11 @@ extern "C" __attribute__((noreturn)) void KernelMain(BootInfo* bootInfo)
 
     PrepareDrivers(bootInfo);
     PrepareInterrupts(bootInfo);
-    Drivers::APIC::Local()->StartTimer(INTERRUPT_VECTOR_TIMER);
 
     //setup logging for the rest of the boot process (we should do this sooner rather than later)
     Log("Kernel booted.");
     Multiprocessing::Scheduler::The()->Init();
+    Drivers::APIC::Local()->StartTimer(INTERRUPT_VECTOR_TIMER);
     Multiprocessing::Scheduler::The()->Yield();
     LogError("Scheduler return!");
 

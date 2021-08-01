@@ -36,6 +36,8 @@ namespace Kernel::Multiprocessing
         thread->stackPages = THREAD_DEFAULT_STACK_PAGES;
         thread->status = ThreadStatus::Sleeping;
 
+        InitKernelThreadData(&thread->data);
+
         //setup entry point. Again platform specific, as to how execution flows after thread switch
         SetKernelThreadEntry(thread->data, (uint64_t)ThreadMainWrapper, (void*)threadMain, arg);
         SetKernelThreadStack(thread->data, (uint64_t)thread + thread->stackPages * PAGE_SIZE); //place stack at top of allocated space

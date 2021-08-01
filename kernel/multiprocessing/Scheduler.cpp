@@ -1,6 +1,8 @@
 #include <multiprocessing/Scheduler.h>
 #include <CPU.h>
 #include <Interrupts.h>
+#include <KLog.h>
+#include <StringUtil.h>
 
 namespace Kernel::Multiprocessing
 {
@@ -12,13 +14,17 @@ namespace Kernel::Multiprocessing
         //Wrapper method to select next thread data to load, callable from assembly
         void Scheduler_SwitchNext()
         {
-            Scheduler().The()->SelectNextThreadData();
+            Scheduler::The()->SelectNextThreadData();
         }
     }
     
     void IdleMain(void* arg)
     {
-        CPU::Halt();
+        while (true)
+        {
+            //Dont work too hard
+            CPU::Halt();
+        }
     }
     
     Scheduler schedulerInstance;
@@ -43,27 +49,29 @@ namespace Kernel::Multiprocessing
         CPU::IssueInterrupt(INTERRUPT_VECTOR_TIMER);
     }
 
+    //NOTE: This is called from within interrupt handler, dont do anything too crazy here
     void Scheduler::SelectNextThreadData()
     {
-
         KernelThread* nextThread = nullptr;
-        //Selection: if the first thread isnt higher priority, we run the nbext one
-        if (currentThread != nullptr && currentThread->GetPriority() >= threads.PeekFront()->GetPriority())
-            nextThread = threads.Find(currentThread)->next->val;
+        // //Selection: if the first thread isnt higher priority, we run the nbext one
+        // if (currentThread != nullptr && currentThread->GetPriority() >= threads.PeekFront()->GetPriority())
+        //     nextThread = threads.Find(currentThread)->next->val;
         
-        //Selection: if that didnt work, use the highest priority thread.
-        if (nextThread == nullptr || nextThread->GetPriority() < currentThread->GetPriority())
-        {
-            auto scanHead = threads.Head();
-            while (scanHead != nullptr)
-            {
-                nextThread = scanHead->val;
-                if (nextThread->CanRun())
-                    break;
+        // //Selection: if that didnt work, use the highest priority thread.
+        // if (nextThread == nullptr || nextThread->GetPriority() < currentThread->GetPriority())
+        // {
+        //     auto scanHead = threads.Head();
+        //     while (scanHead != nullptr)
+        //     {
+        //         nextThread = scanHead->val;
+        //         if (nextThread->CanRun())
+        //             break;
 
-                scanHead = scanHead->next;
-            }
-        }
+        //         scanHead = scanHead->next;
+        //     }
+        // }
+
+        nextThread = threads.PeekFront();
 
         //next thread has been selected, set pointer and return to assembly to load registers
         Scheduler_currentThreadData = nextThread->data;

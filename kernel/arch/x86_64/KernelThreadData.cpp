@@ -1,7 +1,9 @@
 #include <multiprocessing/Thread.h>
 #include <drivers/APIC.h>
+#include <KLog.h>
+#include <StringUtil.h>
 
-namespace Kernel::Multipropcessing
+namespace Kernel::Multiprocessing
 {
     extern "C" void Asm_SendEOI()
     {
@@ -18,7 +20,25 @@ namespace Kernel::Multipropcessing
         uint64_t rax, rbx, rcx, rdx, rsi, rdi, rbp;
         uint64_t r8, r9, r10, r11, r12, r13, r14, r15;
         uint64_t ds, es, fs, gs;
+
+        static KernelThreadData* Init()
+        { 
+            return new KernelThreadData(); 
+        }
+
+        KernelThreadData()
+        {
+            ss = rsp = rflags = cs = rip = 0;
+            rax = rbx = rcx = rdx = rsi = rdi = rbp = 0;
+            r8 = r9 = r10 = r11 = r12= r13 = r14 = r15 = 0;
+            ds = es = fs = gs = 0;
+        }
     };
+
+    void InitKernelThreadData(KernelThreadData** data)
+    {
+        *data = new KernelThreadData(); 
+    }
 
     void SetKernelThreadEntry(KernelThreadData* data, uint64_t mainAddr, void* arg0, void* arg1)
     {
@@ -35,7 +55,8 @@ namespace Kernel::Multipropcessing
     void SetKernelThreadFlags(KernelThreadData* data, uint64_t codeSegment, uint64_t dataSegment, uint64_t flags)
     {
         data->cs = codeSegment;
-        data->ds = dataSegment;
+        //TODO: not sure if this is the right thing to do, but SS requires a valid data segment, and I dont like the rest being null segments
+        data->ds = data->es = data->ss = data->fs = data->gs = dataSegment;
         data->rflags = flags;
     }
 }

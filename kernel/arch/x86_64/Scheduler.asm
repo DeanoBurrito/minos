@@ -11,6 +11,10 @@ SchedulerTimerInterruptHandler:
     push %rdi
     mov (Scheduler_currentThreadData), %rdi
 
+    #only save current thread data if we have somewhere to save it (its not nullptr)
+    test %rdi, %rdi
+    jz SkipSave
+
     # save rax, so we can use it, then pop and store rdi
     mov %rax, 0x28(%rdi)
     pop %rax
@@ -53,6 +57,10 @@ SchedulerTimerInterruptHandler:
 
     # Now that registers have been saved, we're safe to call other routines, without fear of trashing anything
 
+    # Send EOI before we load anything back onto the stack, as this will corrupt it
+    call Asm_SendEOI
+
+SkipSave:
     # Call switchnext() to load the next thread
     call Scheduler_SwitchNext
 
@@ -90,8 +98,5 @@ SchedulerTimerInterruptHandler:
     mov 0xB8(%rdi), %gs
 
     mov 0x50(%rdi), %rdi
-
-    #send EOI to our timer source
-    call Asm_SendEOI
 
     iretq

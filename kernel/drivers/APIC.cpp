@@ -209,10 +209,10 @@ namespace Kernel::Drivers
 
     void APIC::StartTimer(uint8_t interruptVectorNum)
     {
-        WriteRegister(LocalApicRegisters::TimerDivideConfig, 0x3);
+        WriteRegister(LocalApicRegisters::TimerDivideConfig, 0x0);
         //TODO: implement a nice way to r/w LVTs
         WriteRegister(LocalApicRegisters::LvtTimer, 0x20'000 | interruptVectorNum); //0x20000 = period mode, 0x20 = irq0
-        WriteRegister(LocalApicRegisters::TimerInitialCount, 0x2000); //TODO: use external clock to set this to a known value.
+        WriteRegister(LocalApicRegisters::TimerInitialCount, 0x10000); //TODO: use external clock to set this to a known value.
     }
 
     uint8_t APIC::GetID()
