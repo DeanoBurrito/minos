@@ -13,7 +13,7 @@ TARGET = $(BUILD_DIR)/$(TARGET_NAME)
 
 #flags
 CXX_INC_DIRS = $(EXT_INCLUDE_DIRS) -I ./include -I ../syslib/include
-CXX_FLAGS = $(ARCH_CXX_FLAGS) -ffreestanding -O2 -fno-rtti -fno-exceptions -mno-red-zone -mcmodel=large -ggdb -Wall
+CXX_FLAGS = $(ARCH_CXX_FLAGS) -ffreestanding -O2 -fno-rtti -fno-exceptions -g -mno-red-zone -mcmodel=large -ggdb -Wall
 LD_FLAGS = $(ARCH_LD_FLAGS) -ffreestanding -O2 -nostdlib -fno-rtti -fno-exceptions -g -zmax-page-size=0x1000
 LD_LIBS = -L $(SYSLIB_DIR)/$(BUILD_DIR) -lsyslib -lgcc
 LD_SCRIPT = $(ARCH_DIR)/linker.lds

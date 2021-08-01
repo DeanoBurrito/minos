@@ -5,6 +5,9 @@
 #include <drivers/Ps2Keyboard.h>
 #include <drivers/APIC.h>
 
+#include <KLog.h>
+#include <StringUtil.h>
+
 namespace InterruptHandlers
 {
     __attribute__((interrupt)) void DoubleFault(interrupt_frame* frame)
@@ -16,8 +19,12 @@ namespace InterruptHandlers
     
     __attribute__((interrupt)) void GeneralProtectionFault(interrupt_frame* frame)
     {
-        Kernel::Panic("Protection Fault.");
+        Kernel::Log("General Protection fault, error code: 0x", false);
+        uint64_t errorCode = 0xdeadc0de; //not all zeros, so if it is a zero, we'll know its been set correctly
+        asm volatile ("pop %0" : "=g"(errorCode));
+        Kernel::Log(ToStrHex(errorCode));
 
+        Kernel::Panic("Protection Fault.");
         Kernel::CPU::Halt();
     }
 
