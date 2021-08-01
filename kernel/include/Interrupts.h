@@ -1,5 +1,14 @@
 #pragma once
 
+//These are defined by intel spec, and we cant change
+#define INTERRUPT_VECTOR_DOUBLE_FAULT 0x08
+#define INTERRUPT_VECTOR_GENERAL_PROTECTION_FAULT 0x0D
+#define INTERRUPT_VECTOR_PAGE_FAULT 0x0E
+
+//Software defined, change these as we need.
+#define INTERRUPT_VECTOR_PS2KEYBOARD 0x21
+#define INTERRUPT_VECTOR_TIMER 0x22
+
 struct interrupt_frame;
 
 namespace InterruptHandlers
@@ -9,5 +18,5 @@ namespace InterruptHandlers
     __attribute__((interrupt)) void PageFault(interrupt_frame* frame);
 
     __attribute__((interrupt)) void PS2KeyboardHandler(interrupt_frame* frame);
-    __attribute__((interrupt)) void TimerHandler(interrupt_frame* frame);
+    __attribute__((interrupt)) void DefaultTimerHandler(interrupt_frame* frame);
 }

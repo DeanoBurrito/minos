@@ -30,7 +30,7 @@ Userland:
     -Windowing system
 
 Drivers:
-    -APIC
+    -HPET: backup timer source
     -Multi-processor booting (see intel/amd manuals on this). Sortix and serenityOS as well.
     -QEMU gpu driver
     -Networking

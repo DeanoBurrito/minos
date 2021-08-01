@@ -76,6 +76,7 @@ namespace Kernel
         static void EnableInterrupts();
         static void DisableInterrupts();
         static bool InterruptsEnabled();
+        static void IssueInterrupt(uint8_t iv);
 
         static bool FeatureSupported(CpuFeatureFlag flag);
 

@@ -13,6 +13,7 @@
 #include <memory/KHeap.h>
 #include <drivers/ACPI.h>
 #include <drivers/APIC.h>
+#include <multiprocessing/Scheduler.h>
 
 extern "C"
 {
@@ -67,9 +68,9 @@ namespace Kernel
         idtr.offset = (uint64_t)PageFrameAllocator::The()->RequestPage();
 
         //CPU interrupts
-        idtr.SetEntry((void*)InterruptHandlers::DoubleFault, 0x8, IDT_ATTRIBS_InterruptGate, 0x08);
-        idtr.SetEntry((void*)InterruptHandlers::GeneralProtectionFault, 0xD, IDT_ATTRIBS_InterruptGate, 0x08);
-        idtr.SetEntry((void*)InterruptHandlers::PageFault, 0xE, IDT_ATTRIBS_InterruptGate, 0x8);
+        idtr.SetEntry((void*)InterruptHandlers::DoubleFault, INTERRUPT_VECTOR_DOUBLE_FAULT, IDT_ATTRIBS_InterruptGate, 0x08);
+        idtr.SetEntry((void*)InterruptHandlers::GeneralProtectionFault, INTERRUPT_VECTOR_GENERAL_PROTECTION_FAULT, IDT_ATTRIBS_InterruptGate, 0x08);
+        idtr.SetEntry((void*)InterruptHandlers::PageFault, INTERRUPT_VECTOR_PAGE_FAULT, IDT_ATTRIBS_InterruptGate, 0x8);
 
         //write redirect entry for irq2 (ps2 keyboard)
         Drivers::IOApicRedirectEntry ps2RedirectEntry;
@@ -82,8 +83,9 @@ namespace Kernel
         ps2RedirectEntry.destination = Drivers::APIC::Local()->GetID();
         Drivers::IOAPIC::ioApics.PeekFront()->WriteRedirectEntry(1, ps2RedirectEntry);
         //PIC interrupts
-        idtr.SetEntry((void*)InterruptHandlers::PS2KeyboardHandler, 0x21, IDT_ATTRIBS_InterruptGate, 0x08);
-        idtr.SetEntry((void*)InterruptHandlers::TimerHandler, 0x20, IDT_ATTRIBS_InterruptGate, 0x8);
+        idtr.SetEntry((void*)InterruptHandlers::PS2KeyboardHandler, INTERRUPT_VECTOR_PS2KEYBOARD, IDT_ATTRIBS_InterruptGate, 0x08);
+        //idtr.SetEntry((void*)InterruptHandlers::DefaultTimerHandler, INTERRUPT_VECTOR_TIMER, IDT_ATTRIBS_InterruptGate, 0x8); TODO: install scheduler handler only after its been intialized
+        idtr.SetEntry((void*)SchedulerTimerInterruptHandler, INTERRUPT_VECTOR_TIMER, IDT_ATTRIBS_InterruptGate, 0x08);
 
         CPU::LoadIDT(&idtr);
         CPU::EnableInterrupts();
@@ -125,11 +127,13 @@ extern "C" __attribute__((noreturn)) void KernelMain(BootInfo* bootInfo)
 
     PrepareDrivers(bootInfo);
     PrepareInterrupts(bootInfo);
+    Drivers::APIC::Local()->StartTimer(INTERRUPT_VECTOR_TIMER);
 
     //setup logging for the rest of the boot process (we should do this sooner rather than later)
     Log("Kernel booted.");
-
-    Drivers::APIC::Local()->StartTimer(0x20);
+    Multiprocessing::Scheduler::The()->Init();
+    Multiprocessing::Scheduler::The()->Yield();
+    LogError("Scheduler return!");
 
     while (1);
 

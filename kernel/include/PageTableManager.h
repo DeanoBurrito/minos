@@ -48,6 +48,7 @@ namespace Kernel
 
         void Init(PageTable* pml4Address);
         void MapMemory(void* virtualAddr, void* physicalAddr);
+        void UnmapMemory(void* virtualAddr);
 
         void MakeCurrentMap();
     };

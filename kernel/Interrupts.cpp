@@ -36,7 +36,7 @@ namespace InterruptHandlers
         Kernel::Drivers::APIC::Local()->SendEOI();
     }
 
-    __attribute__((interrupt)) void TimerHandler(interrupt_frame* frame)
+    __attribute__((interrupt)) void DefaultTimerHandler(interrupt_frame* frame)
     {
         Kernel::Drivers::APIC::Local()->SendEOI();
     }

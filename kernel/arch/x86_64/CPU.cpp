@@ -72,6 +72,17 @@ namespace Kernel
         return (flags & 0b1'000'000'000) != 0;
     }
 
+    void CPU::IssueInterrupt(uint8_t iv)
+    {
+        //TODO: find out how to pass an immediate value to inline assembly (%c0 and 'n/i/N' seem to not be what I want)
+        // asm volatile("int %0" 
+        //             :
+        //             : "n"(iv));
+
+        //TODO: big hack, just assuming we want to trigger scheduler timer interrupt
+        asm volatile("int $0x22");
+    }
+
     bool CPU::FeatureSupported(CpuFeatureFlag flag)
     {
         if (!cpuIdSupported)

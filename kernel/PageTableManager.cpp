@@ -110,6 +110,11 @@ namespace Kernel
         pt->entries[page] = pageEntry;
     }
 
+    void PageTableManager::UnmapMemory(void* virtualAddr)
+    {
+        //TODO: unmap virtual memory, free pagetable entry
+    }
+
     void PageTableManager::MakeCurrentMap()
     {
         CPU::LoadPageTableMap(pml4Addr);
