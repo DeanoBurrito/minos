@@ -140,12 +140,15 @@ namespace Syslib
             if (head == nullptr)
                 return nullptr;
             
-            LinkedListEntry<Value>* current = head;
-            while (current->next != nullptr)
+            LinkedListEntry<Value>* current = head;  
+            do
             {
                 if (current->val == value)
                     return current;
+                
+                current = current->next;
             }
+            while (current != nullptr);
 
             return nullptr;
         }
@@ -156,11 +159,14 @@ namespace Syslib
                 return nullptr;
             
             LinkedListEntry<Value>* current = tail;
-            while (current->prev != nullptr)
+            do
             {
                 if (current->val == value)
                     return current;
+
+                current = current->prev;
             }
+            while (current != nullptr);
 
             return nullptr;
         }
