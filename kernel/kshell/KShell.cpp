@@ -59,12 +59,24 @@ namespace Kernel::Shell
             
             inputLine[inputLength] = Ps2Keyboard::The()->GetPrintable(key.key, (key.flags & KeyModifierFlags::AnyShift) != KeyModifierFlags::None);
             inputLength++;
+            inputCursor++;
             SetPrompt(nullptr);
             return;
         }
         
         switch (key.key) 
         {
+        case KeyboardKey::Backspace:
+        {
+            if (inputCursor > 0 && inputLength > 0)
+            {
+                memcopy(inputLine + inputCursor, inputLine + inputCursor - 1, inputLength - inputCursor);
+                inputLength--;
+                inputCursor--;
+                SetPrompt(nullptr);
+            }
+            break;
+        }
         case KeyboardKey::Enter:
         {
             SetStatus("processing command ...");
@@ -84,7 +96,7 @@ namespace Kernel::Shell
         inputLine[inputLength] = 0;
         WriteLine(inputLine);
         memset(inputLine, 0, inputLength);
-        inputLength = 0;
+        inputLength = inputCursor = 0;
         SetPrompt(nullptr);
     }
 
