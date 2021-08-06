@@ -24,6 +24,8 @@ namespace Kernel::Shell
         promptText = "(kernel) - no FS $ ";
         echoSerialOut = true;
 
+        memset(incomingLogsBuffer, 0, KSHELL_INCOMING_LOGS_MAX);
+
         characterSize = KRenderer::The()->GetFontCharacterSize();
         displaySize = KRenderer::The()->GetFramebufferSize();
         displaySize = Position(displaySize.x / characterSize.x, displaySize.y / characterSize.y);
@@ -34,11 +36,11 @@ namespace Kernel::Shell
         memset(dirtyLineLengths, 0, displaySize.y);
 
         SetPrompt(nullptr);
+        ClearLine(KSHELL_STATUS_LINE, 0, displaySize.x - 1, KSHELL_STATUS_BG_COLOUR);
         KRenderer::The()->SetCursor(Position(0, KSHELL_STATUS_LINE));
         KRenderer::The()->Write("STATUS: ");
         SetStatus(nullptr);
-        
-        //TODO: disable log printing automatically, instead piping its output to us
+        writeCursorPos = Position(0, 0);
     }
 
     void KShell::ProcessKey(const KeyAction& key)
@@ -100,7 +102,7 @@ namespace Kernel::Shell
         SetPrompt(nullptr);
     }
 
-    void KShell::ClearLine(uint32_t lineNum, uint32_t startCol, uint32_t endCol)
+    void KShell::ClearLine(uint32_t lineNum, uint32_t startCol, uint32_t endCol, Colour clearColour)
     {
         if (endCol > displaySize.x)
             endCol = displaySize.x;
@@ -109,7 +111,7 @@ namespace Kernel::Shell
         uint32_t height = characterSize.y;
         uint32_t width = (endCol - startCol) * characterSize.x;
 
-        KRenderer::The()->DrawRect(Position(left, top), Position(width, height), bgColour, true);
+        KRenderer::The()->DrawRect(Position(left, top), Position(width, height), clearColour, true);
     }
     
     void KShell::Main()
@@ -119,9 +121,17 @@ namespace Kernel::Shell
 
         while (keepRunning)
         {
-            if (Ps2Keyboard::The()->KeysAvailable() /* || Log::OutputPending? */)
+            if (Ps2Keyboard::The()->KeysAvailable() || LogsUnread() > 0)
             {
-                //TODO: check for log input to display
+                //check for unread logs, display them if we need to
+                while (LogsUnread() > 0)
+                {
+                    unsigned long logsCount = KSHELL_INCOMING_LOGS_MAX;
+                    ReceiveLogs(incomingLogsBuffer, &logsCount);
+                    
+                    for (int i = 0; i < logsCount; i++)
+                        WriteLine(incomingLogsBuffer[i]);
+                }
                 
                 //check for keyboard input
                 unsigned int keysCount = 0;
@@ -147,7 +157,7 @@ namespace Kernel::Shell
             writeCursorPos.y = 0; //roll over to the top if we ever reach the limit line
 
         if (dirtyLineLengths[writeCursorPos.y] > 0)
-            ClearLine(writeCursorPos.y, 0, dirtyLineLengths[writeCursorPos.y]);
+            ClearLine(writeCursorPos.y, 0, dirtyLineLengths[writeCursorPos.y], bgColour);
         
         KRenderer::The()->SetCursor(writeCursorPos);
         KRenderer::The()->Write(line);
@@ -170,7 +180,7 @@ namespace Kernel::Shell
         if (text != nullptr)
             promptText = text;
         if (dirtyLineLengths[KSHELL_PROMPT_LINE] > 0)
-            ClearLine(KSHELL_PROMPT_LINE, 0, dirtyLineLengths[KSHELL_PROMPT_LINE]);
+            ClearLine(KSHELL_PROMPT_LINE, 0, dirtyLineLengths[KSHELL_PROMPT_LINE], bgColour);
         
         KRenderer::The()->SetCursor(Position(0, KSHELL_PROMPT_LINE));
         KRenderer::The()->Write(promptText);
@@ -185,7 +195,7 @@ namespace Kernel::Shell
     void KShell::SetStatus(const char* const text)
     {
         if (dirtyLineLengths[KSHELL_STATUS_LINE] > 8)
-            ClearLine(KSHELL_STATUS_LINE, 8, dirtyLineLengths[KSHELL_STATUS_LINE]);
+            ClearLine(KSHELL_STATUS_LINE, 8, dirtyLineLengths[KSHELL_STATUS_LINE], KSHELL_STATUS_BG_COLOUR);
         
         if (text != nullptr)
         {

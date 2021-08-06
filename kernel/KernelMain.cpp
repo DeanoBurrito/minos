@@ -102,7 +102,6 @@ namespace Kernel
         Drivers::IOAPIC::InitAll();
         
         KRenderer::The()->Init(bootInfo);
-        SetRenderedLogging(true);
         Log("KRenderer initialized.");
     }
 }
@@ -121,6 +120,7 @@ extern "C" __attribute__((noreturn)) void KernelMain(BootInfo* bootInfo)
     
     //call any non trivial global constructors now that we have memory setup.
     _init();
+    InitLogging();
 
     SerialPort::COM1()->Init(PORT_COM1_ADDRESS); //COM1 gets initialized here so we have logging output.
     SetSerialLogging(true);

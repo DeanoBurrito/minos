@@ -1,23 +1,29 @@
 #include <Serial.h>
-#include <KRenderer.h>
 #include <KLog.h>
+#include <templates/List.h>
+#include <CPU.h>
+#include <memory/Utilities.h>
+#include <StringUtil.h>
 
 namespace Kernel
 {
+    Syslib::List<const char*> unreadLogs; //TODO: have some failsafe for logs, as this can grow infinitely until it consumes all system memory.
+
+    void InitLogging()
+    {
+        unreadLogs = Syslib::List<const char*>(LOGGING_DEFAULT_RESERVE_COUNT); //reserve some space, because we're going to use it for sure.
+    }
+    
     bool serialLogEnabled = false;
     void SetSerialLogging(bool enabled)
     {
         serialLogEnabled = enabled;
     }
 
-    bool renderedLogEnabled = false;
-    void SetRenderedLogging(bool enabled)
-    {
-        renderedLogEnabled = enabled;
-    }
-
     void Log(const char* message, bool endLine)
     {
+        //unreadLogs.PushBack(msgCopy);
+        
         if (serialLogEnabled)
         {
             for (int i = 0; message[i] != 0; i++)
@@ -32,18 +38,36 @@ namespace Kernel
                 SerialPort::COM1()->WriteByte('\r');
             }
         }
-
-        if (renderedLogEnabled)
-        {
-            if (endLine)
-                KRenderer::The()->WriteLine(message);
-            else
-                KRenderer::The()->Write(message);
-        }
     }
 
     void LogError(const char* message, bool endLine)
     {
         Log(message, endLine); //TODO: implement endpoint specific stuff to highlight error
+    }
+
+    unsigned long LogsUnread()
+    {
+        return unreadLogs.Size();
+    }
+
+    void ReceiveLogs(const char** logsBuffer, unsigned long* count)
+    {
+        //since other threads might alter the logs, this cant be pre-empted
+        bool interruptsEnabled = CPU::InterruptsEnabled();
+        CPU::DisableInterrupts();
+
+        unsigned long consumeCount = *count;
+        if (consumeCount > unreadLogs.Size())
+        {
+            consumeCount = unreadLogs.Size();
+            *count = consumeCount;
+        }
+
+        //since we only have PopBack(), we'll iterate backwards
+        for (int i = consumeCount; i > 0; i--)
+            logsBuffer[i - 1] = unreadLogs.PopBack();
+
+        if (interruptsEnabled)
+            CPU::EnableInterrupts();
     }
 }
