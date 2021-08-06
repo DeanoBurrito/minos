@@ -94,6 +94,12 @@ namespace Kernel::Shell
 
     void KShell::ProcessCommand()
     {   
+        if (inputLength >= 5 && memcmp(inputLine, "serial", 6) == 0)
+        {
+            echoSerialOut = !echoSerialOut;
+            SetStatus("Serial echo toggled.");
+        }
+        
         //TODO: command parsing
         inputLine[inputLength] = 0;
         WriteLine(inputLine);

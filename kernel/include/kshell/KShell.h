@@ -14,11 +14,8 @@
 
 namespace Kernel::Shell
 {
-    struct KShellPixel
-    {
-        uint8_t r, g, b, x;
-    };
-    
+    typedef void (*KShellCommandCallback)(const char* const);
+
     class KShell
     {
     private:
