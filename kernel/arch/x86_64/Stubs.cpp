@@ -7,4 +7,7 @@ extern "C"
 {
     void __cxa_atexit()
     {} //I mean if the kernel is 'exiting', i'm not too worried about calling dtors.
+
+    void __cxa_throw_bad_array_new_length()
+    {} //gcc being sneaky here, even with exceptions disabled at all stages.
 }
