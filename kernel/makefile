@@ -95,6 +95,11 @@ $(BUILD_DIR)/./multiprocessing/Scheduler.o: multiprocessing/Scheduler.cpp
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXX_INC_DIRS) $(CPP_FLAGS) -mno-sse -mgeneral-regs-only -c $< -o $@
 
+$(BUILD_DIR)/./drivers/Ps2Keyboard.o: drivers/Ps2Keyboard.cpp
+	@echo COMPILING $< with special flags
+	@mkdir -p $(shell dirname $@)
+	@$(CXX) $(CXX_INC_DIRS) $(CPP_FLAGS) -mno-sse -mgeneral-regs-only -c $< -o $@
+
 $(BUILD_DIR)/%_asm.o: %.asm
 	@echo ASSEMBLING $<
 	@mkdir -p $(shell dirname $@)
