@@ -1,6 +1,7 @@
 #include <drivers/Ps2Keyboard.h>
 #include <KLog.h>
 #include <CPU.h>
+#include <memory/Utilities.h>
 
 namespace Kernel::Drivers
 {
@@ -53,13 +54,16 @@ namespace Kernel::Drivers
                 { /* not sure what happened, if it wasnt pressed or released. TODO: emit error */ }
             }
 
-            if ((action.flags & KeyModifierFlags::Pressed) == KeyModifierFlags::Pressed && IsPrintable(action.key))
-            {
-                char outbuf[] { GetPrintable(action.key, (currentModifiers & KeyModifierFlags::LeftShift) == KeyModifierFlags::LeftShift), 0 };
-                Log(outbuf, false);
-            }
+            action.flags = action.flags | currentModifiers; //store current modifiers with keypress
 
-            //TODO: store these somewhere, for later consumption
+            //stash key action in circular buffer
+            if (actionQueueLength < KEYACTION_QUEUE_LENGTH - 1)
+            {
+                actionQueue[actionQueueLength] = action;
+                actionQueueLength++;
+            }
+            //else: keypress is dropped
+
             return true;
         }
         else if (currentSet == ScancodeSet::Set2)
@@ -121,5 +125,30 @@ namespace Kernel::Drivers
 
         if (response != 0xFA) //0xFA = ACK
             LogError("PS2 keyboard was not happy with key repeat values sent.");
+    }
+
+    bool Ps2Keyboard::KeysAvailable()
+    {
+        return actionQueueLength > 0;
+    }
+
+    void Ps2Keyboard::GetKeys(KeyAction* const buffer, unsigned int* const count)
+    {
+        if (!KeysAvailable())
+        {
+            *count = 0;
+            return;
+        }
+        
+        //dont want to be modifying collection whilst we access it
+        bool interruptsEnabled = CPU::InterruptsEnabled();
+        CPU::DisableInterrupts();
+
+        *count = actionQueueLength;
+        memcopy(actionQueue, buffer, sizeof(KeyAction) * actionQueueLength);
+        actionQueueLength = 0; //TODO: if a keypress occurs during this process, count may no longer be accurate, and we'll be dropping keypresses here. Move to circular buffer?
+
+        if (interruptsEnabled)
+            CPU::EnableInterrupts();
     }
 }

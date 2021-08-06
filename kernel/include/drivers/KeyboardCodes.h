@@ -143,18 +143,18 @@ namespace Kernel::Drivers
         LeftGui = 1 << 8,
         RightGui = 1 << 9,
 
-        AnyShift = 3 << 2,
-        AnyCtrl = 3 << 4,
-        AnyAlt = 3 << 6,
-        AnyGui = 3 << 8,
+        AnyShift = LeftShift | RightShift,
+        AnyCtrl = LeftCtrl | RightCtrl,
+        AnyAlt = LeftAlt | RightAlt,
+        AnyGui = LeftGui | RightGui,
     };
 
     KeyModifierFlags operator&(const KeyModifierFlags& l, const KeyModifierFlags& r);
     KeyModifierFlags operator|(const KeyModifierFlags& l, const KeyModifierFlags& r);
     KeyModifierFlags operator~(const KeyModifierFlags& operand);
     
-    KeyModifierFlags KeyModifierFromKey(KeyboardKey& key);
-    bool KeyIsModifier(KeyboardKey& key);
+    KeyModifierFlags KeyModifierFromKey(const KeyboardKey& key);
+    bool KeyIsModifier(const KeyboardKey& key);
 
     class KeyAction
     {

@@ -17,7 +17,7 @@ namespace Kernel::Drivers
         return (KeyModifierFlags)~((uint32_t)operand); //the critical wiggle :D
     }
 
-    KeyModifierFlags KeyModifierFromKey(KeyboardKey& key)
+    KeyModifierFlags KeyModifierFromKey(const KeyboardKey& key)
     {
         switch (key)
         {   //TODO: do we really need this? static data like this would be better an array of fixed data, rather than code.
@@ -42,7 +42,7 @@ namespace Kernel::Drivers
         }
     }
 
-    bool KeyIsModifier(KeyboardKey& key)
+    bool KeyIsModifier(const KeyboardKey& key)
     {
         return KeyModifierFromKey(key) != KeyModifierFlags::None;
     }
