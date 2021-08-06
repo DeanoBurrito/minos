@@ -182,3 +182,13 @@ const char* ToStrHex(uint8_t value, uint8_t size)
 {
     return ToStrHex(static_cast<uint64_t>(value), size);
 }
+
+//define a safe upper limit. If we have a string of this size, its probably a bug
+#define STRLEN_SAFETY_MAX_LENGTH 4096
+unsigned int strlen(const char* const str)
+{
+    unsigned int count = 0;
+    while (str[count] != 0 && count != STRLEN_SAFETY_MAX_LENGTH)
+        count++;
+    return count;
+}

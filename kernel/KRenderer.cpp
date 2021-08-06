@@ -38,42 +38,56 @@ namespace Kernel
         fontHeight = 16;
 
         cursorPos = 0;
-        bgColor = Color(0x000000FF);
-        fgColor = Color(0xFFFFFFFF);
+        bgColour = Colour(0x000000FF);
+        fgColour = Colour(0xFFFFFFFF);
 
         Clear();
     }
 
-    void KRenderer::Clear(const Color clearColor)
+    void KRenderer::Clear(const Colour clearColour)
     {
         int bytesPerPixel = framebuffer.bitsPerPixel / 8;
-        uint32_t formattedColor = clearColor.GetFormatted(framebuffer.pixelFormat);
+        uint32_t formattedColour = clearColour.GetFormatted(framebuffer.pixelFormat);
 
         for (unsigned y = 0; y < framebuffer.height; y++)
         {
             for (unsigned int x = 0; x < framebuffer.width * bytesPerPixel; x += bytesPerPixel)
             {
-                *(unsigned int *)(x + (y * framebuffer.pixelsPerScanline * bytesPerPixel) + framebuffer.baseAddress) = formattedColor;
+                *(unsigned int *)(x + (y * framebuffer.pixelsPerScanline * bytesPerPixel) + framebuffer.baseAddress) = formattedColour;
             }
         }
     }
 
-    void KRenderer::DrawPixel(const Position where, const Color col)
+    void KRenderer::DrawPixel(const Position where, const Colour col)
     {
         //oof, thats a long one.
         int bytesPerPixel = framebuffer.bitsPerPixel / 8;
         *(unsigned int *)(where.x * bytesPerPixel + (where.y * framebuffer.pixelsPerScanline * bytesPerPixel) + framebuffer.baseAddress) = col.GetFormatted(framebuffer.pixelFormat);
     }
 
-    void KRenderer::DrawLine(const Position start, const Position end, const Color col)
+    void KRenderer::DrawLine(const Position start, const Position end, const Colour col)
     {
     }
 
-    void KRenderer::DrawRect(const Position topLeft, const Position size, const Color col, const bool filled)
+    void KRenderer::DrawRect(const Position topLeft, const Position size, const Colour col, const bool filled)
     {
+        if (filled)
+        {
+            for (int x = topLeft.x; x < topLeft.x + size.x; x++)
+            {
+                for (int y = topLeft.y; y < topLeft.y + size.y; y++)
+                {
+                    DrawPixel(Position(x, y), col);
+                }
+            }
+        }
+        else
+        {
+            //TODO: draw 4 lines
+        }
     }
 
-    void KRenderer::DrawChar(const char c, const Position where, const Color fgCol, const Color bgCol)
+    void KRenderer::DrawChar(const char c, const Position where, const Colour fgCol, const Colour bgCol)
     {
         unsigned int *pixPtr = (unsigned int*)framebuffer.baseAddress;
         uint32_t fgFormatted = fgCol.GetFormatted(framebuffer.pixelFormat);
@@ -95,12 +109,12 @@ namespace Kernel
         }
     }
 
-    void KRenderer::DrawText(const char* text, const Position where, const Color col)
+    void KRenderer::DrawText(const char* text, const Position where, const Colour col)
     {
-        DrawText(text, where, col, Color(0x00000000));
+        DrawText(text, where, col, Colour(0x00000000));
     }
 
-    void KRenderer::DrawText(const char* text, const Position where, const Color fg, const Color bg)
+    void KRenderer::DrawText(const char* text, const Position where, const Colour fg, const Colour bg)
     {
         int len = 0;
         while (text[len] != 0)
@@ -114,23 +128,28 @@ namespace Kernel
         }
     }
 
-    void KRenderer::SetCursor(const int x, const int y)
+    void KRenderer::SetCursor(const Position where)
     {
-        if (x < 0 || y < 0)
+        if (where.x < 0 || where.y < 0)
             return;
-        if (x > framebuffer.width / fontWidth || y > framebuffer.height / fontHeight)
+        if (where.x > framebuffer.width / fontWidth || where.y > framebuffer.height / fontHeight)
             return;
 
-        cursorPos.x = x;
-        cursorPos.y = y;
+        cursorPos.x = where.x;
+        cursorPos.y = where.y;
     }
 
-    void KRenderer::SetColors(const Color foreground, const Color background)
+    Position KRenderer::GetCursor()
+    {
+        return cursorPos;
+    }
+
+    void KRenderer::SetColours(const Colour foreground, const Colour background)
     {
         if (foreground.alpha > 0)
-            fgColor = foreground;
+            fgColour = foreground;
         if (background.alpha > 0)
-            bgColor = background;
+            bgColour = background;
     }
 
     void KRenderer::Write(const char* text)
@@ -139,14 +158,24 @@ namespace Kernel
         while (text[len] != 0)
             len++;
 
-        DrawText(text, Position(cursorPos.x * fontWidth, cursorPos.y * fontHeight), fgColor, bgColor);
+        DrawText(text, Position(cursorPos.x * fontWidth, cursorPos.y * fontHeight), fgColour, bgColour);
         cursorPos.x += len;
     }
 
     void KRenderer::WriteLine(const char* text)
     {
-        DrawText(text, Position(cursorPos.x * fontWidth, cursorPos.y * fontHeight), fgColor, bgColor);
+        DrawText(text, Position(cursorPos.x * fontWidth, cursorPos.y * fontHeight), fgColour, bgColour);
         cursorPos.x = 0;
         cursorPos.y += 1;
+    }
+
+    Position KRenderer::GetFramebufferSize()
+    {
+        return Position(framebuffer.width, framebuffer.height);
+    }
+
+    Position KRenderer::GetFontCharacterSize()
+    {
+        return Position(fontWidth, fontHeight);
     }
 }

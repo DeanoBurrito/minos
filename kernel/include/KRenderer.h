@@ -33,14 +33,14 @@ namespace Kernel
         }
     };
 
-    struct Color
+    struct Colour
     {
         uint8_t red;
         uint8_t green;
         uint8_t blue;
         uint8_t alpha;
 
-        Color(uint32_t rgba)
+        Colour(uint32_t rgba)
         {
             red = (rgba & 0xFF000000) >> 24;
             green = (rgba & 0x00FF0000) >> 16;
@@ -48,7 +48,7 @@ namespace Kernel
             alpha = (rgba & 0x000000FF) >> 0;
         }
 
-        Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+        Colour(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
         {
             red = r;
             green = g;
@@ -56,7 +56,7 @@ namespace Kernel
             alpha = a;
         }
 
-        Color(Color rgb, uint8_t newAlpha)
+        Colour(Colour rgb, uint8_t newAlpha)
         {
             red = rgb.red;
             green = rgb.green;
@@ -64,30 +64,30 @@ namespace Kernel
             alpha = newAlpha;
         }
 
-        Color() : Color(0x00000000)
+        Colour() : Colour(0x00000000)
         {
         }
 
         constexpr uint32_t GetFormatted(FramebufferPixelFormat format) const
         {
-            uint32_t color = 0x00000000;
+            uint32_t colour = 0x00000000;
             switch (format)
             {
             case FramebufferPixelFormat::BlueGreenRedAlpha_32BPP:
-                color = color | ((uint32_t)alpha << 24);
-                color = color | ((uint32_t)red << 16);
-                color = color | ((uint32_t)green << 8);
-                color = color | ((uint32_t)blue << 0);
-                return color;
+                colour = colour | ((uint32_t)alpha << 24);
+                colour = colour | ((uint32_t)red << 16);
+                colour = colour | ((uint32_t)green << 8);
+                colour = colour | ((uint32_t)blue << 0);
+                return colour;
             case FramebufferPixelFormat::RedGreenBlueAlpha_32BPP:
-                color = color | ((uint32_t)alpha << 24);
-                color = color | ((uint32_t)blue << 16);
-                color = color | ((uint32_t)green << 8);
-                color = color | ((uint32_t)red << 0);
-                return color;
+                colour = colour | ((uint32_t)alpha << 24);
+                colour = colour | ((uint32_t)blue << 16);
+                colour = colour | ((uint32_t)green << 8);
+                colour = colour | ((uint32_t)red << 0);
+                return colour;
 
             default:
-                return color;
+                return colour;
             }
         }
     };
@@ -112,24 +112,28 @@ namespace Kernel
         unsigned int fontHeight;
 
         Position cursorPos;
-        Color bgColor;
-        Color fgColor;
+        Colour bgColour;
+        Colour fgColour;
 
     public:
         static KRenderer* The();
         void Init(const BootInfo* bootInfo);
 
-        void Clear(const Color clearColor = Color(0x000000ff));
-        void DrawPixel(const Position where, const Color col);
-        void DrawLine(const Position start, const Position end, const Color col);
-        void DrawRect(const Position topLeft, const Position size, const Color col, const bool filled);
-        void DrawChar(const char c, const Position where, const Color fg, const Color bg);
-        void DrawText(const char* text, const Position where, const Color col);
-        void DrawText(const char* text, const Position whre, const Color fg, const Color bg);
+        void Clear(const Colour clearColour = Colour(0x000000ff));
+        void DrawPixel(const Position where, const Colour col);
+        void DrawLine(const Position start, const Position end, const Colour col);
+        void DrawRect(const Position topLeft, const Position size, const Colour col, const bool filled);
+        void DrawChar(const char c, const Position where, const Colour fg, const Colour bg);
+        void DrawText(const char* text, const Position where, const Colour col);
+        void DrawText(const char* text, const Position whre, const Colour fg, const Colour bg);
 
-        void SetCursor(const int x, const int y);
-        void SetColors(const Color foreground, const Color background);
+        void SetCursor(const Position where);
+        Position GetCursor();
+        void SetColours(const Colour foreground, const Colour background);
         void Write(const char* text);
         void WriteLine(const char* text);
+
+        Position GetFramebufferSize();
+        Position GetFontCharacterSize();
     };
 }

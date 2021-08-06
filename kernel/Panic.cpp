@@ -6,8 +6,8 @@ namespace Kernel
 {
     void Panic(const char* reason)
     {
-        KRenderer::The()->Clear(Color(0xC0000000)); //red background
-        KRenderer::The()->SetCursor(0, 0);
+        KRenderer::The()->Clear(Colour(0xC0000000)); //red background
+        KRenderer::The()->SetCursor(Position(0));
 
         KRenderer::The()->WriteLine((const char*)"Oops! Kernel panic! :(");
         KRenderer::The()->WriteLine((const char*)"");

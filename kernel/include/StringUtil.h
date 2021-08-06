@@ -18,3 +18,5 @@ const char* ToStrHex(uint64_t value, uint8_t size = 15);
 const char* ToStrHex(uint32_t value, uint8_t size = 7);
 const char* ToStrHex(uint16_t value, uint8_t size = 3);
 const char* ToStrHex(uint8_t value, uint8_t size = 1);
+
+unsigned int strlen(const char* const str);
