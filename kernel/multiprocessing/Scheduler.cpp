@@ -1,8 +1,6 @@
 #include <multiprocessing/Scheduler.h>
 #include <CPU.h>
 #include <Interrupts.h>
-#include <KLog.h>
-#include <StringUtil.h>
 
 namespace Kernel::Multiprocessing
 {
@@ -52,26 +50,10 @@ namespace Kernel::Multiprocessing
     //NOTE: This is called from within interrupt handler, dont do anything too crazy here
     void Scheduler::SelectNextThreadData()
     {
-        KernelThread* nextThread = nullptr;
-        // //Selection: if the first thread isnt higher priority, we run the nbext one
-        // if (currentThread != nullptr && currentThread->GetPriority() >= threads.PeekFront()->GetPriority())
-        //     nextThread = threads.Find(currentThread)->next->val;
-        
-        // //Selection: if that didnt work, use the highest priority thread.
-        // if (nextThread == nullptr || nextThread->GetPriority() < currentThread->GetPriority())
-        // {
-        //     auto scanHead = threads.Head();
-        //     while (scanHead != nullptr)
-        //     {
-        //         nextThread = scanHead->val;
-        //         if (nextThread->CanRun())
-        //             break;
+        KernelThread* nextThread = threads.PeekFront();
 
-        //         scanHead = scanHead->next;
-        //     }
-        // }
-
-        nextThread = threads.PeekFront();
+        //Thread selection
+        nextThread = threads.PeekBack(); //TODO: actual scheduling
 
         //next thread has been selected, set pointer and return to assembly to load registers
         Scheduler_currentThreadData = nextThread->data;

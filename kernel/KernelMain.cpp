@@ -14,6 +14,7 @@
 #include <drivers/ACPI.h>
 #include <drivers/APIC.h>
 #include <multiprocessing/Scheduler.h>
+#include <kshell/KShell.h>
 
 extern "C"
 {
@@ -131,7 +132,12 @@ extern "C" __attribute__((noreturn)) void KernelMain(BootInfo* bootInfo)
     //setup logging for the rest of the boot process (we should do this sooner rather than later)
     Log("Kernel booted.");
 
+    //init scheduler, and spawn shell thread
     Multiprocessing::Scheduler::The()->Init();
+    Multiprocessing::KernelThread* shellThread = Multiprocessing::KernelThread::Create(Shell::KShell::ThreadMain, nullptr, 1);
+    shellThread->Start();
+
+    //start timer (scheduler handler should already be installed), and yield to scheduler
     Drivers::APIC::Local()->StartTimer(INTERRUPT_VECTOR_TIMER);
     Multiprocessing::Scheduler::The()->Yield();
 
