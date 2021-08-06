@@ -6,6 +6,7 @@
 
 #define KSHELL_INPUT_BUFFER_LEN 70
 
+#define KSHELL_OUTPUT_LIMIT_LINE displaySize.y - 4
 #define KSHELL_PROMPT_LINE displaySize.y - 2
 #define KSHELL_STATUS_LINE displaySize.y - 1
 

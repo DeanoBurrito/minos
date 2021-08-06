@@ -131,8 +131,16 @@ namespace Kernel::Shell
     
     void KShell::WriteLine(const char* const line)
     {
+        if (writeCursorPos.y >= KSHELL_OUTPUT_LIMIT_LINE)
+            writeCursorPos.y = 0; //roll over to the top if we ever reach the limit line
+
+        if (dirtyLineLengths[writeCursorPos.y] > 0)
+            ClearLine(writeCursorPos.y, 0, dirtyLineLengths[writeCursorPos.y]);
+        
         KRenderer::The()->SetCursor(writeCursorPos);
         KRenderer::The()->Write(line);
+
+        dirtyLineLengths[writeCursorPos.y] = KRenderer::The()->GetCursor().x;
         writeCursorPos.y++;
 
         if (echoSerialOut)
