@@ -21,24 +21,24 @@ namespace Kernel::Drivers
     {
         switch (key)
         {   //TODO: do we really need this? static data like this would be better an array of fixed data, rather than code.
-            case KeyboardKey::LeftShift:
-                return KeyModifierFlags::LeftShift;
-            case KeyboardKey::RightShift:
-                return KeyModifierFlags::RightShift;
-            case KeyboardKey::LeftCtrl:
-                return KeyModifierFlags::LeftCtrl;
-            case KeyboardKey::RightCtrl:
-                return KeyModifierFlags::RightCtrl;
-            case KeyboardKey::LeftAlt:
-                return KeyModifierFlags::LeftAlt;
-            case KeyboardKey::RightAlt:
-                return KeyModifierFlags::RightAlt;
-            case KeyboardKey::LeftGui:
-                return KeyModifierFlags::LeftGui;
-            case KeyboardKey::RightGui:
-                return KeyModifierFlags::RightGui;
-            default:
-                return KeyModifierFlags::None;
+        case KeyboardKey::LeftShift:
+            return KeyModifierFlags::LeftShift;
+        case KeyboardKey::RightShift:
+            return KeyModifierFlags::RightShift;
+        case KeyboardKey::LeftCtrl:
+            return KeyModifierFlags::LeftCtrl;
+        case KeyboardKey::RightCtrl:
+            return KeyModifierFlags::RightCtrl;
+        case KeyboardKey::LeftAlt:
+            return KeyModifierFlags::LeftAlt;
+        case KeyboardKey::RightAlt:
+            return KeyModifierFlags::RightAlt;
+        case KeyboardKey::LeftGui:
+            return KeyModifierFlags::LeftGui;
+        case KeyboardKey::RightGui:
+            return KeyModifierFlags::RightGui;
+        default:
+            return KeyModifierFlags::None;
         }
     }
 

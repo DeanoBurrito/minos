@@ -43,15 +43,15 @@ namespace Kernel::Drivers
         {
             switch (entry->type)
             {
-                case MADTEntryType::IOAPIC:
-                    uint8_t apicId = reinterpret_cast<uint8_t>(*(uint8_t*)((uint64_t)entry + 0x2));
-                    uint32_t physicalAddr = reinterpret_cast<uint32_t>(*(uint32_t*)((uint64_t)entry + 0x4));
-                    uint32_t gsiBase = reinterpret_cast<uint32_t>(*(uint32_t*)((uint64_t)entry + 0x8));
+            case MADTEntryType::IOAPIC:
+                uint8_t apicId = reinterpret_cast<uint8_t>(*(uint8_t*)((uint64_t)entry + 0x2));
+                uint32_t physicalAddr = reinterpret_cast<uint32_t>(*(uint32_t*)((uint64_t)entry + 0x4));
+                uint32_t gsiBase = reinterpret_cast<uint32_t>(*(uint32_t*)((uint64_t)entry + 0x8));
 
-                    IOAPIC* ioApic = new IOAPIC();
-                    ioApic->Init(apicId, physicalAddr, gsiBase);
-                    ioApics.PushBack(ioApic);
-                    break;
+                IOAPIC* ioApic = new IOAPIC();
+                ioApic->Init(apicId, physicalAddr, gsiBase);
+                ioApics.PushBack(ioApic);
+                break;
             }
 
             entry = reinterpret_cast<MADTEntry*>((uint64_t)entry + entry->length);
@@ -148,28 +148,28 @@ namespace Kernel::Drivers
         {
             switch (entry->type) 
             {
-                case MADTEntryType::LocalAPIC:
-                    Log("Entry Type: Local APIC");
-                    totalProcessors++;
-                    break;
-                case MADTEntryType::IOAPIC:
-                    Log("Entry Type: IO APIC");
-                    break;
-                case MADTEntryType::IOAPIC_SourceOverride:
-                    Log("Entry Type: IO APIC, source override");
-                    break;
-                case MADTEntryType::IOAPIC_NonMaskableSourceOverride:
-                    Log("Entry Type: IO APIC, NM source override");
-                    break;
-                case MADTEntryType::LocalAPIC_NonMaskableInterrupts:
-                    Log("Entry Type: LAPIC, NMI");
-                    break;
-                case MADTEntryType::LocalAPIC_AddressOverride:
-                    Log("Entry Type: LAPIC, addr override");
-                    break;
-                case MADTEntryType::Localx2APIC:
-                    Log("Entry Type: Local x2APIC");
-                    break;
+            case MADTEntryType::LocalAPIC:
+                Log("Entry Type: Local APIC");
+                totalProcessors++;
+                break;
+            case MADTEntryType::IOAPIC:
+                Log("Entry Type: IO APIC");
+                break;
+            case MADTEntryType::IOAPIC_SourceOverride:
+                Log("Entry Type: IO APIC, source override");
+                break;
+            case MADTEntryType::IOAPIC_NonMaskableSourceOverride:
+                Log("Entry Type: IO APIC, NM source override");
+                break;
+            case MADTEntryType::LocalAPIC_NonMaskableInterrupts:
+                Log("Entry Type: LAPIC, NMI");
+                break;
+            case MADTEntryType::LocalAPIC_AddressOverride:
+                Log("Entry Type: LAPIC, addr override");
+                break;
+            case MADTEntryType::Localx2APIC:
+                Log("Entry Type: Local x2APIC");
+                break;
             }
             Log("Entry Length: 0x", false);
             Log(ToStr(entry->length));
