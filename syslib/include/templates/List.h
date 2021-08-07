@@ -1,6 +1,6 @@
 #pragma once
 
-#define SYSLIB_LIST_NOT_FOUND 0xFFFF'FFFF'FFFF'FFFF
+#include <stddef.h>
 
 namespace Syslib
 {
@@ -10,50 +10,49 @@ namespace Syslib
     {
     private:
         Value* buffer;
-        unsigned long bufferSize;
-        unsigned long count;
+        size_t capacity;
+        size_t count;
+
+        void ExpandBuffer()
+        {
+            size_t newCapacity = capacity + (capacity / 2);
+            Value* newBuffer = new Value[newCapacity]; //reserve 50% more space each time
+            for (int i = 0; i < count; i++)
+                newBuffer[i] = buffer[i];
+            
+            delete[] buffer;
+            buffer = newBuffer;
+            capacity = newCapacity;
+        }
 
     public:
         List()
         {
             count = 0;
-            bufferSize = 0;
+            capacity = 0;
             buffer = nullptr;
         }
 
-        List(unsigned int reserveFor) : List()
+        List(size_t reserveFor) : List()
         {
-            bufferSize = reserveFor;
-            buffer = new Value[bufferSize];
+            capacity = reserveFor;
+            buffer = new Value[capacity];
         }
 
         ~List()
         {
-            if (bufferSize > 0)
+            if (buffer != nullptr)
                 delete[] buffer;
         }
 
-        void EnsureBigEnough()
-        {
-            if (count >= bufferSize)
-            {
-                //allocate some more space
-                unsigned long newReservedCount = count + (count * 2); //reserve an extra 50% each time
-                Value* newSpace = new Value[newReservedCount];
-                
-                //copy existing data across, then free current buffer, and swap pointers
-                for (int i = 0; i < count; i++)
-                    newSpace[i] = buffer[i]; 
-                
-                delete[] buffer;
-                buffer = newSpace;
-                bufferSize = newReservedCount;
-            }
-        }
-
-        unsigned long Size()
+        size_t Size()
         {
             return count;
+        }
+
+        size_t Capacity()
+        {
+            return capacity;
         }
 
         Value First()
@@ -77,10 +76,11 @@ namespace Syslib
 
         void PushBack(const Value& val)
         {
-            EnsureBigEnough();
+            if (count == capacity)
+                ExpandBuffer();
 
-            count++;
             buffer[count] = val;
+            count++;
         }
 
         Value PopBack()
@@ -92,28 +92,39 @@ namespace Syslib
             return buffer[count];
         }
 
-        void InsertAt(unsigned long index, const Value& val)
-        {}
-
-        void RemoveAt(unsigned long index)
-        {}
-
-        void Remove(const Value& val)
+        void InsertAt(size_t index, const Value& val)
         {
-            unsigned long index = Find(val);
-            if (index == SYSLIB_LIST_NOT_FOUND)
-                return;
-            
-            RemoveAt(index);
+            if (index >= count)
+                PushBack(val);
+            else
+            {
+                if (count == capacity)
+                    ExpandBuffer();
+                
+                //copy existing items over by 1
+                for (int i = count; i > index; i--)
+                    buffer[i] = buffer[i - 1];
+                buffer[index] = val;
+            }
         }
 
-        unsigned long Find(const Value& val)
+        void RemoveAt(size_t index)
+        {
+            if (index >= count)
+                return;
+            
+            for (int i = index; i < count - 1; i++)
+                buffer[i] = buffer[i + 1];
+            count--;
+        }
+
+        size_t Find(const Value& val)
         {}
 
-        unsigned long FindR(const Value& val)
+        size_t FindR(const Value& val)
         {}
 
-        Value operator[](unsigned long index)
+        Value operator[](size_t index)
         {
             if (index < count)
                 return buffer[index];
