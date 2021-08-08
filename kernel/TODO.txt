@@ -1,3 +1,15 @@
+*Project Refactoring - First order of business*
+    -Move all the global singleton objects xyz::The()->abc into a single structure (KernelInfo or something similar).
+        -A single place to access them all. It probably wont change anything size wise, but I like the concept more.
+    -System clock: abstract all available and unavailable timers through a generic clock interface.
+        -It can provide accurate hi-res IRQs for scheduling
+        -Local and global system uptime, as well as repeating timers and 1-shot timers.
+        -Real world time.
+    -Refactor kernel init:
+        -Break down initialization into logical chunks.
+
+--------------------------------
+
 Memory management:
     -Page management, lazy allocation, and reserving sections for kernel/programs that request it.
     -Allocators: slab(8, 16, 32, 64 byte versions), stack frame allocator
