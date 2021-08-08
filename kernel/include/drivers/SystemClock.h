@@ -23,6 +23,7 @@ namespace Kernel::Drivers
     {
     private:
         Syslib::List<ClockSourceType> availableSources;
+        ClockSourceType primarySource;
 
     public:
         void Init();
@@ -35,13 +36,9 @@ namespace Kernel::Drivers
         size_t GetSourceTimers(ClockSourceType type);
 
         //Sets up a timer for single-shot mode. Timer will not begin immmediately if possible.
-        void SetupSingleShotIRQ(ClockSourceType type, size_t timerIndex, uint8_t vector, uint64_t millis);
-        //Issues a single-shot timer to start counting.
-        void SetSingleShotBegin(ClockSourceType type, size_t timerIndex);
+        bool SetupSingleShotIRQ(ClockSourceType type, size_t timerIndex, uint8_t vector, uint64_t millis);
 
-        //Sets up a timer to trigger an IRQ on a specific millisecond interval. Timer is masked by default.
-        void SetupTimerIRQ(ClockSourceType type, size_t timerIndex, uint8_t vector, uint64_t millis);
-        //Enables a timer to begin sending interrupts
-        void SetTimerIRQMask(ClockSourceType type, size_t timerIndex, bool enabled);
+        //Sets up a timer to trigger an IRQ on a specific millisecond interval. Timer is masked by default. Returns if operation was successful
+        bool SetupTimerIRQ(ClockSourceType type, size_t timerIndex, uint8_t vector, uint64_t millis);
     };
 }

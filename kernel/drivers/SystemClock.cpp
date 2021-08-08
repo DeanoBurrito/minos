@@ -49,6 +49,23 @@ namespace Kernel::Drivers
     void SystemClock::SelectPrimarySource(ClockSourceType type)
     {
         //TODO: set DateTime::ticksPerSecond based on this
+        switch (type)
+        {
+        case ClockSourceType::X86_TSC:
+            return;
+        case ClockSourceType::X86_LAPIC:
+            return;
+        case ClockSourceType::X86_LAPIC_TSC:
+            return;
+        case ClockSourceType::X86_HPET:
+            return;
+        case ClockSourceType::X86_PIT:
+            return;
+
+        default:
+            Log("Unsupported clock source for system primary");
+            return;
+        }
     }
 
     size_t SystemClock::GetSourceTimers(ClockSourceType type)
@@ -71,16 +88,42 @@ namespace Kernel::Drivers
         }
     }
 
-    void SystemClock::SetupSingleShotIRQ(ClockSourceType type, size_t timerIndex, uint8_t vector, uint64_t millis)
-    {}
+    bool SystemClock::SetupSingleShotIRQ(ClockSourceType type, size_t timerIndex, uint8_t vector, uint64_t millis)
+    {
+        switch (type)
+        {
+        case ClockSourceType::X86_LAPIC:
+            return false;
+        case ClockSourceType::X86_LAPIC_TSC:
+            return false;
+        case ClockSourceType::X86_HPET:
+            return false;
+        case ClockSourceType::X86_PIT:
+            return false;
 
-    void SystemClock::SetSingleShotBegin(ClockSourceType type, size_t timerIndex)
-    {}
+        default:
+            Log("Unsupported ClockSourceType for single shot IRQ.");
+            return false;
+        }
+    }
 
-    void SystemClock::SetupTimerIRQ(ClockSourceType type, size_t timerIndex, uint8_t vector, uint64_t millis)
-    {}
+    bool SystemClock::SetupTimerIRQ(ClockSourceType type, size_t timerIndex, uint8_t vector, uint64_t millis)
+    {
+        switch (type)
+        {
+        case ClockSourceType::X86_LAPIC:
+            APIC::Local()->StartTimer(vector);
+            return true;
+        
+        case ClockSourceType::X86_PIT:
+            return false; //TODO: setup PIT and adjust IOAPIC entry to match requested vector
+        case ClockSourceType::X86_HPET:
+            return false; //TODO: setup HPET and adjust IOAPIC entries
 
-    void SystemClock::SetTimerIRQMask(ClockSourceType type, size_t timerIndex, bool enabled)
-    {}
+        default:
+            Log("Unsupported ClockSourceType for periodic timer IRQ.");
+            return false;
+        }
+    }
 
 }
