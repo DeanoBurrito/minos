@@ -44,7 +44,8 @@ namespace Kernel::Multiprocessing
     void Scheduler::Yield()
     {
         //manually trigger timer handler
-        CPU::IssueInterrupt(INTERRUPT_VECTOR_TIMER);
+        //ISSUE_INTERRUPT(INTERRUPT_VECTOR_TIMER);
+        ISSUE_INTERRUPT_SCHEDULER_YIELD;
     }
 
     //NOTE: This is called from within interrupt handler, dont do anything too crazy here
