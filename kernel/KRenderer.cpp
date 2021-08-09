@@ -1,4 +1,5 @@
 #include <KRenderer.h>
+#include <KLog.h>
 
 namespace Kernel
 {
@@ -29,10 +30,10 @@ namespace Kernel
         default:
             framebuffer.pixelFormat = FramebufferPixelFormat::Unknown;
             framebuffer.bitsPerPixel = 1; //if its zero we'll get infinite loops when drawing multiple pixels.
+            LogError("KRenderer found unknown framebuffer pixel format. Corrupt bootloader?");
             break;
         }
 
-        //TODO: emit log message if pixel format is invalid, or any other details are wonky.
         font = bootInfo->font;
         fontWidth = 8;
         fontHeight = 16;

@@ -133,7 +133,7 @@ namespace Kernel::Drivers
     }
 
     void Ps2Keyboard::GetKeys(KeyAction* const buffer, unsigned int* const count)
-    {
+    {   
         if (!KeysAvailable())
         {
             *count = 0;
@@ -141,14 +141,10 @@ namespace Kernel::Drivers
         }
         
         //dont want to be modifying collection whilst we access it
-        bool interruptsEnabled = CPU::InterruptsEnabled();
-        CPU::DisableInterrupts();
+        InterruptScopeGuard interruptGuard;
 
         *count = actionQueueLength;
-        memcopy(actionQueue, buffer, sizeof(KeyAction) * actionQueueLength);
-        actionQueueLength = 0; //TODO: if a keypress occurs during this process, count may no longer be accurate, and we'll be dropping keypresses here. Move to circular buffer?
-
-        if (interruptsEnabled)
-            CPU::EnableInterrupts();
+        memcopy(actionQueue, buffer, sizeof(KeyAction) * *count);
+        actionQueueLength -= *count; //NOTE: not setting to zero here, as if a keypress occurs during the copying process, itll be dropped.
     }
 }

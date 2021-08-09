@@ -130,7 +130,7 @@ namespace Kernel
             return;
 
         if (!pageBitmap.Set(index, false))
-            return; //TODO: throw an error here
+            return; //dud address, just return.
 
         freeMemory += PAGE_SIZE;
         usedMemory -= PAGE_SIZE;

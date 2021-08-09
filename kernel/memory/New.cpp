@@ -26,7 +26,6 @@ void operator delete[](void* addr) noexcept
     Kernel::KHeap::The()->Free(addr);
 }
 
-//TODO: Solve this hack
 /*
     From my understanding these are used for c++ exceptions (which are disabled!).
     gxx_personality is for stack unwinding, because it uses a different method to dwarf2.

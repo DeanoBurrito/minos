@@ -55,8 +55,9 @@ namespace Kernel::Multiprocessing
     void SetKernelThreadFlags(KernelThreadData* data, uint64_t codeSegment, uint64_t dataSegment, uint64_t flags)
     {
         data->cs = codeSegment;
-        //TODO: not sure if this is the right thing to do, but SS requires a valid data segment, and I dont like the rest being null segments
-        data->ds = data->es = data->ss = data->fs = data->gs = dataSegment;
         data->rflags = flags;
+
+        //NOTE: setting all other segments to data segment (read/write, no execute) by default
+        data->ds = data->es = data->ss = data->fs = data->gs = dataSegment;
     }
 }

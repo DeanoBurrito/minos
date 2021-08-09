@@ -50,5 +50,5 @@ namespace Kernel::Multiprocessing
     void InitKernelThreadData(KernelThreadData** data);
     void SetKernelThreadEntry(KernelThreadData* data, uint64_t mainAddr, void* arg0, void* arg1);
     void SetKernelThreadStack(KernelThreadData* data, uint64_t base);
-    void SetKernelThreadFlags(KernelThreadData* data, uint64_t codeSegment, uint64_t dataSegment, uint64_t flags); //TODO: platform agnostic way of naming these
+    void SetKernelThreadFlags(KernelThreadData* data, uint64_t codeSegment, uint64_t dataSegment, uint64_t flags);
 }
