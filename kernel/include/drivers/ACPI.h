@@ -16,6 +16,8 @@ namespace Kernel::Drivers
 
     public:
         static ACPI* The();
+
+        static bool ChecksumValid(SDTHeader* header);
   
         void Init(void* rsdp);
         void PrintTables();

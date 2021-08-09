@@ -2,6 +2,7 @@
 #include <StringUtil.h>
 #include <drivers/ACPI.h>
 #include <memory/Utilities.h>
+#include <stddef.h>
 
 namespace Kernel::Drivers
 {
@@ -9,6 +10,15 @@ namespace Kernel::Drivers
     ACPI* ACPI::The()
     {
         return &acpiInstance;
+    }
+
+    bool ACPI::ChecksumValid(SDTHeader* header)
+    {
+        uint64_t checksum = 0;
+        for (int i = 0; i < header->length; i++)
+            checksum += (reinterpret_cast<uint8_t*>(header))[i];
+        
+        return (checksum & 0xFF) == 0;
     }
 
     void ACPI::Init(void* rsdPtr)
@@ -20,12 +30,25 @@ namespace Kernel::Drivers
             Log("ACPI subsystem using revision 1. RSDP with 32bit pointers.");
             rootHeader = reinterpret_cast<SDTHeader*>(rsdp->rsdtAddress);
             revisionPtrSize = 4;
+
+            //verify checksum is correct
+            uint64_t checksum = 0;
+            for (int i = 0; i < 20; i++) //20 bytes is size of rsdp v1 header
+                checksum += ((uint8_t*)rsdPtr)[i];
+            if ((checksum & 0xFF) != 0)
+                LogError("RSDP checksum mismatch! Init will continue, but this should not be ignored.");
         }
         else
         {
             Log("ACPI subsystem using revision 2+. XSDT with 64bit pointers.");
             rootHeader = reinterpret_cast<SDTHeader*>(rsdp->xsdtAddress);
             revisionPtrSize = 8;
+
+            uint64_t checksum = 0;
+            for (int i = 0; i < sizeof(RSDP2); i++) 
+                checksum += ((uint8_t*)rsdPtr)[i];
+            if ((checksum & 0xFF) != 0)
+                LogError("RSDP checksum mismatch! Init will continue, but this should not be ignored.");
         }
 
         Log("ACPI subsystem intializing with RSDP=0x", false);

@@ -105,6 +105,11 @@ namespace Kernel::Drivers
             LogError("CPU reports APIC available, but not table was found in ACPI. Aborting init.");
             return;
         }
+        if (!ACPI::ChecksumValid((SDTHeader*)madt))
+        {
+            LogError("MADT Header is corrupted, checksum mismatch. Aborting APIC init.");
+            return;
+        }
 
         if ((madt->flags & MADT_FLAGS_DUAL8259_INSTALLED) != 0 || FORCE_DISABLE_LEGACY_PIC)
         {

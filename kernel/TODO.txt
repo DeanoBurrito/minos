@@ -4,9 +4,6 @@
     -System clock: abstract all available and unavailable timers through a generic clock interface.
         -It can provide accurate hi-res IRQs for scheduling
         -Local and global system uptime, as well as repeating timers and 1-shot timers.
-        -Real world time.
-    -Refactor kernel init:
-        -Break down initialization into logical chunks.
 
 --------------------------------
 
@@ -20,7 +17,6 @@ Globals:
 
 Interrupts:
     -mouse handlers
-    -Schedulers
 
 File system:
     -VFS base, in memory
@@ -30,8 +26,8 @@ File system:
     -proc/sys parameter dumps into filesystem
     -proper kernel logging infrastructure, ditch the krenderer.
 
-Init disk:
-    -Dont rely on bootloader to load font/other early data. Just take in a single ramdisk.
+Init disk
+    -Bootloader should just kernel elf. Make a ramdisk and embed it into elf during linking stage.
 Bootloader:
     -Multiboot1 formatted bootloader for direct loading in qemu, speed up dev cycles.
 
@@ -42,9 +38,6 @@ Userland:
     -Windowing system
 
 Drivers:
-    -HPET: backup timer source
     -Multi-processor booting (see intel/amd manuals on this). Sortix and serenityOS as well.
     -QEMU gpu driver
     -Networking
-
-Audit of existing code for possible missed bugs and unfinished features.
