@@ -4,40 +4,61 @@
     -System clock: abstract all available and unavailable timers through a generic clock interface.
         -It can provide accurate hi-res IRQs for scheduling
         -Local and global system uptime, as well as repeating timers and 1-shot timers.
+    -Remove identity mapping all memory. If devices need mapped memory, we should be mapping + locking it as we need it.
 
 --------------------------------
 
-Memory management:
-    -Page management, lazy allocation, and reserving sections for kernel/programs that request it.
-    -Allocators: slab(8, 16, 32, 64 byte versions), stack frame allocator
+Strings (syslib):
+    -String class, keeps track of it's start and length. Both a mutable and immutable version.
+    -StringBuilder class, designed to be efficient for constructing stings from multiple buffers, slow to read from. (linked list under hood?).
+    -Formatting functions, for converting PODs to strings, emplacing within strings, and extracting.
+    -Go back and replace c-string strings within kernel to our new type-safe friend.
 
-Globals:
-    -Keyboard handler and KRenderer both use static memory for instances, once heap is implemented, use dyanmically allocated versions.
-    -printf()/sprinf() implementations. It's about time we had some better string formatting.
+Memory:
+    -Ability to unmap pages
+    -Setting page flags when creating them, or modifying them when mapping.
+    -Multiple generic allocators. Slab alloctors(8/16/32/64 byte wide versions), stack frame allocator.
+    -Turn KHeap into a generic heap allocator, and rename it.
+    -Ability to reserve pages, backed with a 'read only' a static page of zeros. Replace with real page only once written to.
+    -Kernel-External mapping: memory that'll never be freed during system runtime (all the globals), mark it as reserved into of claimed.
 
-Interrupts:
-    -mouse handlers
+Logging:
+    -Improve use of kernel Log()
+    -Implement 2 stage logging. Log() only copies message details into a memory buffer. Actually accessing/displaying is implemented elsewhere, this should speed up Log().
 
-File system:
-    -VFS base, in memory
-    -Mounting/unmounting
-    -Ext2 driver
-    -FAT32 driver
-    -proc/sys parameter dumps into filesystem
-    -proper kernel logging infrastructure, ditch the krenderer.
+Multiprocessing:
+    -Trampoline for booting APs. Synchronising multiple cores.
+    -Implement processes: a single program unit (GDT/handles/virtual memory map), each with a number of threads.
+    -Semaphore, mutex and spinlocks. ScopeGuard that can operate on any of the above
 
-Init disk
+Virtual File System:
+    -Basic tree structure in memory, single root.
+    -Easy mounting/unmounting
+    -Deferring parts of tree to specific drivers, drivers communicate tree status under their jurisdiction
+    -ext2 driver, FAT32 driver
+    -proc/sys like parameter dump trees
+
+Platform Layer:
+    -A lot of kernel init/management is platform specific (arm has no idea what an APIC is, why bother searching for it).
+     Perhaps delegating parts of kernel init (like setting up interrupts) to platform-specific code. Keep the core generic.
+    -SystemClock: Wrapper around platform-specific timing devices (rtc/pit), can provide single-shot/periodic timers.
+
+Init disk:
     -Bootloader should just kernel elf. Make a ramdisk and embed it into elf during linking stage.
+
 Bootloader:
+    -Bootloader specific stub to collecting info into BootInfo* struct.
     -Multiboot1 formatted bootloader for direct loading in qemu, speed up dev cycles.
+    -BIOS based bootloader, an alternative to UEFI.
 
 Userland:
     -syscall infrastructure
     -POSIX libc implementation
-    -Shell
+    -Userspace shell/kernel shell
     -Windowing system
 
 Drivers:
-    -Multi-processor booting (see intel/amd manuals on this). Sortix and serenityOS as well.
     -QEMU gpu driver
     -Networking
+    -ACHI
+    -NVME
