@@ -4,18 +4,21 @@
 
 namespace Kernel
 {
+    class KHeap;
+    
     class HeapSegmentHeader
     {
-    public:
+    friend KHeap;
+    private:
         size_t length;
         HeapSegmentHeader* next;
         HeapSegmentHeader* prev;
         bool free;
 
         HeapSegmentHeader(size_t length) : length(length), next(nullptr), prev(nullptr), free(true) {}
-        HeapSegmentHeader* Split(size_t biteSize);
-        void CombineForward();
-        void CombineBackward();
+        HeapSegmentHeader* Split(size_t biteSize, HeapSegmentHeader* lastSegment);
+        void CombineForward(HeapSegmentHeader* lastSegment);
+        void CombineBackward(HeapSegmentHeader* lastSegment);
     };
     
     class KHeap
@@ -23,6 +26,7 @@ namespace Kernel
     private:
         void* heapStart;
         void* heapEnd;
+        HeapSegmentHeader* lastSegment;
 
         void ExpandHeap(size_t expansionLength);
 

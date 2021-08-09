@@ -7,8 +7,7 @@
 
 namespace Kernel
 {
-    HeapSegmentHeader* lastSegment; //TODO: not really safe for multiple heaps. Everything should be stored as class variables.
-    void HeapSegmentHeader::CombineForward()
+    void HeapSegmentHeader::CombineForward(HeapSegmentHeader* lastSegment)
     {
         if (next == nullptr)
             return;
@@ -24,13 +23,13 @@ namespace Kernel
         length = length + next->length + sizeof(HeapSegmentHeader);
     }
 
-    void HeapSegmentHeader::CombineBackward()
+    void HeapSegmentHeader::CombineBackward(HeapSegmentHeader* lastSegment)
     {
         if (prev != nullptr && prev->free)
-            prev->CombineForward();
+            prev->CombineForward(lastSegment);
     }
 
-    HeapSegmentHeader* HeapSegmentHeader::Split(size_t biteSize)
+    HeapSegmentHeader* HeapSegmentHeader::Split(size_t biteSize, HeapSegmentHeader* lastSegment)
     { 
         if (biteSize < MALLOC_CHUNK_SIZE)
             return nullptr;
@@ -113,7 +112,7 @@ namespace Kernel
                 if (scanHead->length > size)
                 {
                     //carve out the space we need with split(), then return the address of the free space after this segment.
-                    scanHead->Split(size);
+                    scanHead->Split(size, lastSegment);
                     scanHead->free = false;
                     return (void*)((uint64_t)scanHead + sizeof(HeapSegmentHeader));
                 }
@@ -136,8 +135,8 @@ namespace Kernel
     {
         HeapSegmentHeader* header = (HeapSegmentHeader*)address - 1; //pointer maths, -1 here will decrement in steps of sizeof(HeapSegmentHeader);
         header->free = true;
-        header->CombineForward();
-        header->CombineBackward();
+        header->CombineForward(lastSegment);
+        header->CombineBackward(lastSegment);
     }
 
     void KHeap::ExpandHeap(size_t expansionLength)
@@ -165,6 +164,6 @@ namespace Kernel
         newSegment->next = nullptr;
 
         newSegment->length = expansionLength - sizeof(HeapSegmentHeader);
-        newSegment->CombineBackward();
+        newSegment->CombineBackward(lastSegment);
     }
 }
