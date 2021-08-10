@@ -19,21 +19,34 @@ namespace Syslib
         {
             length = copy.length;
             buffer = new char[length + 1];
-            memcopy(copy.buffer, buffer, length + 1);
+            memcopy(copy.buffer, buffer, length);
+            buffer[length] = 0;
         }
+    }
+
+    String& String::operator=(const String& copy)
+    {
+        if (buffer)
+            delete[] buffer;
+
+        length = copy.length;
+        buffer = new char[length + 1];
+        memcopy(copy.buffer, buffer, length);
+        buffer[length] = 0;
+
+        return *this;
     }
 
     String::String(String&& from)
     {
-        delete[] buffer;
-        length = 0;
         swap(buffer, from.buffer);
         swap(length, from.length);
     }
 
     String& String::operator=(String&& from)
     {
-        delete[] buffer;
+        if (buffer)
+            delete[] buffer;
         length = 0;
         swap(buffer, from.buffer);
         swap(length, from.length);

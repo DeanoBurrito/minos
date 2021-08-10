@@ -13,8 +13,8 @@ namespace Syslib
     public:
         String();
         String(const char* const cstr);
-        String& operator=(const String& copy);
         String(const String& copy);
+        String& operator=(const String& copy);
         String(String&& from);
         String& operator=(String&& from);
         ~String();
