@@ -166,4 +166,19 @@ namespace Kernel
         newSegment->length = expansionLength - sizeof(HeapSegmentHeader);
         newSegment->CombineBackward(lastSegment);
     }
+
+    size_t KHeap::GetCurrentUsage()
+    {
+        size_t totalUsage = 0;
+        HeapSegmentHeader* current = (HeapSegmentHeader*)heapStart;
+        while (current != nullptr)
+        {
+            if (!current->free)
+                totalUsage += current->length;
+            
+            current = current->next;
+        }
+
+        return totalUsage;
+    }
 }

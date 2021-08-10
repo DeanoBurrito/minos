@@ -36,5 +36,7 @@ namespace Kernel
         void Init(void* address, size_t initialLength); 
         void* Malloc(size_t size);
         void Free(void* address);
+        
+        size_t GetCurrentUsage();
     };
 }
