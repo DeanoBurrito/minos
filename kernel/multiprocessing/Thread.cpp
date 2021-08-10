@@ -1,11 +1,13 @@
 #include <multiprocessing/Thread.h>
 #include <PageFrameAllocator.h>
 #include <PageTableManager.h>
-#include <CPU.h>
+#include <drivers/CPU.h>
 #include <multiprocessing/Scheduler.h>
 
 namespace Kernel::Multiprocessing
 {
+    using Kernel::Drivers::CPU;
+    
     static void ThreadMainWrapper(void (threadMain)(void*), void* arg)
     {
         threadMain(arg);

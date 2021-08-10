@@ -1,5 +1,5 @@
 #include <drivers/CmosRTC.h>
-#include <CPU.h>
+#include <drivers/CPU.h>
 
 #define READ_RTC_REG(x, y) CPU::PortWrite8(PORT_CMOS_SELECT, x); y = CPU::PortRead8(PORT_CMOS_DATA);
 

@@ -1,9 +1,11 @@
-#include <CPU.h>
+#include <drivers/CPU.h>
 #include <multiprocessing/Semaphore.h>
 #include <multiprocessing/Scheduler.h>
 
 namespace Kernel::Multiprocessing
 {
+    using Kernel::Drivers::CPU;
+
     Semaphore::Semaphore(uint64_t initialCount)
     {
         value = initialCount;

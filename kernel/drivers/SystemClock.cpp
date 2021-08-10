@@ -1,5 +1,5 @@
 #include <drivers/SystemClock.h>
-#include <CPU.h>
+#include <drivers/CPU.h>
 #include <DateTime.h>
 #include <drivers/ACPI.h>
 #include <drivers/CmosRTC.h>

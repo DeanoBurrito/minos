@@ -5,7 +5,7 @@
 #include <PageFrameAllocator.h>
 #include <KLog.h>
 #include <StringUtil.h>
-#include <CPU.h>
+#include <drivers/CPU.h>
 
 namespace Kernel::Drivers
 {

@@ -3,10 +3,10 @@
 #include <PageFrameAllocator.h>
 #include <PageTableManager.h>
 #include <memory/Utilities.h>
-#include <CPU.h>
+#include <drivers/CPU.h>
 #include <IDT.h>
 #include <Interrupts.h>
-#include <Serial.h>
+#include <drivers/Serial.h>
 #include <KLog.h>
 #include <StringUtil.h>
 #include <Panic.h>
@@ -25,6 +25,8 @@ extern void _init();
 
 namespace Kernel
 {
+    using namespace Kernel::Drivers;
+
     extern void InitPlatformInterrupts(IDTR* idtr);
 
     void InitMemory(BootInfo* bootInfo)

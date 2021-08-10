@@ -1,6 +1,6 @@
 #include <drivers/Ps2Keyboard.h>
 #include <KLog.h>
-#include <CPU.h>
+#include <drivers/CPU.h>
 #include <memory/Utilities.h>
 
 namespace Kernel::Drivers

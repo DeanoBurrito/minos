@@ -10,7 +10,7 @@
 //TODO: figure this shit out.
 #define ISSUE_INTERRUPT(n) asm volatile("int $" ## n);
 
-namespace Kernel
+namespace Kernel::Drivers
 {
     //These flags are platform independant, they get translated to platform-specific offsets in CPU.cpp for that platform.
     enum class CpuFeatureFlag : uint32_t

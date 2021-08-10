@@ -2,8 +2,12 @@
 #include <multiprocessing/Scheduler.h>
 #include <StringUtil.h>
 #include <memory/Utilities.h>
-#include <Serial.h>
+#include <drivers/Serial.h>
 #include <KLog.h>
+
+#include <StringUtil.h>
+#include <memory/KHeap.h>
+#include <StringBuilder.h>
 
 using namespace Kernel::Drivers;
 
@@ -41,6 +45,8 @@ namespace Kernel::Shell
         KRenderer::The()->Write("STATUS: ");
         SetStatus(nullptr);
         writeCursorPos = Position(0, 0);
+
+        WriteLine("Welcome to KShell! Nothing to do with KDE.");
     }
 
     void KShell::ProcessKey(const KeyAction& key)

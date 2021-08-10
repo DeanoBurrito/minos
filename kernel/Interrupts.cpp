@@ -1,10 +1,8 @@
 #include <Interrupts.h>
-#include <Serial.h>
 #include <Panic.h>
-#include <CPU.h>
+#include <drivers/CPU.h>
 #include <drivers/Ps2Keyboard.h>
 #include <drivers/APIC.h>
-
 #include <KLog.h>
 #include <StringUtil.h>
 
@@ -14,7 +12,7 @@ namespace InterruptHandlers
     {
         Kernel::Panic("Fault Fault x2. (double fault)");
 
-        Kernel::CPU::Halt();
+        Kernel::Drivers::CPU::Halt();
     }
     
     __attribute__((interrupt)) void GeneralProtectionFault(interrupt_frame* frame)
@@ -25,19 +23,19 @@ namespace InterruptHandlers
         Kernel::Log(ToStrHex(errorCode));
 
         Kernel::Panic("Protection Fault.");
-        Kernel::CPU::Halt();
+        Kernel::Drivers::CPU::Halt();
     }
 
     __attribute__((interrupt)) void PageFault(interrupt_frame* frame)
     {
         Kernel::Panic("Page Fault!"); //CR2 contains our culprit
 
-        Kernel::CPU::Halt();
+        Kernel::Drivers::CPU::Halt();
     }
 
     __attribute__((interrupt)) void PS2KeyboardHandler(interrupt_frame* frame)
     {   
-        uint8_t scancode = Kernel::CPU::PortRead8(PORT_PS2_KEYBOARD);
+        uint8_t scancode = Kernel::Drivers::CPU::PortRead8(PORT_PS2_KEYBOARD);
         Kernel::Drivers::Ps2Keyboard::The()->HandlePacketByte(scancode);
 
         Kernel::Drivers::APIC::Local()->SendEOI();

@@ -1,8 +1,8 @@
-#include <CPU.h>
+#include <drivers/CPU.h>
 #include <drivers/8259PIC.h>
 
-namespace Kernel
-{
+namespace Kernel::Drivers
+{   
     void PIC::Remap()
     {
         //store previous maps of master and slave chips

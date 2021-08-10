@@ -1,7 +1,7 @@
 #include <PageTableManager.h>
 #include <PageFrameAllocator.h>
 #include <memory/Utilities.h>
-#include <CPU.h>
+#include <drivers/CPU.h>
 
 namespace Kernel
 {
@@ -117,6 +117,6 @@ namespace Kernel
 
     void PageTableManager::MakeCurrentMap()
     {
-        CPU::LoadPageTableMap(pml4Addr);
+        Drivers::CPU::LoadPageTableMap(pml4Addr);
     }
 }

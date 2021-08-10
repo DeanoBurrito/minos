@@ -1,6 +1,6 @@
 #include <Panic.h>
 #include <KRenderer.h>
-#include <CPU.h>
+#include <drivers/CPU.h>
 
 namespace Kernel
 {
@@ -15,6 +15,6 @@ namespace Kernel
         KRenderer::The()->Write((const char*)"    ");
         KRenderer::The()->WriteLine(reason);
 
-        CPU::Halt();
+        Drivers::CPU::Halt();
     }
 }

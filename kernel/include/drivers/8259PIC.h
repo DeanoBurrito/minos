@@ -15,7 +15,7 @@
 
 #define PIC_INTERRUPT_PS2KEYBOARD 0x1
 
-namespace Kernel
+namespace Kernel::Drivers
 {
     class PIC
     {

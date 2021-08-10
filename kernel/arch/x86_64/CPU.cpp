@@ -1,7 +1,7 @@
 #include <cpuid.h>
-#include <CPU.h>
+#include <drivers/CPU.h>
 
-namespace Kernel
+namespace Kernel::Drivers
 {   
     //this just stops us clogging the kernel namespace
     namespace CPU_x86_64

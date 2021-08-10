@@ -1,11 +1,11 @@
-#include <CPU.h>
+#include <drivers/CPU.h>
 #include <KLog.h>
 #include <StringUtil.h>
-#include <Serial.h>
+#include <drivers/Serial.h>
 
 #define PORT_TEST_BYTE 0xAE
 
-namespace Kernel
+namespace Kernel::Drivers
 {
     SerialPort com1;
     SerialPort* SerialPort::COM1()

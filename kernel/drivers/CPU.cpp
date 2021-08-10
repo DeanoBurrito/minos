@@ -1,6 +1,6 @@
-#include <CPU.h>
+#include <drivers/CPU.h>
 
-namespace Kernel
+namespace Kernel::Drivers
 {
     InterruptScopeGuard::InterruptScopeGuard()
     {

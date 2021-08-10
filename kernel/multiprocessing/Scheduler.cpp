@@ -1,9 +1,11 @@
 #include <multiprocessing/Scheduler.h>
-#include <CPU.h>
+#include <drivers/CPU.h>
 #include <Interrupts.h>
 
 namespace Kernel::Multiprocessing
 {
+    using Kernel::Drivers::CPU;
+    
     extern "C" 
     {
         //Current thread data, so we can access it from assembly routines

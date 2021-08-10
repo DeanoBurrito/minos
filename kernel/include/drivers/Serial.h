@@ -4,7 +4,7 @@
 
 #define PORT_COM1_ADDRESS 0x03F8
 
-namespace Kernel
+namespace Kernel::Drivers
 {
     class SerialPort
     {

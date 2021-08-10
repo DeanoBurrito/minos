@@ -1,5 +1,5 @@
 #include <drivers/8253PIT.h>
-#include <CPU.h>
+#include <drivers/CPU.h>
 
 namespace Kernel::Drivers
 {
