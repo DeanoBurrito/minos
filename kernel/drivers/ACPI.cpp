@@ -1,7 +1,7 @@
 #include <KLog.h>
 #include <StringUtil.h>
 #include <drivers/ACPI.h>
-#include <memory/Utilities.h>
+#include <Memory.h>
 #include <stddef.h>
 
 namespace Kernel::Drivers
@@ -67,7 +67,7 @@ namespace Kernel::Drivers
         
         Log("--[ SDT Header ]--");
         Log("  |- Signature: ", false);
-        memcopy(header->signature, reusableBuffer, 4);
+        sl::memcopy(header->signature, reusableBuffer, 4);
         reusableBuffer[4] = 0;
         Log(reusableBuffer);
 
@@ -81,12 +81,12 @@ namespace Kernel::Drivers
         Log(ToStrHex(header->checksum));
 
         Log("  |- OEM ID: ", false);
-        memcopy(header->oemId, reusableBuffer, 6);
+        sl::memcopy(header->oemId, reusableBuffer, 6);
         reusableBuffer[6] = 0;
         Log(reusableBuffer);
 
         Log("  |- OEM Table ID: ", false);
-        memcopy(header->oemTableId, reusableBuffer, 8);
+        sl::memcopy(header->oemTableId, reusableBuffer, 8);
         reusableBuffer[8] = 0;
         Log(reusableBuffer);
 
@@ -113,7 +113,7 @@ namespace Kernel::Drivers
         Log("ACPI Table Dump:");
         Log("--[ RSDP ]--");
         
-        memcopy(rsdp->signature, printableSig, 8);
+        sl::memcopy(rsdp->signature, printableSig, 8);
         printableSig[8] = 0;
         Log("  |- Signature: ", false);
         Log(printableSig);
@@ -122,7 +122,7 @@ namespace Kernel::Drivers
         Log(ToStrHex(rsdp->checksum));
 
         Log("  |- OEM ID: ", false);
-        memcopy(rsdp->oemId, printableSig, 6);
+        sl::memcopy(rsdp->oemId, printableSig, 6);
         printableSig[6] = 0;
         Log(printableSig);
 
@@ -190,7 +190,7 @@ namespace Kernel::Drivers
             if (signature == nullptr)
                 return localHeader;
             
-            if (memcmp(localHeader->signature, signature, 4) == 0)
+            if (sl::memcmp(localHeader->signature, signature, 4) == 0)
             {
                 //it's a match!
                 return localHeader;

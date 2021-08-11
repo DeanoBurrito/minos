@@ -12,7 +12,7 @@ namespace Kernel::Multiprocessing
     class Semaphore
     {
     private:
-        Syslib::LinkedList<KernelThread*> waitingThreads; //TODO: better data structure than linked list
+        sl::LinkedList<KernelThread*> waitingThreads; //TODO: better data structure than linked list
         uint64_t value;
 
     public:

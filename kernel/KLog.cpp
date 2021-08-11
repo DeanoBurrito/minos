@@ -2,18 +2,18 @@
 #include <KLog.h>
 #include <templates/List.h>
 #include <drivers/CPU.h>
-#include <memory/Utilities.h>
+#include <Memory.h>
 #include <StringUtil.h>
 
 namespace Kernel
 {
     using namespace Kernel::Drivers;
     
-    Syslib::List<const char*> unreadLogs; //TODO: have some failsafe for logs, as this can grow infinitely until it consumes all system memory.
+    sl::List<const char*> unreadLogs; //TODO: have some failsafe for logs, as this can grow infinitely until it consumes all system memory.
 
     void InitLogging()
     {
-        unreadLogs = Syslib::List<const char*>(LOGGING_DEFAULT_RESERVE_COUNT); //reserve some space, because we're going to use it for sure.
+        unreadLogs = sl::List<const char*>(LOGGING_DEFAULT_RESERVE_COUNT); //reserve some space, because we're going to use it for sure.
     }
     
     bool serialLogEnabled = false;

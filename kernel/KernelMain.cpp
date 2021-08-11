@@ -2,7 +2,7 @@
 #include <KRenderer.h>
 #include <PageFrameAllocator.h>
 #include <PageTableManager.h>
-#include <memory/Utilities.h>
+#include <Memory.h>
 #include <drivers/CPU.h>
 #include <IDT.h>
 #include <Interrupts.h>
@@ -41,7 +41,7 @@ namespace Kernel
 
         //create page table, init it as kernel table
         PageTable* kernelPageTable = (PageTable*)PageFrameAllocator::The()->RequestPage();
-        memset(kernelPageTable, 0, PAGE_SIZE); //zero page table = everything is absent
+        sl::memset(kernelPageTable, 0, PAGE_SIZE); //zero page table = everything is absent
 
         PageTableManager::The()->Init(kernelPageTable);
 

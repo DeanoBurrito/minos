@@ -22,7 +22,7 @@ namespace Kernel::Drivers
     class SystemClock
     {
     private:
-        Syslib::List<ClockSourceType> availableSources;
+        sl::List<ClockSourceType> availableSources;
         ClockSourceType primarySource;
 
     public:

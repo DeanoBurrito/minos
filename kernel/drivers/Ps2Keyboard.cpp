@@ -1,7 +1,7 @@
 #include <drivers/Ps2Keyboard.h>
 #include <KLog.h>
 #include <drivers/CPU.h>
-#include <memory/Utilities.h>
+#include <Memory.h>
 
 namespace Kernel::Drivers
 {
@@ -144,7 +144,7 @@ namespace Kernel::Drivers
         InterruptScopeGuard interruptGuard;
 
         *count = actionQueueLength;
-        memcopy(actionQueue, buffer, sizeof(KeyAction) * *count);
+        sl::memcopy(actionQueue, buffer, sizeof(KeyAction) * *count);
         actionQueueLength -= *count; //NOTE: not setting to zero here, as if a keypress occurs during the copying process, itll be dropped.
     }
 }

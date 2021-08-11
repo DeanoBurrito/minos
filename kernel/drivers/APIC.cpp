@@ -9,7 +9,7 @@
 
 namespace Kernel::Drivers
 {
-    Syslib::LinkedList<IOAPIC*> IOAPIC::ioApics;
+    sl::LinkedList<IOAPIC*> IOAPIC::ioApics;
 
     uint32_t IOAPIC::ReadRegister(uint64_t offset)
     {

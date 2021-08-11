@@ -135,7 +135,7 @@ namespace Kernel::Drivers
         void WriteRegister(uint64_t offset, uint32_t value);
 
     public:
-        static Syslib::LinkedList<IOAPIC*> ioApics;
+        static sl::LinkedList<IOAPIC*> ioApics;
         static void InitAll();
 
         void Init(uint8_t apicId, uint32_t physAddr, uint32_t gsiBase);

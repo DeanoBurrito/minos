@@ -18,7 +18,7 @@ namespace Kernel::Multiprocessing
         value += amount;
 
         //wake threads
-        Syslib::LinkedListEntry<KernelThread*>* current = waitingThreads.Head();
+        sl::LinkedListEntry<KernelThread*>* current = waitingThreads.Head();
         while (current != nullptr)
         {
             //wake threads in order, if they were waiting, perhaps they can do something
@@ -46,7 +46,7 @@ namespace Kernel::Multiprocessing
             KernelThread* currentThread = Scheduler::The()->GetCurrentThread();
 
             //insert based on priority
-            Syslib::LinkedListEntry<KernelThread*>* scanHead = waitingThreads.Head();
+            sl::LinkedListEntry<KernelThread*>* scanHead = waitingThreads.Head();
             while (scanHead != nullptr)
             {
                 if (currentThread->GetPriority() >= scanHead->val->GetPriority())

@@ -14,7 +14,7 @@ namespace Kernel::Multiprocessing
     class Scheduler
     {
     private:
-        Syslib::LinkedList<KernelThread*> threads;
+        sl::LinkedList<KernelThread*> threads;
         KernelThread* currentThread;
 
     public:

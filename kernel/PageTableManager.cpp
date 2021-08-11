@@ -1,6 +1,6 @@
 #include <PageTableManager.h>
 #include <PageFrameAllocator.h>
-#include <memory/Utilities.h>
+#include <Memory.h>
 #include <drivers/CPU.h>
 
 namespace Kernel
@@ -54,7 +54,7 @@ namespace Kernel
         if (!pageEntry.GetFlag(PageEntryFlags::Present))
         {
             pdp = (PageTable*)PageFrameAllocator::The()->RequestPage();
-            memset(pdp, 0, PAGE_SIZE);
+            sl::memset(pdp, 0, PAGE_SIZE);
 
             pageEntry.SetAddress((uint64_t)pdp >> 12);
             pageEntry.SetFlag(PageEntryFlags::Present, true);
@@ -72,7 +72,7 @@ namespace Kernel
         if (!pageEntry.GetFlag(PageEntryFlags::Present))
         {
             pd = (PageTable*)PageFrameAllocator::The()->RequestPage();
-            memset(pd, 0, PAGE_SIZE);
+            sl::memset(pd, 0, PAGE_SIZE);
 
             pageEntry.SetAddress((uint64_t)pd >> 12);
             pageEntry.SetFlag(PageEntryFlags::Present, true);
@@ -90,7 +90,7 @@ namespace Kernel
         if (!pageEntry.GetFlag(PageEntryFlags::Present))
         {
             pt = (PageTable*)PageFrameAllocator::The()->RequestPage();
-            memset(pt, 0, PAGE_SIZE);
+            sl::memset(pt, 0, PAGE_SIZE);
 
             pageEntry.SetAddress((uint64_t)pt >> 12);
             pageEntry.SetFlag(PageEntryFlags::Present, true);

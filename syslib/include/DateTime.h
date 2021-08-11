@@ -2,7 +2,7 @@
 
 #include <stdint-gcc.h>
 
-namespace Syslib
+namespace sl
 {
     class DateTime
     {

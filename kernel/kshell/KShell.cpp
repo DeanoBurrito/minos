@@ -1,7 +1,7 @@
 #include <kshell/KShell.h>
 #include <multiprocessing/Scheduler.h>
 #include <StringUtil.h>
-#include <memory/Utilities.h>
+#include <Memory.h>
 #include <drivers/Serial.h>
 #include <KLog.h>
 
@@ -24,11 +24,11 @@ namespace Kernel::Shell
         bgColour = 0x00'00'00'FF;
         fgColour = 0xFF'FF'FF'FF;
         inputCursor = inputLength = 0;
-        memset(inputLine, 0, KSHELL_INPUT_BUFFER_LEN + 1);
+        sl::memset(inputLine, 0, KSHELL_INPUT_BUFFER_LEN + 1);
         promptText = "(kernel) - no FS $ ";
         echoSerialOut = true;
 
-        memset(incomingLogsBuffer, 0, KSHELL_INCOMING_LOGS_MAX);
+        sl::memset(incomingLogsBuffer, 0, KSHELL_INCOMING_LOGS_MAX);
 
         characterSize = KRenderer::The()->GetFontCharacterSize();
         displaySize = KRenderer::The()->GetFramebufferSize();
@@ -37,7 +37,7 @@ namespace Kernel::Shell
         KRenderer::The()->Clear();
 
         dirtyLineLengths = new uint8_t[displaySize.y];
-        memset(dirtyLineLengths, 0, displaySize.y);
+        sl::memset(dirtyLineLengths, 0, displaySize.y);
 
         SetPrompt(nullptr);
         ClearLine(KSHELL_STATUS_LINE, 0, displaySize.x - 1, KSHELL_STATUS_BG_COLOUR);
@@ -78,7 +78,7 @@ namespace Kernel::Shell
         {
             if (inputCursor > 0 && inputLength > 0)
             {
-                memcopy(inputLine + inputCursor, inputLine + inputCursor - 1, inputLength - inputCursor);
+                sl::memcopy(inputLine + inputCursor, inputLine + inputCursor - 1, inputLength - inputCursor);
                 inputLength--;
                 inputCursor--;
                 SetPrompt(nullptr);
@@ -100,7 +100,7 @@ namespace Kernel::Shell
 
     void KShell::ProcessCommand()
     {   
-        if (inputLength >= 5 && memcmp(inputLine, "serial", 6) == 0)
+        if (inputLength >= 5 && sl::memcmp(inputLine, "serial", 6) == 0)
         {
             echoSerialOut = !echoSerialOut;
             SetStatus("Serial echo toggled.");
@@ -109,7 +109,7 @@ namespace Kernel::Shell
         //TODO: command parsing
         inputLine[inputLength] = 0;
         WriteLine(inputLine);
-        memset(inputLine, 0, inputLength);
+        sl::memset(inputLine, 0, inputLength);
         inputLength = inputCursor = 0;
         SetPrompt(nullptr);
     }
