@@ -1,6 +1,6 @@
 #include <DateTime.h>
 
-namespace Syslib
+namespace sl
 {
     uint64_t DateTime::ticksPerSecond = 1; //will be set by the selected system clocksource
 

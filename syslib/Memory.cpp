@@ -1,6 +1,6 @@
 #include <Memory.h>
 
-namespace Syslib
+namespace sl
 {
     void memset(void* const start, uint8_t value, size_t count)
     {

@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdint-gcc.h>
 
-namespace Syslib
+namespace sl
 {
     template <typename T>
     T&& move(T&& t)

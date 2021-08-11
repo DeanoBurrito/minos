@@ -1,7 +1,7 @@
 #include <StringBuilder.h>
 #include <Memory.h>
 
-namespace Syslib
+namespace sl
 {
     StringBuilder StringBuilder::FromFormatString(string str, char delim)
     {

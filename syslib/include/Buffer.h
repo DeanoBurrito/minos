@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdint-gcc.h>
 
-namespace Syslib
+namespace sl
 {
     class Buffer;
     typedef const Buffer ReadOnlyBuffer; //can always specialize this later, for now setting as const is enough

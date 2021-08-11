@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Syslib
+namespace sl
 {    
     template <typename Value>
     class LinkedListEntry

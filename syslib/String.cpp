@@ -1,6 +1,6 @@
 #include <String.h>
 
-namespace Syslib
+namespace sl
 {
     String::String() : buffer(nullptr)
     {}

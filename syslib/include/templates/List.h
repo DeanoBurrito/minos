@@ -2,7 +2,7 @@
 
 #include <stddef.h>
 
-namespace Syslib
+namespace sl
 {
     //Variable length array, similar to std::vector or C#'s List<T>
     template <typename Value>

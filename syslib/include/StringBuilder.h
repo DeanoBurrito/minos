@@ -4,7 +4,7 @@
 #include <Buffer.h>
 #include <String.h>
 
-namespace Syslib
+namespace sl
 {
     class StringBuilder
     {

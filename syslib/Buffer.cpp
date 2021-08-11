@@ -1,7 +1,7 @@
 #include <Buffer.h>
 #include <Memory.h>
 
-namespace Syslib
+namespace sl
 {
     ReadOnlyBuffer* Buffer::CopyToReadOnly(const Buffer* const from, size_t offset, size_t length)
     {

@@ -2,7 +2,7 @@
 
 #include <Memory.h>
 
-namespace Syslib
+namespace sl
 {   
     class String
     {
@@ -26,4 +26,4 @@ namespace Syslib
     };
 }
 
-typedef Syslib::String string;
+typedef sl::String string;
