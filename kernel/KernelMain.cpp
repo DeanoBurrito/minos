@@ -15,6 +15,7 @@
 #include <drivers/APIC.h>
 #include <multiprocessing/Scheduler.h>
 #include <kshell/KShell.h>
+#include <InitDisk.h>
 
 extern "C"
 {
@@ -159,6 +160,7 @@ extern "C" __attribute__((noreturn)) void KernelMain(BootInfo* bootInfo)
     InitMemory(bootInfo);
     InitPlatformEarly(bootInfo);
 
+    LoadInitDisk();
     InitDrivers(bootInfo);
     InitInterrupts(bootInfo);
 

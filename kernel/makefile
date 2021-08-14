@@ -2,6 +2,8 @@
 EXT_INCLUDE_DIRS = -I ../bootloader
 BOOTLOADER = ../bootloader/build/booty.efi
 SYSLIB_DIR = ../syslib
+KDISK_DIR = ../kernel-disk
+KDISK_FILE= $(KDISK_DIR)/$(BUILD_DIR)/kdisk.img
 OVMF_DIR = /usr/share/ovmf/OVMF.fd
 
 #internal project settings
@@ -45,7 +47,8 @@ clean:
 	@echo DELETING $(BUILD_DIR) ...
 	@rm -r $(BUILD_DIR)
 	@cd ../bootloader; make clean;
-	@cd $(SYSLIB_DIR); make clean
+	@cd $(SYSLIB_DIR); make clean;
+	@cd $(KDISK_DIR); make clean;
 
 fun: run
 	@echo fun fun fun!
@@ -63,8 +66,8 @@ iso-img: all
 	@echo Getting bootloader file
 	@cd ../bootloader; make all;
 	@cp $(BOOTLOADER) $(BUILD_DIR)/BOOTX64.EFI
-	@dd if=/dev/zero of=$(TARGET).img bs=1K count=1440
-	@mformat -i $(TARGET).img -f 1440 ::
+	@dd if=/dev/zero of=$(TARGET).img bs=1K count=2880
+	@mformat -i $(TARGET).img -f 2880 ::
 	@mmd -i $(TARGET).img ::/EFI
 	@mmd -i $(TARGET).img ::/EFI/BOOT
 	@mcopy -i $(TARGET).img $(BUILD_DIR)/BOOTX64.EFI ::/EFI/BOOT
@@ -74,8 +77,9 @@ iso-img: all
 
 $(TARGET): $(CPP_OBJS) $(ASM_OBJS) $(LD_SCRIPT) $(CRT_OBJS)
 	@cd $(SYSLIB_DIR); make all;
+	@cd $(KDISK_DIR); make all;
 	@echo LINKING $@
-	@$(LD) $(LD_FLAGS) -T $(LD_SCRIPT) $(BUILD_DIR)/crti.o $(CRTBEGIN_OBJ) $(CPP_OBJS) $(ASM_OBJS) $(CRTEND_OBJ) $(BUILD_DIR)/crtn.o -o $@ $(LD_LIBS)
+	@$(LD) $(LD_FLAGS) -T $(LD_SCRIPT) $(BUILD_DIR)/crti.o $(CRTBEGIN_OBJ) $(CPP_OBJS) $(ASM_OBJS) $(CRTEND_OBJ) $(BUILD_DIR)/crtn.o -o $@ $(LD_LIBS) -Wl,--format -Wl,binary -Wl,$(KDISK_FILE)
 
 $(BUILD_DIR)/crti.o: $(ARCH_DIR)/crti.S
 	@echo ASSEMBLING $<
