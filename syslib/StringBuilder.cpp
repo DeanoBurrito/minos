@@ -5,11 +5,13 @@ namespace sl
 {
     StringBuilder StringBuilder::FromFormatString(string str, char delim)
     {
-        return StringBuilder();
+        return StringBuilder(); //reserve the required number of buckets
     }
 
     StringBuilder::StringBuilder()
-    {}
+    {
+        textLength = 0;
+    }
 
     StringBuilder::StringBuilder(string str)
     {
@@ -38,6 +40,15 @@ namespace sl
         swap(textLength, from.textLength);
 
         return *this;
+    }
+
+    void StringBuilder::Append(const string& str)
+    {
+        Buffer* convertedString = Buffer::CopyTo(reinterpret_cast<const unsigned char* const>(str.Data()), 0, str.Size());
+        buffers.PushBack(move(*convertedString));
+        delete convertedString;
+
+        textLength += str.Size();
     }
 
     string StringBuilder::ToString()
@@ -73,7 +84,7 @@ namespace sl
     {
         if (index >= textLength)
             return buffers.Tail()->val;
-        
+
         auto scan = buffers.Head();
         while (scan != nullptr)
         {
@@ -90,6 +101,6 @@ namespace sl
     char& StringBuilder::operator[](size_t index)
     {
         Buffer buff = BufferFromIndex(index);
-        return reinterpret_cast<char&>(buff[index]); 
+        return reinterpret_cast<char&>(buff[index]);
     }
 }

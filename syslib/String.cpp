@@ -1,3 +1,4 @@
+#include <Memory.h>
 #include <String.h>
 
 namespace sl
@@ -11,6 +12,14 @@ namespace sl
         buffer = new char[length + 1];
         memcopy(cstr, buffer, length);
         buffer[length] = 0;
+    }
+
+    String::String(const char c)
+    {
+        length = 1;
+        buffer = new char[2];
+        buffer[0] = c;
+        buffer[1] = 0;
     }
 
     String::String(const String& copy)
@@ -75,4 +84,67 @@ namespace sl
     {
         return length;
     }
+
+    String String::SubString(size_t start, size_t length) const
+    {
+        if (length > this->length)
+            length = this->length;
+
+        //TODO: double copy here, would be nice to be able to move a char[] to a string.
+        char* const tempBuffer = new char[length];
+        sl::memcopy(buffer, start, tempBuffer, 0, length);
+        String temp(tempBuffer);
+        delete[] tempBuffer;
+
+        return temp;
+    }
+
+    char& String::At(size_t index)
+    {
+        if (index >= length)
+            return buffer[length - 1];
+        return buffer[index];
+    }
+
+    const char& String::At(size_t index) const
+    {
+        if (index >= length)
+            return buffer[length - 1];
+        return buffer[index];
+    }
+
+    char& String::operator[](size_t index)
+    {
+        return At(index);
+    }
+
+    const char& String::operator[](size_t index) const
+    {
+        return At(index);
+    }
+
+    bool String::TryGetUInt8(uint8_t& out)
+    { return true; }
+
+    bool String::TryGetUInt16(uint16_t& out)
+    { return true; }
+
+    bool String::TryGetUInt32(uint32_t& out)
+    { return true; }
+
+    bool String::TryGetUInt64(uint64_t& out)
+    { return true; }
+
+    bool String::TryGetInt8(int8_t& out)
+    { return true; }
+
+    bool String::TryGetInt16(int16_t& out)
+    { return true; }
+
+    bool String::TryGetInt32(int32_t& out)
+    { return true; }
+
+    bool String::TryGetInt64(int64_t& out)
+    { return true; }
+
 }

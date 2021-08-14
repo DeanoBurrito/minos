@@ -9,18 +9,17 @@
 --------------------------------
 
 Strings (syslib):
-    -String class, keeps track of it's start and length. Both a mutable and immutable version.
-    -StringBuilder class, designed to be efficient for constructing stings from multiple buffers, slow to read from. (linked list under hood?).
     -Formatting functions, for converting PODs to strings, emplacing within strings, and extracting.
     -Go back and replace c-string strings within kernel to our new type-safe friend.
 
 Memory:
-    -Ability to unmap pages
-    -Setting page flags when creating them, or modifying them when mapping.
+    -Refactor page mapping/unmapping api, allowing optional flags to be set.
+        -Ability to unmap pages 
+        -Setting page flags when creating them, or modifying them when mapping.
     -Multiple generic allocators. Slab alloctors(8/16/32/64 byte wide versions), stack frame allocator.
     -Turn KHeap into a generic heap allocator, and rename it.
     -Ability to reserve pages, backed with a 'read only' a static page of zeros. Replace with real page only once written to.
-    -Kernel-External mapping: memory that'll never be freed during system runtime (all the globals), mark it as reserved into of claimed.
+    -Kernel-Eternal mapping: memory that'll never be freed during system runtime (all the globals), mark it as reserved into of claimed.
 
 Logging:
     -Improve use of kernel Log()
@@ -41,6 +40,7 @@ Virtual File System:
 Platform Layer:
     -A lot of kernel init/management is platform specific (arm has no idea what an APIC is, why bother searching for it).
      Perhaps delegating parts of kernel init (like setting up interrupts) to platform-specific code. Keep the core generic.
+        -Maybe have a platform specific core (tightly integrated with that platform's bootloader), and keep the surrounds generic?
     -SystemClock: Wrapper around platform-specific timing devices (rtc/pit), can provide single-shot/periodic timers.
 
 Init disk:

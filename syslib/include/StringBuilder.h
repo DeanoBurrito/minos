@@ -25,6 +25,8 @@ namespace sl
         StringBuilder(StringBuilder&& from);
         StringBuilder& operator=(StringBuilder&& from);
 
+        void Append(const string& str);
+
         string ToString();
         size_t Size();
         void Clear();
