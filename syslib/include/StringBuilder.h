@@ -14,8 +14,6 @@ namespace sl
         Buffer& BufferFromIndex(size_t& index);
 
     public:
-        static StringBuilder FromFormatString(string str, char delim);
-        
         StringBuilder();
         StringBuilder(string str);
 

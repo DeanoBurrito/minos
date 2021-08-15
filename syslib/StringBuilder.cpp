@@ -3,11 +3,6 @@
 
 namespace sl
 {
-    StringBuilder StringBuilder::FromFormatString(string str, char delim)
-    {
-        return StringBuilder(); //reserve the required number of buckets
-    }
-
     StringBuilder::StringBuilder()
     {
         textLength = 0;

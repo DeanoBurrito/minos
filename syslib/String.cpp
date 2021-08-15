@@ -48,6 +48,8 @@ namespace sl
 
     String::String(String&& from)
     {
+        buffer = nullptr;
+        length = 0;
         swap(buffer, from.buffer);
         swap(length, from.length);
     }
@@ -91,8 +93,9 @@ namespace sl
             length = this->length - start;
 
         //TODO: double copy here, would be nice to be able to move a char[] to a string.
-        char* const tempBuffer = new char[length];
+        char* const tempBuffer = new char[length + 1];
         sl::memcopy(buffer, start, tempBuffer, 0, length);
+        tempBuffer[length] = 0;
         String temp(tempBuffer);
         delete[] tempBuffer;
 

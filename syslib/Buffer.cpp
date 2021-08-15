@@ -89,7 +89,8 @@ namespace sl
 
     Buffer& Buffer::operator=(Buffer&& from)
     {
-        delete[] start;
+        if (start)
+            delete[] start;
 
         length = from.length;
         start = from.start;
