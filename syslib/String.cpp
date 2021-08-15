@@ -87,8 +87,8 @@ namespace sl
 
     String String::SubString(size_t start, size_t length) const
     {
-        if (length > this->length)
-            length = this->length;
+        if (start + length > this->length)
+            length = this->length - start;
 
         //TODO: double copy here, would be nice to be able to move a char[] to a string.
         char* const tempBuffer = new char[length];
