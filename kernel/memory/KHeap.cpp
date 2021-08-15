@@ -18,7 +18,10 @@ namespace Kernel
             lastSegment = this;
         
         if (next->next != nullptr)
+        {
+            next = next->next;
             next->next->prev = this;
+        }
 
         length = length + next->length + sizeof(HeapSegmentHeader);
     }
