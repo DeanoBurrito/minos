@@ -23,7 +23,7 @@ namespace sl
     {
         NoFormat,
         VerbatimSpecifier,
-        
+
         SingleCharacter,
         String,
 
@@ -50,7 +50,7 @@ namespace sl
         DoubleLong,
         //rest are unsupported
     };
-    
+
     struct FormatSpecifier
     {
         FormatFlags flags = FormatFlags::None;
@@ -60,10 +60,14 @@ namespace sl
         uint32_t precision : 31; //0 meaning unspecified or default precision.
         bool isBig : 1;
     };
-    
+
     class StringFormatter
     {
     private:
+        const String* const source;
+        uint64_t sourcePos;
+        StringBuilder builder;
+        
         FormatFlags ParseFlags();
         uint32_t ParseWidth();
         uint32_t ParsePrecision();
@@ -73,13 +77,11 @@ namespace sl
         String FormatNext(FormatSpecifier, va_list args);
 
     public:
-        const String* const source;
-        uint64_t sourcePos;
-
         StringFormatter(const String* const input) : source(input), sourcePos(0)
         {}
 
         void ParseAll(size_t maxLength, va_list args);
+        string GetString();
     };
 
     FormatFlags StringFormatter::ParseFlags()
@@ -132,7 +134,7 @@ namespace sl
 
             while (IsDigit(currentChar))
                 sourcePos++;
-            
+
             string widthSubstr = move(source->SubString(start, sourcePos - start));
             uint32_t outWidth;
             if (widthSubstr.TryGetUInt32(outWidth))
@@ -154,7 +156,7 @@ namespace sl
 
             while (IsDigit(currentChar))
                 sourcePos++;
-            
+
             if (sourcePos > start)
             {
                 string precSubstr = move(source->SubString(start, start - sourcePos));
@@ -163,7 +165,7 @@ namespace sl
                     precision = precision;
             }
         }
-        
+
         return precision;
     }
 
@@ -176,10 +178,10 @@ namespace sl
             sourcePos++;
             currentChar = source->At(sourcePos);
             if (currentChar == 'h')
-                { 
-                    sourcePos++; 
-                    return FormatLength::DoubleHalf; 
-                }
+            {
+                sourcePos++;
+                return FormatLength::DoubleHalf;
+            }
             else
                 return FormatLength::Half;
 
@@ -206,8 +208,6 @@ namespace sl
         if (source->At(sourcePos) != '%')
             return spec;
 
-        return spec; //TESTING
-        
         sourcePos++; //consume leading '%'
         char currentChar = source->At(sourcePos);
 
@@ -218,7 +218,7 @@ namespace sl
             sourcePos++;
             return spec;
         }
-        
+
         spec.flags = ParseFlags();
         spec.width = ParseWidth();
         spec.precision = ParsePrecision();
@@ -233,42 +233,42 @@ namespace sl
             sourcePos++;
             spec.specifier = FormatType::SingleCharacter;
             break;
-        
+
         case 's':
             sourcePos++;
             spec.specifier = FormatType::String;
             break;
-        
+
         case 'd':
         case 'i':
             sourcePos++;
             spec.specifier = FormatType::SignedInteger;
             break;
-        
+
         case 'o':
             sourcePos++;
             spec.specifier = FormatType::UnsginedIntegerOctal;
             break;
-        
+
         case 'X':
             spec.isBig = true;
         case 'x':
             sourcePos++;
             spec.specifier = FormatType::UnsignedIntegerHex;
             break;
-        
+
         case 'u':
             sourcePos++;
             spec.specifier = FormatType::UnsignedIntegerDecimal;
             break;
-        
+
         case 'F':
             spec.isBig = true;
         case 'f':
             sourcePos++;
             spec.specifier = FormatType::FloatingPointDecimal;
             break;
-        
+
         case 'E':
             spec.isBig = true;
         case 'e':
@@ -289,12 +289,12 @@ namespace sl
             sourcePos++;
             spec.specifier = FormatType::FloatingPointShortest;
             break;
-        
+
         case 'n':
             sourcePos++;
             spec.specifier = FormatType::GetCharactersWritten;
             break;
-        
+
         case 'p':
             sourcePos++;
             spec.specifier = FormatType::ImplementationDefined;
@@ -310,38 +310,62 @@ namespace sl
     String StringFormatter::FormatNext(FormatSpecifier specifier, va_list args)
     {
         if (specifier.specifier == FormatType::NoFormat)
-            return "";
+            return "NoFormatData";
         if (specifier.specifier == FormatType::VerbatimSpecifier)
             return "%";
 
-        
-        
+
+
         //TODO: emit an error token
-        return "";
+        return "FormattedText";
     }
 
     void StringFormatter::ParseAll(size_t maxLength, va_list args)
     {
+        size_t currentLength = 0;
+        size_t segmentStart = 0;
+        size_t segmentLength = 0;
 
+        while (sourcePos < source->Size())
+        {
+            if (source->At(sourcePos) != '%')
+            {
+                segmentLength++;
+                sourcePos++;
+                continue; //consume characters until we hit the next format token, or end of string
+            }
+
+            //hit a format token, store current text and begin parsing
+            if (segmentLength > 0)
+                builder.Append(source->SubString(segmentStart, segmentLength));
+
+            FormatSpecifier formatSpec = ParseNext();
+            builder.Append(FormatNext(formatSpec, args));
+
+            segmentStart = sourcePos; //next segment starts here
+            segmentLength = 0;
+        }
+
+        if (segmentLength > 0)
+            builder.Append(source->SubString(segmentStart, segmentLength));
     }
-    
+
+    string StringFormatter::GetString()
+    {
+        return builder.ToString();
+    }
+
     String FormatToString(size_t maxLength, const String* const format, ...)
     {
         StringFormatter formatter(format);
-        StringBuilder builder;
-        builder.Append("Hello");
-        builder.Append(" ");
-        builder.Append("world!");
-        return builder.ToString();
-
 
         va_list argsList;
         va_start(argsList, format);
 
         formatter.ParseAll(maxLength, argsList);
-        
+
         va_end(argsList);
-        
-        return builder.ToString();
+
+        return formatter.GetString();
     }
 }
