@@ -18,7 +18,8 @@ namespace InterruptHandlers
     __attribute__((interrupt)) void GeneralProtectionFault(interrupt_frame* frame)
     {
         Kernel::Log("General Protection fault, error code: 0x", false);
-        uint64_t errorCode = Kernel::Drivers::CPU::PopStack();
+        uint64_t errorCode = 0xdeadc0de; //not all zeros, so if it is a zero, we'll know its been set correctly
+        asm volatile ("pop %0" : "=g"(errorCode));
         Kernel::Log(ToStrHex(errorCode));
 
         Kernel::Panic("Protection Fault.");

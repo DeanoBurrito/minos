@@ -92,8 +92,6 @@ namespace Kernel::Drivers
         static void WriteMSR(uint32_t id, uint64_t value);
         static uint64_t ReadMSR(uint32_t);
 
-        static uint64_t PopStack();
-
         static void PortWrite8(uint16_t port, uint8_t data);
         static void PortWrite16(uint16_t port, uint16_t data);
         static void PortWrite32(uint16_t port, uint32_t data);
