@@ -247,6 +247,13 @@ namespace Kernel::Drivers
         return lo | (hi << 16);
     }
 
+    uint64_t CPU::PopStack()
+    {
+        uint64_t val;
+        asm volatile ("pop %0" : "=g"(val));
+        return val;
+    }
+
     void CPU::PortWrite8(uint16_t port, uint8_t data)
     {
         asm volatile("outb %0, %1"
