@@ -3,22 +3,22 @@
 
 namespace sl
 {
-    ReadOnlyBuffer* Buffer::CopyToReadOnly(const Buffer* const from, size_t offset, size_t length)
+    ReadOnlyBuffer* Buffer::CopyToReadOnly(const Buffer& from, size_t offset, size_t length)
     {
         return CopyTo(from, offset, length);
     }
 
-    ReadOnlyBuffer* Buffer::CopyToReadOnly(const unsigned char* const from, size_t offset, size_t length)
+    ReadOnlyBuffer* Buffer::CopyToReadOnly(const void* const from, size_t offset, size_t length)
     {
         return CopyTo(from, offset, length);
     }
 
-    Buffer* Buffer::CopyTo(const Buffer* const from, size_t offset, size_t length)
+    Buffer* Buffer::CopyTo(const Buffer& from, size_t offset, size_t length)
     {
-        return CopyTo(from->start, offset, length);
+        return CopyTo(from.start, offset, length);
     }
 
-    Buffer* Buffer::CopyTo(const unsigned char* const from, size_t offset, size_t length)
+    Buffer* Buffer::CopyTo(const void* const from, size_t offset, size_t length)
     {
         uint8_t* newBuff = new uint8_t[length];
         memcopy(from, offset, newBuff, 0, length);
@@ -33,15 +33,15 @@ namespace sl
         start = nullptr;
     }
 
-    Buffer::Buffer(uint8_t* start, size_t length)
+    Buffer::Buffer(void* start, size_t length)
     {
-        this->start = start;
+        this->start = static_cast<uint8_t*>(start);
         this->length = length;
     }
 
-    Buffer::Buffer(uint8_t* start, size_t length, uint8_t fillWith)
+    Buffer::Buffer(void* start, size_t length, uint8_t fillWith)
     {
-        this->start = start;
+        this->start = static_cast<uint8_t*>(start);
         this->length = length;
         memset(start, fillWith, length);
     }
@@ -133,12 +133,12 @@ namespace sl
         return length;
     }
 
-    uint8_t* const Buffer::Data()
+    void* const Buffer::Data()
     {
         return start;
     }
 
-    const uint8_t* const Buffer::Data() const
+    const void* const Buffer::Data() const
     {
         return start;
     }

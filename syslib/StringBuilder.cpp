@@ -11,7 +11,7 @@ namespace sl
     StringBuilder::StringBuilder(string str)
     {
         textLength = str.Size();
-        Buffer* convertedString = Buffer::CopyTo(reinterpret_cast<const unsigned char* const>(str.Data()), 0, str.Size());
+        Buffer* convertedString = Buffer::CopyTo(str.Data(), 0, str.Size());
         buffers.PushFront(move(*convertedString)); //move from temp buffer and then delete it
         delete convertedString;
     }
@@ -38,8 +38,8 @@ namespace sl
     }
 
     void StringBuilder::Append(const string& str)
-    {
-        Buffer* convertedString = Buffer::CopyTo(reinterpret_cast<const unsigned char* const>(str.Data()), 0, str.Size());
+    {   
+        Buffer* convertedString = Buffer::CopyTo(str.Data(), 0, str.Size());
         buffers.PushBack(move(*convertedString));
         delete convertedString;
 
