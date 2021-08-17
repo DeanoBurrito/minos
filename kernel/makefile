@@ -22,6 +22,7 @@ LD_SCRIPT = $(ARCH_DIR)/linker.lds
 ASM_FLAGS =
 CPP_SRCS = $(shell find -path ./arch -prune -false -o -path ./$(ASSETS_DIR) -prune -false -o -name "*.cpp") $(ARCH_CPP_SRCS)
 ASM_SRCS = 
+QEMU_FLAGS = -machine q35 -smp cores=4 -serial mon:stdio -m 256M -drive if=pflash,format=raw,readonly,file=$(OVMF_DIR) -cdrom $(TARGET).iso
 
 #architecture settings
 ARCH_DIR = arch/$(ARCH)
@@ -39,7 +40,7 @@ CRTBEGIN_OBJ = $(shell $(CXX) $(CXX_FLAGS) -print-file-name=crtbegin.o)
 CRTEND_OBJ = $(shell $(CXX) $(CXX_FLAGS) -print-file-name=crtend.o)
 CRT_OBJS = $(CRTBEGIN_OBJ) $(CRTEND_OBJ) $(BUILD_DIR)/crti.o $(BUILD_DIR)/crtn.o
 
-.PHONY: all clean iso run fun $(TARGET)
+.PHONY: all clean iso run debug $(TARGET)
 
 all: $(TARGET)
 
@@ -50,11 +51,11 @@ clean:
 	@cd $(SYSLIB_DIR); make clean;
 	@cd $(KDISK_DIR); make clean;
 
-fun: run
-	@echo fun fun fun!
-
 run: iso
-	@qemu-system-x86_64 -machine q35 -smp cores=4 -serial mon:stdio -m 256M -drive if=pflash,format=raw,readonly,file=$(OVMF_DIR) -cdrom $(TARGET).iso
+	@qemu-system-x86_64 $(QEMU_FLAGS)
+
+debug: iso
+	@qemu-system-x86_64 $(QEMU_FLAGS) -s -S
 
 iso: iso-img
 	@echo CREATING ISO
