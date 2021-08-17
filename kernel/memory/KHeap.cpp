@@ -19,8 +19,8 @@ namespace Kernel
         
         if (next->next != nullptr)
         {
-            next = next->next;
             next->next->prev = this;
+            next = next->next;
         }
 
         length = length + next->length + sizeof(HeapSegmentHeader);
