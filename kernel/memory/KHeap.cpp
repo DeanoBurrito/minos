@@ -120,7 +120,10 @@ namespace Kernel
                     return (void*)((uint64_t)scanHead + sizeof(HeapSegmentHeader));
                 }
                 if (scanHead->length == size) //perfect fit, no need to adjust segment sizes
+                {
+                    scanHead->free = false;
                     return (void*)((uint64_t)scanHead + sizeof(HeapSegmentHeader));
+                }
             }
 
             if (scanHead->next == nullptr)
