@@ -34,15 +34,6 @@ namespace sl
         const char& At(size_t index) const;
         char& operator[](size_t index);
         const char& operator[](size_t index) const;
-
-        bool TryGetUInt8(uint8_t& out);
-        bool TryGetUInt16(uint16_t& out);
-        bool TryGetUInt32(uint32_t& out);
-        bool TryGetUInt64(uint64_t& out);
-        bool TryGetInt8(int8_t& out);
-        bool TryGetInt16(int16_t& out);
-        bool TryGetInt32(int32_t& out);
-        bool TryGetInt64(int64_t& out);
     };
 }
 

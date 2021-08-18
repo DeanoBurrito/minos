@@ -125,29 +125,4 @@ namespace sl
     {
         return At(index);
     }
-
-    bool String::TryGetUInt8(uint8_t& out)
-    { return true; }
-
-    bool String::TryGetUInt16(uint16_t& out)
-    { return true; }
-
-    bool String::TryGetUInt32(uint32_t& out)
-    { return true; }
-
-    bool String::TryGetUInt64(uint64_t& out)
-    { return true; }
-
-    bool String::TryGetInt8(int8_t& out)
-    { return true; }
-
-    bool String::TryGetInt16(int16_t& out)
-    { return true; }
-
-    bool String::TryGetInt32(int32_t& out)
-    { return true; }
-
-    bool String::TryGetInt64(int64_t& out)
-    { return true; }
-
 }
