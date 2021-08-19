@@ -87,15 +87,15 @@ namespace sl
         return length;
     }
 
-    String String::SubString(size_t start, size_t length) const
+    String String::SubString(size_t start, size_t len) const
     {
-        if (start + length > this->length)
-            length = this->length - start;
+        if (start + len > length)
+            len = length - start;
 
         //TODO: double copy here, would be nice to be able to move a char[] to a string.
-        char* const tempBuffer = new char[length + 1];
-        sl::memcopy(buffer, start, tempBuffer, 0, length);
-        tempBuffer[length] = 0;
+        char* const tempBuffer = new char[len + 1];
+        sl::memcopy(buffer, start, tempBuffer, 0, len);
+        tempBuffer[len] = 0;
         String temp(tempBuffer);
         delete[] tempBuffer;
 

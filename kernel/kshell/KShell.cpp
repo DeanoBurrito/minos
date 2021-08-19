@@ -5,10 +5,6 @@
 #include <drivers/Serial.h>
 #include <KLog.h>
 
-#include <StringUtil.h>
-#include <memory/KHeap.h>
-#include <StringBuilder.h>
-
 using namespace Kernel::Drivers;
 
 namespace Kernel::Shell

@@ -67,7 +67,7 @@ namespace sl
         const String* const source;
         uint64_t sourcePos;
         StringBuilder builder;
-        
+
         FormatFlags ParseFlags();
         uint32_t ParseWidth();
         uint32_t ParsePrecision();
@@ -137,7 +137,7 @@ namespace sl
 
             string widthSubstr = move(source->SubString(start, sourcePos - start));
             uint32_t outWidth;
-            if (widthSubstr.TryGetUInt32(outWidth))
+            if (TryGetUInt32(widthSubstr, outWidth))
                 return outWidth;
         }
 
@@ -161,7 +161,7 @@ namespace sl
             {
                 string precSubstr = move(source->SubString(start, start - sourcePos));
                 uint32_t precision;
-                if (precSubstr.TryGetUInt32(precision))
+                if (TryGetUInt32(precSubstr, precision))
                     precision = precision;
             }
         }
@@ -309,15 +309,152 @@ namespace sl
 
     String StringFormatter::FormatNext(FormatSpecifier specifier, va_list args)
     {
-        if (specifier.specifier == FormatType::NoFormat)
+        if (specifier.width == UINT32_UPPER_LIMIT)
+            specifier.width = va_arg(args, int);
+        
+        //TODO: all this stuff with the length of arguments seems like it could be simplified with decltype.
+        switch (specifier.specifier) 
+        {
+        case FormatType::NoFormat:
             return "NoFormatData";
-        if (specifier.specifier == FormatType::VerbatimSpecifier)
+        case FormatType::VerbatimSpecifier:
             return "%";
 
+        case FormatType::SingleCharacter:
+            //NOTE: char gets promoted to int because of legacy reasons in va_list. This plays nicely with utf8, and casting back to char
+            return string(va_arg(args, unsigned int));
 
+        case FormatType::String:
+        {
+            char* inString = va_arg(args, char*);
+            if (specifier.precision == DEFAULT_PRECISION)
+                return string(inString);
+            else
+                return string(inString).SubString(0, specifier.precision);
+        }
 
-        //TODO: emit an error token
-        return "FormattedText";
+        case FormatType::SignedInteger:
+        {
+            switch (specifier.length)
+            {
+            case FormatLength::Long:
+                return IntToString(va_arg(args, long), 10);
+            case FormatLength::DoubleLong:
+                return IntToString(va_arg(args, long long), 10);
+            default:
+                return IntToString(va_arg(args, int), 10);
+            }
+        }
+
+        case FormatType::UnsignedIntegerDecimal:
+        {
+            switch (specifier.length)
+            {
+            case FormatLength::Long:
+                return UIntToString(va_arg(args, unsigned long), 10);
+            case FormatLength::DoubleLong:
+                return UIntToString(va_arg(args, unsigned long long), 10);
+            default:
+                return UIntToString(va_arg(args, unsigned int), 10);
+            }
+        }
+
+        case FormatType::UnsginedIntegerOctal:
+        {
+            switch (specifier.length)
+            {
+            case FormatLength::Long:
+                return UIntToString(va_arg(args, unsigned long), 8);
+            case FormatLength::DoubleLong:
+                return UIntToString(va_arg(args, unsigned long long), 8);
+            default:
+                return UIntToString(va_arg(args, unsigned int), 8);
+            }
+        }
+
+        case FormatType::UnsignedIntegerHex:
+        {
+            switch (specifier.length)
+            {
+            case FormatLength::Long:
+                return UIntToString(va_arg(args, unsigned long), 16);
+            case FormatLength::DoubleLong:
+                return UIntToString(va_arg(args, unsigned long long), 16);
+            default:
+                return UIntToString(va_arg(args, unsigned int), 16);
+            }
+        }
+
+        case FormatType::FloatingPointDecimal:
+        {
+            double consumedArg = va_arg(args, double);
+            return "";
+        }
+
+        case FormatType::FloatingPointExponentDecimal:
+        {
+            double consumedArg = va_arg(args, double);
+            return "";
+        }
+
+        case FormatType::FloatingPointExponentHex:
+        {
+            double consumedArg = va_arg(args, double);
+            return "";
+        }
+
+        case FormatType::FloatingPointShortest:
+        {
+            double consumedArg = va_arg(args, double);
+            return "";
+        }
+
+        case FormatType::GetCharactersWritten:
+        {
+            switch (specifier.length)
+            {
+            case FormatLength::Default:
+            {
+                int* charsWrittenInt = va_arg(args, int*);
+                *charsWrittenInt = static_cast<int>(builder.Size());
+                break;
+            }
+            case FormatLength::Half:
+            {
+                short* charsWrittenShort = reinterpret_cast<short*>(va_arg(args, int*));
+                *charsWrittenShort = static_cast<short>(builder.Size());
+                break;
+            }
+            case FormatLength::DoubleHalf:
+            {
+                signed char* charsWrittenChar = reinterpret_cast<signed char*>(va_arg(args, int*));
+                *charsWrittenChar = static_cast<signed char>(builder.Size());
+                break;
+            }
+            case FormatLength::Long:
+            {
+                long* charsWrittenLong = reinterpret_cast<long*>(va_arg(args, long*));
+                *charsWrittenLong = static_cast<long>(builder.Size());
+                break;
+            }
+            case FormatLength::DoubleLong:
+            {
+                long long* charsWrittenShort = reinterpret_cast<long long*>(va_arg(args, long long*));
+                *charsWrittenShort = static_cast<int>(builder.Size());
+                break;
+            }
+            }
+            return "";
+        }
+
+        case FormatType::ImplementationDefined:
+        {
+            void* consumedArg = va_arg(args, void*);
+            return "NoFormatData";
+        }
+        }
+
+        return "FormattingError";
     }
 
     void StringFormatter::ParseAll(size_t maxLength, va_list args)
