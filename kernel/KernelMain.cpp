@@ -101,15 +101,8 @@ namespace Kernel
         InitPlatformInterrupts(&idtr);
 
         //redirect entry for irq2 (ps2 keyboard)
-        Drivers::IOApicRedirectEntry ps2RedirectEntry;
-        ps2RedirectEntry.vector = INTERRUPT_VECTOR_PS2KEYBOARD;
-        ps2RedirectEntry.deliveryMode = IOAPIC_DELIVERY_MODE_FIXED;
-        ps2RedirectEntry.destinationMode = IOAPIC_DESTINATION_PHYSICAL;
-        ps2RedirectEntry.pinPolarity = IOAPIC_PIN_POLARITY_ACTIVE_HIGH;
-        ps2RedirectEntry.triggerMode = IOAPIC_TRIGGER_MODE_EDGE;
-        ps2RedirectEntry.mask = IOAPIC_MASK_ENABLE;
-        ps2RedirectEntry.destination = Drivers::APIC::Local()->GetID();
-        Drivers::IOAPIC::ioApics.PeekFront()->WriteRedirectEntry(1, ps2RedirectEntry);
+        auto keyboardRedirect = IOAPIC::CreateRedirectEntry(INTERRUPT_VECTOR_PS2KEYBOARD, Drivers::APIC::Local()->GetID(), IOAPIC_PIN_POLARITY_ACTIVE_HIGH, IOAPIC_TRIGGER_MODE_EDGE, true);
+        Drivers::IOAPIC::ioApics.PeekFront()->WriteRedirectEntry(1, keyboardRedirect);
 
         //ps2 keyboard
         idtr.SetEntry((void*)InterruptHandlers::PS2KeyboardHandler, INTERRUPT_VECTOR_PS2KEYBOARD, IDT_ATTRIBS_InterruptGate, 0x08);

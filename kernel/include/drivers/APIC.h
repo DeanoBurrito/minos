@@ -137,6 +137,7 @@ namespace Kernel::Drivers
     public:
         static sl::LinkedList<IOAPIC*> ioApics;
         static void InitAll();
+        static IOApicRedirectEntry CreateRedirectEntry(uint8_t gsiVector, uint8_t physDestination, uint8_t pinPolarity, uint8_t triggerMode, bool enabled);
 
         void Init(uint8_t apicId, uint32_t physAddr, uint32_t gsiBase);
         void WriteRedirectEntry(uint8_t entryNum, const IOApicRedirectEntry& entry);

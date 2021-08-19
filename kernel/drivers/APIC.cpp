@@ -57,6 +57,19 @@ namespace Kernel::Drivers
             entry = reinterpret_cast<MADTEntry*>((uint64_t)entry + entry->length);
         }
     }
+
+    IOApicRedirectEntry IOAPIC::CreateRedirectEntry(uint8_t gsiVector, uint8_t physDestination, uint8_t pinPolarity, uint8_t triggerMode, bool enabled)
+    {
+        IOApicRedirectEntry entry;
+        entry.vector = gsiVector;
+        entry.deliveryMode = IOAPIC_DELIVERY_MODE_FIXED;
+        entry.destinationMode = IOAPIC_DESTINATION_PHYSICAL;
+        entry.pinPolarity = pinPolarity;
+        entry.triggerMode = triggerMode;
+        entry.mask = enabled ? IOAPIC_MASK_ENABLE : IOAPIC_MASK_DISABLE;
+        entry.destinationMode = physDestination;
+        return entry;
+    }
     
     void IOAPIC::Init(uint8_t apicId, uint32_t physAddr, uint32_t gsiBase)
     {

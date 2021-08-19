@@ -71,31 +71,6 @@ namespace Kernel::Drivers
         };
     }
 
-    struct HPETAddressStructure
-    {
-        uint8_t addressSpaceId; // 0 = memory, 1 = port i/o
-        uint8_t registerBitWidth;
-        uint8_t registerBitOffset;
-        uint8_t reserved;
-        uint64_t address;
-    } __attribute__((packed));
-
-    //signature is "HPET", high precision/performance event time
-    struct HPETHeader
-    {
-        SDTHeader header;
-        uint8_t hardwareRevision;
-        uint8_t comparatorCount : 5;
-        uint8_t countSize : 1;
-        uint8_t reserved : 1;
-        uint8_t legacyReplacement : 1;
-        uint16_t pciVendorId;
-        HPETAddressStructure address;
-        uint8_t unitNumber;
-        uint16_t minimumTick;
-        uint8_t pageProtection;
-    } __attribute__((packed));
-
     struct ACPIGenericAddress
     {
         //0 = system memory, 1 = system IO, 2 = PCI config, 3 = embedded controller, 4 = SMI bus, 5 = CMOS, 6 = PCI BAR target, 
@@ -111,6 +86,23 @@ namespace Kernel::Drivers
         uint64_t address;
     } __attribute__((packed));
 
+
+    //signature is "HPET", high precision/performance event time
+    struct HPETHeader
+    {
+        SDTHeader header;
+        uint8_t hardwareRevision;
+        uint8_t comparatorCount : 5;
+        uint8_t countSize : 1;
+        uint8_t reserved : 1;
+        uint8_t legacyReplacement : 1;
+        uint16_t pciVendorId;
+        ACPIGenericAddress address;
+        uint8_t unitNumber;
+        uint16_t minimumTick;
+        uint8_t pageProtection;
+    } __attribute__((packed));
+    
     //signature is "FACP", fixed ACPI description table - used for power management stuff.
     struct FADTHeader
     {
