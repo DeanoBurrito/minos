@@ -17,13 +17,11 @@ namespace Kernel
         if (next == lastSegment)
             lastSegment = this;
         
-        if (next->next != nullptr)
-        {
-            next->next->prev = this;
-            next = next->next;
-        }
-
         length = length + next->length + sizeof(HeapSegmentHeader);
+
+        if (next->next != nullptr)
+            next->next->prev = this;
+        next = next->next;
     }
 
     void HeapSegmentHeader::CombineBackward(HeapSegmentHeader* lastSegment)
