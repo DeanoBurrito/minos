@@ -8,7 +8,7 @@
 #include <Interrupts.h>
 #include <drivers/Serial.h>
 #include <KLog.h>
-#include <StringUtil.h>
+#include <StringExtras.h>
 #include <Panic.h>
 #include <memory/KHeap.h>
 #include <drivers/ACPI.h>
@@ -85,7 +85,7 @@ namespace Kernel
         Log("Platform early init finished. Serial logging enabled.");
 
         Log("GDT loaded at: 0x", false);
-        Log(ToStrHex(rootDescriptor.offset));
+        Log(sl::UIntToString(rootDescriptor.offset, BASE_HEX).Data());
     }
 
     IDTR idtr;
@@ -121,7 +121,7 @@ namespace Kernel
         CPU::EnableInterrupts();
 
         Log("IDT loaded at: 0x", false);
-        Log(ToStrHex(idtr.offset));
+        Log(sl::UIntToString(idtr.offset, BASE_HEX).Data());
     }
 
     void InitDrivers(BootInfo* bootInfo)

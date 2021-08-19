@@ -3,7 +3,6 @@
 #include <templates/List.h>
 #include <drivers/CPU.h>
 #include <Memory.h>
-#include <StringUtil.h>
 
 namespace Kernel
 {

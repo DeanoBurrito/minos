@@ -4,7 +4,7 @@
 #include <PageTableManager.h>
 #include <PageFrameAllocator.h>
 #include <KLog.h>
-#include <StringUtil.h>
+#include <StringExtras.h>
 #include <drivers/CPU.h>
 
 namespace Kernel::Drivers
@@ -66,9 +66,9 @@ namespace Kernel::Drivers
         PageTableManager::The()->MapMemory((void*)virtualAddr, (void*)physicalAddr);
 
         Log("IOAPIC initialized at: 0x", false);
-        Log(ToStrHex(physAddr), false);
+        Log(sl::UIntToString(physAddr, BASE_HEX).Data(), false);
         Log(", id=0x", false);
-        Log(ToStrHex(apicId));
+        Log(sl::UIntToString(apicId, BASE_HEX).Data());
     }
 
     void IOAPIC::WriteRedirectEntry(uint8_t entryNum, const IOApicRedirectEntry& entry)
@@ -124,7 +124,7 @@ namespace Kernel::Drivers
         }
 
         Log("Local APIC found at: 0x", false);
-        Log(ToStrHex(madt->localAddress));
+        Log(sl::UIntToString(madt->localAddress, BASE_HEX).Data());
         localApicAddr = reinterpret_cast<uint32_t*>(madt->localAddress);
 
         //ensure page that contains LAPIC registers is locked and identity mapped
@@ -177,13 +177,13 @@ namespace Kernel::Drivers
                 break;
             }
             Log("Entry Length: 0x", false);
-            Log(ToStr(entry->length));
+            Log(sl::UIntToString(entry->length, BASE_DECIMAL).Data());
 
             entry = (MADTEntry*)((uint64_t)entry + entry->length);
         }
 
         Log("Total processors: ", false);
-        Log(ToStr(totalProcessors));
+        Log(sl::UIntToString(totalProcessors, BASE_DECIMAL).Data());
     }
 
     uint32_t APIC::ReadRegister(LocalApicRegisters reg)

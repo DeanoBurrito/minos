@@ -1,6 +1,6 @@
 #include <drivers/CPU.h>
 #include <KLog.h>
-#include <StringUtil.h>
+#include <StringExtras.h>
 #include <drivers/Serial.h>
 
 #define PORT_TEST_BYTE 0xAE
@@ -20,7 +20,8 @@ namespace Kernel::Drivers
 
         initialized = true;
         address = portAddr;
-        Log("Initializing serial port at: 0x", false); Log(ToStrHex(address));
+        Log("Initializing serial port at: 0x", false); 
+        Log(sl::UIntToString(address, BASE_HEX).Data());
 
         //do the standard serial init dance
         CPU::PortWrite8(address + (uint16_t)RegisterOffsets::InterruptEnable, 0x00);               //disable interrupts

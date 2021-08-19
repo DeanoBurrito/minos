@@ -1,4 +1,4 @@
-#include <StringUtil.h>
+#include <StringExtras.h>
 #include <EfiDefs.h>
 #include <KRenderer.h>
 #include <PageFrameAllocator.h>
@@ -209,7 +209,7 @@ namespace Kernel
         for (int i = 0; i < descriptorCount; i++)
         {
             EfiMemoryDescriptor* descriptor = (EfiMemoryDescriptor*)((uint64_t)rootDescriptor + (i * descriptorSize));
-            KRenderer::The()->Write(ToStr((uint64_t)i));
+            KRenderer::The()->Write(sl::UIntToString((uint64_t)i, BASE_DECIMAL).Data());
             if (i < 10)
                 KRenderer::The()->Write("   ");
             else if (i < 100)
@@ -219,15 +219,15 @@ namespace Kernel
             KRenderer::The()->Write(EFI_MEMORY_TYPE_STRINGS[descriptor->type]);
 
             KRenderer::The()->Write("    size=");
-            KRenderer::The()->Write(ToStr(descriptor->numberOfPages * PAGE_SIZE / 1024));
+            KRenderer::The()->Write(sl::UIntToString(descriptor->numberOfPages * PAGE_SIZE / 1024, BASE_DECIMAL).Data());
             KRenderer::The()->Write("KB");
             KRenderer::The()->Write(", addr=");
-            KRenderer::The()->WriteLine(ToStrHex(descriptor->physicalStart));
+            KRenderer::The()->WriteLine(sl::UIntToString(descriptor->physicalStart, BASE_HEX).Data());
         }
         KRenderer::The()->Write("Entries count: ");
-        KRenderer::The()->WriteLine(ToStr(descriptorCount));
+        KRenderer::The()->WriteLine(sl::UIntToString(descriptorCount, BASE_DECIMAL).Data());
 
         KRenderer::The()->Write("Total mapped memory: ");
-        KRenderer::The()->WriteLine(ToStr(GetTotalMemory()));
+        KRenderer::The()->WriteLine(sl::UIntToString(GetTotalMemory(), BASE_DECIMAL).Data());
     }
 }

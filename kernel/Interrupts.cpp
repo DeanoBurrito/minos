@@ -4,7 +4,7 @@
 #include <drivers/Ps2Keyboard.h>
 #include <drivers/APIC.h>
 #include <KLog.h>
-#include <StringUtil.h>
+#include <StringExtras.h>
 
 namespace InterruptHandlers
 {
@@ -20,7 +20,7 @@ namespace InterruptHandlers
         Kernel::Log("General Protection fault, error code: 0x", false);
         uint64_t errorCode = 0xdeadc0de; //not all zeros, so if it is a zero, we'll know its been set correctly
         asm volatile ("pop %0" : "=g"(errorCode));
-        Kernel::Log(ToStrHex(errorCode));
+        Kernel::Log(sl::UIntToString(errorCode, BASE_HEX).Data()); //NOTE: this will allocate memory, if its a memory issue, thisll overwrite the error codes we want to see.
 
         Kernel::Panic("Protection Fault.");
         Kernel::Drivers::CPU::Halt();

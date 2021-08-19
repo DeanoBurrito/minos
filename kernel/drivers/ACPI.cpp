@@ -1,5 +1,5 @@
 #include <KLog.h>
-#include <StringUtil.h>
+#include <StringExtras.h>
 #include <drivers/ACPI.h>
 #include <Memory.h>
 #include <stddef.h>
@@ -52,7 +52,7 @@ namespace Kernel::Drivers
         }
 
         Log("ACPI subsystem intializing with RSDP=0x", false);
-        Log(ToStrHex((uint64_t)rsdp));
+        Log(sl::UIntToString((uint64_t)rsdp, BASE_HEX).Data());
 
         //https://uefi.org/htmlspecs/ACPI_Spec_6_4_html/
     }
@@ -72,13 +72,13 @@ namespace Kernel::Drivers
         Log(reusableBuffer);
 
         Log("  |- Length: 0x", false);
-        Log(ToStrHex(header->length));
+        Log(sl::UIntToString(header->length, BASE_HEX).Data());
 
         Log("  |- Revision: ", false);
-        Log(ToStr(header->revision));
+        Log(sl::UIntToString(header->revision, BASE_DECIMAL).Data());
 
         Log("  |- Checksum: 0x", false);
-        Log(ToStrHex(header->checksum));
+        Log(sl::UIntToString(header->checksum, BASE_HEX).Data());
 
         Log("  |- OEM ID: ", false);
         sl::memcopy(header->oemId, reusableBuffer, 6);
@@ -91,13 +91,13 @@ namespace Kernel::Drivers
         Log(reusableBuffer);
 
         Log("  |- OEM Revision: ", false);
-        Log(ToStr(header->oemRevision));
+        Log(sl::UIntToString(header->oemRevision, BASE_DECIMAL).Data());
 
         Log("  |- Creator ID: 0x", false);
-        Log(ToStrHex(header->creatorId));
+        Log(sl::UIntToString(header->creatorId, BASE_HEX).Data());
 
         Log("  |- Creator Revision: ", false);
-        Log(ToStr(header->creatorRevision));
+        Log(sl::UIntToString(header->creatorRevision, BASE_DECIMAL).Data());
 
         Log("--[ End Header ]--");
     }
@@ -119,7 +119,7 @@ namespace Kernel::Drivers
         Log(printableSig);
         
         Log("  |- Checksum: 0x", false);
-        Log(ToStrHex(rsdp->checksum));
+        Log(sl::UIntToString(rsdp->checksum, BASE_HEX).Data());
 
         Log("  |- OEM ID: ", false);
         sl::memcopy(rsdp->oemId, printableSig, 6);
@@ -127,19 +127,19 @@ namespace Kernel::Drivers
         Log(printableSig);
 
         Log("  |- Revision: ", false);
-        Log(ToStr(rsdp->revision));
+        Log(sl::UIntToString(rsdp->revision, BASE_DECIMAL).Data());
 
         Log("  |- RSDT addr: 0x", false);
-        Log(ToStrHex(rsdp->rsdtAddress));
+        Log(sl::UIntToString(rsdp->rsdtAddress, BASE_HEX).Data());
 
         Log("  |- Length: 0x", false);
-        Log(ToStrHex(rsdp->length));
+        Log(sl::UIntToString(rsdp->length, BASE_HEX).Data());
 
         Log("  |- XSDT addr: 0x", false);
-        Log(ToStrHex(rsdp->xsdtAddress));
+        Log(sl::UIntToString(rsdp->xsdtAddress, BASE_HEX).Data());
 
         Log("  |- Ext. Checksum: 0x", false);
-        Log(ToStrHex(rsdp->extendedChecksum));
+        Log(sl::UIntToString(rsdp->extendedChecksum, BASE_HEX).Data());
 
         Log("--[ End RSDP ]--");
 

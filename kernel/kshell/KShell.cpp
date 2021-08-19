@@ -1,6 +1,6 @@
 #include <kshell/KShell.h>
 #include <multiprocessing/Scheduler.h>
-#include <StringUtil.h>
+#include <StringExtras.h>
 #include <Memory.h>
 #include <drivers/Serial.h>
 #include <KLog.h>
@@ -176,7 +176,7 @@ namespace Kernel::Shell
         if (echoSerialOut)
         {
             //more slow serial goodness :(
-            int textLen = strlen(line);
+            int textLen = sl::memfirst(line, 0, 0);
             for (int i = 0; i < textLen; i++)
                 SerialPort::COM1()->WriteByte(line[i]);
             SerialPort::COM1()->WriteByte('\n');

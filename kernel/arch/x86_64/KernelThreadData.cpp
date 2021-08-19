@@ -1,7 +1,5 @@
 #include <multiprocessing/Thread.h>
 #include <drivers/APIC.h>
-#include <KLog.h>
-#include <StringUtil.h>
 
 namespace Kernel::Multiprocessing
 {
