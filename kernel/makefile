@@ -59,11 +59,18 @@ run: iso
 debug: iso
 	@qemu-system-x86_64 $(QEMU_FLAGS) -s -S
 
+ifeq ($(BOOT_PLATFORM), multiboot)
+iso: all
+	@cp $(TARGET) $(BOOT_PLATFORM_DIR)/build/kernel.elf
+	@cd $(BOOT_PLATFORM_DIR); make mb-pack
+	@cp $(BOOT_PLATFORM_DIR)/build/kernel-patched.elf $(BUILD_DIR)/kernel-patched.elf
+else
 iso: iso-img
 	@echo CREATING ISO
 	@mkdir -p $(BUILD_DIR)/iso
 	@cp $(TARGET).img $(BUILD_DIR)/iso
 	@cd $(BUILD_DIR); xorriso -as mkisofs -R -f -e $(TARGET_NAME).img -no-emul-boot -o $(TARGET_NAME).iso iso
+endif
 	
 iso-img: all
 	@echo Getting bootloader file
@@ -84,28 +91,7 @@ $(TARGET): $(CPP_OBJS) $(ASM_OBJS) $(LD_SCRIPT) $(CRT_OBJS)
 	@echo LINKING $@
 	@$(LD) $(LD_FLAGS) -T $(LD_SCRIPT) $(BUILD_DIR)/crti.o $(CRTBEGIN_OBJ) $(CPP_OBJS) $(ASM_OBJS) $(CRTEND_OBJ) $(BUILD_DIR)/crtn.o -o $@ $(LD_LIBS) -Wl,--format -Wl,binary -Wl,$(KDISK_FILE)
 
-$(BUILD_DIR)/crti.o: $(ARCH_DIR)/crti.S
-	@echo ASSEMBLING $<
-	@$(ASM) $(ASM_FLAGS) $< --64 -o $@
-
-$(BUILD_DIR)/crtn.o: $(ARCH_DIR)/crtn.S
-	@echo ASSEMBLING $<
-	@$(ASM) $(ASM_FLAGS) $< --64 -o $@
-
-$(BUILD_DIR)/./Interrupts.o: Interrupts.cpp
-	@echo COMPILING $< with special flags
-	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(CXX_INC_DIRS) $(CPP_FLAGS) -mno-sse -mgeneral-regs-only -c $< -o $@
-
-$(BUILD_DIR)/./multiprocessing/Scheduler.o: multiprocessing/Scheduler.cpp
-	@echo COMPILING $< with special flags
-	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(CXX_INC_DIRS) $(CPP_FLAGS) -mno-sse -mgeneral-regs-only -c $< -o $@
-
-$(BUILD_DIR)/./drivers/Ps2Keyboard.o: drivers/Ps2Keyboard.cpp
-	@echo COMPILING $< with special flags
-	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(CXX_INC_DIRS) $(CPP_FLAGS) -mno-sse -mgeneral-regs-only -c $< -o $@
+include overrides.mk
 
 $(BUILD_DIR)/%_asm.o: %.asm
 	@echo ASSEMBLING $<
