@@ -21,9 +21,6 @@ Currently Minos only runs on x86_64 CPUs, and requires uefi support for the boot
 I have do plans to eventually port it to Aarch64 (raspberry pi 3/4), and add a simple bios bootloader as well.
 Best compatability is with QEMU, as that's what I develop it on.
 
-# OS Features
-Right now? Not much. I'm spending lots of exploring documentation, and writing drivers for various parts system components rather than actual features.
-
 # Project Layout
 Currently there are 3 top-level directories, each of these is a mostly isolated sub-project.
 - `boot/`: This is where the bootloaders live. They're mutually exclusive when building, and can be selected in the kernel makefile. 
@@ -44,3 +41,28 @@ This includes the different bootloaders.
 # Other Notes
 compile_flags.txt is specific to my install of all these tools, and may not work for you.
 TODO.txt is notes for my future self on implementation notes and all that.
+
+# Development Goals
+Just here to feel like there's progress being made.
+
+### Previous features
+- [x] Flexible UEFI bootloader
+- [x] IDT and GDT implemented and *understood*
+- [x] PS/2 Keyboard driver
+- [x] Basic memory manager and heap allocator
+- [x] String and string builders
+
+### Next Milestone
+- [x] APIC/IOAPIC drivers
+- [x] HPET driver
+- [ ] Initdisk support
+- [ ] Complete virtual memory manager
+- [ ] Working kernel scheduler
+- [ ] FPU and SSE support
+- [ ] Completed string formatting
+
+### Beyond that
+- [ ] Virtual file system
+- [ ] Userland
+- [ ] Expanded template library
+- [ ] IPC and system calls
