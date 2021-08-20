@@ -2,8 +2,8 @@
 #include <efilib.h>
 #include <elf.h>
 #include <stddef.h>
-#include "BootInfo.h"
-#include "PSF1.h"
+#include "../BootInfo.h"
+#include "../PSF1.h"
 
 void init_gop(BootInfo* bInfo)
 {

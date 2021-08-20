@@ -1,5 +1,5 @@
 #external project references
-GNUEFI_DIR = ../../gnu-efi
+GNUEFI_DIR = ../../../gnu-efi
 OVMF_DIR = /usr/share/ovmf/OVMF.fd
 
 #internal project settings

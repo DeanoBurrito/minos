@@ -1,6 +1,5 @@
 #external project references
-EXT_INCLUDE_DIRS = -I ../bootloader
-BOOTLOADER = ../bootloader/build/booty.efi
+BOOTLOADER_DIR = ../boot
 SYSLIB_DIR = ../syslib
 KDISK_DIR = ../kernel-disk
 KDISK_FILE= $(KDISK_DIR)/$(BUILD_DIR)/kdisk.img
@@ -8,13 +7,14 @@ OVMF_DIR = /usr/share/ovmf/OVMF.fd
 
 #internal project settings
 ARCH = x86_64
+BOOT_PLATFORM = uefi
 BUILD_DIR = build
 ASSETS_DIR = assets
 TARGET_NAME = kernel-$(ARCH).elf
 TARGET = $(BUILD_DIR)/$(TARGET_NAME)
 
 #flags
-CXX_INC_DIRS = $(EXT_INCLUDE_DIRS) -I ./include -I ../syslib/include
+CXX_INC_DIRS = -I ./include -I $(SYSLIB_DIR)/include -I $(BOOTLOADER_DIR)
 CXX_FLAGS = $(ARCH_CXX_FLAGS) -ffreestanding -O2 -fno-rtti -fno-exceptions -mno-red-zone -mcmodel=large -g -Wall
 LD_FLAGS = $(ARCH_LD_FLAGS) -ffreestanding -O2 -nostdlib -fno-rtti -fno-exceptions -g -zmax-page-size=0x1000
 LD_LIBS = -L $(SYSLIB_DIR)/$(BUILD_DIR) -lsyslib -lgcc
@@ -39,6 +39,8 @@ ASM_OBJS = $(patsubst %.asm, $(BUILD_DIR)/%_asm.o, $(ASM_SRCS))
 CRTBEGIN_OBJ = $(shell $(CXX) $(CXX_FLAGS) -print-file-name=crtbegin.o)
 CRTEND_OBJ = $(shell $(CXX) $(CXX_FLAGS) -print-file-name=crtend.o)
 CRT_OBJS = $(CRTBEGIN_OBJ) $(CRTEND_OBJ) $(BUILD_DIR)/crti.o $(BUILD_DIR)/crtn.o
+BOOT_PLATFORM_DIR = $(BOOTLOADER_DIR)/$(ARCH)-$(BOOT_PLATFORM)
+BOOTLOADER_FILE = $(BOOT_PLATFORM_DIR)/build/booty.efi
 
 .PHONY: all clean iso run debug $(TARGET)
 
@@ -47,7 +49,7 @@ all: $(TARGET)
 clean:
 	@echo DELETING $(BUILD_DIR) ...
 	@rm -r $(BUILD_DIR)
-	@cd ../bootloader; make clean;
+	@cd $(BOOT_PLATFORM_DIR); make clean;
 	@cd $(SYSLIB_DIR); make clean;
 	@cd $(KDISK_DIR); make clean;
 
@@ -65,8 +67,8 @@ iso: iso-img
 	
 iso-img: all
 	@echo Getting bootloader file
-	@cd ../bootloader; make all;
-	@cp $(BOOTLOADER) $(BUILD_DIR)/BOOTX64.EFI
+	@cd $(BOOT_PLATFORM_DIR); make all;
+	@cp $(BOOTLOADER_FILE) $(BUILD_DIR)/BOOTX64.EFI
 	@dd if=/dev/zero of=$(TARGET).img bs=1K count=2880
 	@mformat -i $(TARGET).img -f 2880 ::
 	@mmd -i $(TARGET).img ::/EFI
