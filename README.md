@@ -66,3 +66,7 @@ Just here to feel like there's progress being made.
 - [ ] Userland
 - [ ] Expanded template library
 - [ ] IPC and system calls
+- [ ] Multicore booting
+- [ ] Multicore scheduling
+- [ ] Filesystem drivers
+- [ ] Libc implementation
