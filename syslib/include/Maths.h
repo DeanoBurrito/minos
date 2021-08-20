@@ -32,3 +32,6 @@ __attribute__((always_inline)) static uint64_t Float64Bits(double arg)
 
 #define Min(a, b) ( (a) < (b) ? (a) : (b) )
 #define Max(a, b) ( (a) > (b) ? (a) : (b) )
+
+#define FemtoToMillis(femto) ((femto) / 1'000'000'000'000)
+#define MilliToFemtos(milli) ((milli) * 1'000'000'000'000)

@@ -13,6 +13,7 @@
 #include <memory/KHeap.h>
 #include <drivers/ACPI.h>
 #include <drivers/APIC.h>
+#include <drivers/HPET.h>
 #include <multiprocessing/Scheduler.h>
 #include <kshell/KShell.h>
 #include <InitDisk.h>
@@ -122,6 +123,7 @@ namespace Kernel
         Log("Initializing drivers.");
 
         Drivers::ACPI::The()->Init(bootInfo->rsdp);
+        Drivers::HPET::The()->Init();
         Drivers::APIC::Local()->Init();
         Drivers::IOAPIC::InitAll();
 
