@@ -112,7 +112,40 @@ namespace Kernel
 
     void PageTableManager::UnmapMemory(void* virtualAddr)
     {
-        //TODO: unmap virtual memory, free pagetable entry
+        uint64_t pageDirectoryPtr, pageDirectory, pageTable, page;
+        PageFrameAllocator::GetPageMapIndices((uint64_t)virtualAddr, &pageDirectoryPtr, &pageDirectory, &pageTable, &page);
+
+        PageDirectoryEntry entry;
+        PageTable* childTable;
+        void* physicalAddress;
+
+        //chain through each layer of page table, checking if pages are present. If yes, then we unmap it. Otherwise wtf?
+        entry = pml4Addr->entries[pageDirectoryPtr];
+        if (!entry.GetFlag(PageEntryFlags::Present))
+            return; //was never mapped in the first place
+        childTable = reinterpret_cast<PageTable*>((uint64_t)entry.GetAddress() << 12);
+
+        entry = childTable->entries[pageDirectory];
+        if (!entry.GetFlag(PageEntryFlags::Present))
+            return;
+        childTable = reinterpret_cast<PageTable*>((uint64_t)entry.GetAddress() << 12);
+
+        entry = childTable->entries[pageTable];
+        if (!entry.GetFlag(PageEntryFlags::Present))
+            return;
+        childTable = reinterpret_cast<PageTable*>((uint64_t)entry.GetAddress() << 12);
+
+        entry = childTable->entries[page];
+        if (!entry.GetFlag(PageEntryFlags::Present))
+            return;
+
+        //clear flag, place back in page table, and then release physical page
+        entry.SetFlag(PageEntryFlags::Present, false);
+        physicalAddress = (void*)(entry.GetAddress() << 12);
+        entry.SetAddress(0);
+        childTable->entries[page] = entry;
+
+        PageFrameAllocator::The()->FreePage(physicalAddress);
     }
 
     void PageTableManager::MakeCurrentMap()
