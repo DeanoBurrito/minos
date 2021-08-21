@@ -73,7 +73,7 @@ namespace Kernel
         //map some initial pages so we dont instantly page fault
         for (size_t i = 0; i < initialLength; i++)
         {
-            PageTableManager::The()->MapMemory((void*)position, PageFrameAllocator::The()->RequestPage());
+            PageTableManager::The()->MapMemory((void*)position, MemoryMapFlags::WriteAllow);
             position += PAGE_SIZE;
         }
 
@@ -157,7 +157,7 @@ namespace Kernel
 
         for (size_t i = 0; i < requiredPages; i++)
         {
-            PageTableManager::The()->MapMemory(heapEnd, PageFrameAllocator::The()->RequestPage());
+            PageTableManager::The()->MapMemory(heapEnd, MemoryMapFlags::WriteAllow);
             heapEnd = (void*)((size_t)heapEnd + PAGE_SIZE);
         }
 

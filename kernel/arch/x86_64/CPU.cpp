@@ -24,7 +24,7 @@ namespace Kernel::Drivers
         else
             cpuIdSupported = true;
 
-        if (cpuIdSupported > 0)
+        if (cpuIdSupported)
         {
             uint32_t eax, ebx, ecx, edx;
 
@@ -44,8 +44,8 @@ namespace Kernel::Drivers
             cpuIdVendorStr[11] = (ecx & 0xff'00'00'00) >> 24;
             cpuIdVendorStr[12] = 0; //null terminated because i value my sanity.
 
-            //cache leafs 1 and 7
-            __get_cpuid(1, &eax, &ebx, &ecx, &edx);
+            //cache leaf extended leaf 1
+            __get_cpuid(0x80000001, &eax, &ebx, &ecx, &edx);
             cpuId_leaf1_ecx = ecx;
             cpuId_leaf1_edx = edx;
         }
@@ -169,6 +169,8 @@ namespace Kernel::Drivers
             return (cpuId_leaf1_edx & (1 << 18)) != 0;
         case CpuFeatureFlag::CLF:
             return (cpuId_leaf1_edx & (1 << 19)) != 0;
+        case CpuFeatureFlag::NX:
+            return (cpuId_leaf1_edx & (1 << 10)) != 0;
         case CpuFeatureFlag::DTES:
             return (cpuId_leaf1_edx & (1 << 21)) != 0;
         case CpuFeatureFlag::ACPI:
@@ -201,6 +203,14 @@ namespace Kernel::Drivers
         asm volatile("mov %0, %%cr3"
                      :
                      : "r"(topLevelAddress));
+    }
+
+    void CPU::InvalidatePageTable(void* tableAddress)
+    {
+        asm volatile("invlpg (%0)"
+                    :
+                    : "r"((uint64_t)tableAddress)
+                    : "memory");
     }
 
     extern "C" 

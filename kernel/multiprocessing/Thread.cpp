@@ -26,7 +26,7 @@ namespace Kernel::Multiprocessing
             if (stackStart == nullptr)
                 stackStart = nextPage;
 
-            PageTableManager::The()->MapMemory((void*)((uint64_t)stackStart + i * PAGE_SIZE), nextPage);
+            PageTableManager::The()->MapMemory((void*)((uint64_t)stackStart + i * PAGE_SIZE), nextPage, MemoryMapFlags::WriteAllow);
         }
 
         //place kernel thread data at start of stack, then populate it

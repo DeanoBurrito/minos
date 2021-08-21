@@ -60,6 +60,7 @@ namespace Kernel::Drivers
         PSE36,
         PSN,
         CLF,
+        NX,
         DTES,
         ACPI,
         MMX,
@@ -85,6 +86,7 @@ namespace Kernel::Drivers
         static bool FeatureSupported(CpuFeatureFlag flag);
 
         static void LoadPageTableMap(void* toplevelAddress);
+        static void InvalidatePageTable(void* tableAddress);
         static void LoadGDT(GDTDescriptor* address);
         static void LoadIDT(IDTR* idtr);
         static void Halt();

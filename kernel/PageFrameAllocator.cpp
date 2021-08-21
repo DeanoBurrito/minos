@@ -1,6 +1,5 @@
 #include <StringExtras.h>
 #include <EfiDefs.h>
-#include <KRenderer.h>
 #include <PageFrameAllocator.h>
 
 namespace Kernel
@@ -39,29 +38,6 @@ namespace Kernel
         for (int i = 0; i < count; i++)
         {
             ReservePage((void*)((uint64_t)addr + (i * PAGE_SIZE)));
-        }
-    }
-
-    void PageFrameAllocator::UnreservePage(void* addr)
-    {
-        uint64_t index = (uint64_t)addr / PAGE_SIZE;
-        if (!pageBitmap[index])
-            return;
-
-        if (!pageBitmap.Set(index, false))
-            return;
-
-        freeMemory += PAGE_SIZE;
-        reservedMemory -= PAGE_SIZE;
-        if (index < allocateStartIndex)
-            allocateStartIndex = index;
-    }
-
-    void PageFrameAllocator::UnreservePages(void* addr, uint64_t count)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            UnreservePage((void*)((uint64_t)addr + (i * PAGE_SIZE)));
         }
     }
 
@@ -127,7 +103,7 @@ namespace Kernel
     {
         uint64_t index = (uint64_t)addr / PAGE_SIZE;
         if (!pageBitmap[index])
-            return;
+            return; //TODO: check if page is reserved. If it is, ignore the call to free the page.
 
         if (!pageBitmap.Set(index, false))
             return; //dud address, just return.
@@ -202,32 +178,5 @@ namespace Kernel
         }
 
         return memoryBytes;
-    }
-
-    void PageFrameAllocator::DumpMemoryInfo()
-    {
-        for (int i = 0; i < descriptorCount; i++)
-        {
-            EfiMemoryDescriptor* descriptor = (EfiMemoryDescriptor*)((uint64_t)rootDescriptor + (i * descriptorSize));
-            KRenderer::The()->Write(sl::UIntToString((uint64_t)i, BASE_DECIMAL).Data());
-            if (i < 10)
-                KRenderer::The()->Write("   ");
-            else if (i < 100)
-                KRenderer::The()->Write("  ");
-            else
-                KRenderer::The()->Write(" ");
-            KRenderer::The()->Write(EFI_MEMORY_TYPE_STRINGS[descriptor->type]);
-
-            KRenderer::The()->Write("    size=");
-            KRenderer::The()->Write(sl::UIntToString(descriptor->numberOfPages * PAGE_SIZE / 1024, BASE_DECIMAL).Data());
-            KRenderer::The()->Write("KB");
-            KRenderer::The()->Write(", addr=");
-            KRenderer::The()->WriteLine(sl::UIntToString(descriptor->physicalStart, BASE_HEX).Data());
-        }
-        KRenderer::The()->Write("Entries count: ");
-        KRenderer::The()->WriteLine(sl::UIntToString(descriptorCount, BASE_DECIMAL).Data());
-
-        KRenderer::The()->Write("Total mapped memory: ");
-        KRenderer::The()->WriteLine(sl::UIntToString(GetTotalMemory(), BASE_DECIMAL).Data());
     }
 }

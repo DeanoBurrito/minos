@@ -39,17 +39,14 @@ namespace Kernel
 
         void InitBitmap(uint64_t size, void* bufferAddr);
 
-        void ReservePage(void* addr);
-        void ReservePages(void* addr, uint64_t count);
-        void UnreservePage(void* addr);
-        void UnreservePages(void* addr, uint64_t count);
-
     public:
         static PageFrameAllocator* The();
         static void GetPageMapIndices(uint64_t virtualAddress, uint64_t* pdpIndex, uint64_t* pdIndex, uint64_t* ptIndex, uint64_t* pageIndex);
 
         void Init(BootInfo* bootInfo);
 
+        void ReservePage(void* addr);
+        void ReservePages(void* addr, uint64_t count);
         void FreePage(void* addr);
         void FreePages(void* addr, uint64_t count);
         void LockPage(void* addr);
@@ -59,6 +56,5 @@ namespace Kernel
 
         MemoryUsage GetMemoryUsage();
         uint64_t GetTotalMemory();
-        void DumpMemoryInfo();
     };
 }

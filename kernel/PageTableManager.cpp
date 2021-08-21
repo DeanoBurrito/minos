@@ -3,8 +3,20 @@
 #include <Memory.h>
 #include <drivers/CPU.h>
 
+#define X86_MSR_EFER 0xC0000080
+
 namespace Kernel
-{
+{   
+    MemoryMapFlags operator&(MemoryMapFlags a, MemoryMapFlags b)
+    {
+        return static_cast<MemoryMapFlags>((uint64_t)a & (uint64_t)b);
+    }
+
+    MemoryMapFlags operator|(MemoryMapFlags a, MemoryMapFlags b)
+    {
+        return static_cast<MemoryMapFlags>((uint64_t)a | (uint64_t)b);
+    }
+    
     void PageDirectoryEntry::SetFlag(PageEntryFlags flag, bool enabled)
     {
         uint64_t mask = (uint64_t)1 << (uint64_t)flag;
@@ -40,74 +52,99 @@ namespace Kernel
     void PageTableManager::Init(PageTable* pml4Address)
     {
         pml4Addr = pml4Address;
+
+        using namespace Drivers;
+        noExecuteSupport = CPU::FeatureSupported(CpuFeatureFlag::NX);
+        if (noExecuteSupport)
+        {
+            uint64_t currentEfer = CPU::ReadMSR(X86_MSR_EFER);
+            currentEfer |= 1 << 11;
+            CPU::WriteMSR(X86_MSR_EFER, currentEfer);
+        }
     }
 
-    void PageTableManager::MapMemory(void* virtualAddr, void* physicalAddr)
+    void PageTableManager::MapMemory(void* virtualAddr, MemoryMapFlags flags)
     {
-        uint64_t pageDirectoryPtr, pageDirectory, pageTable, page;
-        PageFrameAllocator::GetPageMapIndices((uint64_t)virtualAddr, &pageDirectoryPtr, &pageDirectory, &pageTable, &page);
-        PageDirectoryEntry pageEntry;
+        return MapMemory(virtualAddr, PageFrameAllocator::The()->RequestPage(), flags);
+    }
 
-        //Getting page directory pointer
-        pageEntry = pml4Addr->entries[pageDirectoryPtr];
-        PageTable* pdp;
-        if (!pageEntry.GetFlag(PageEntryFlags::Present))
+    void PageTableManager::MapMemory(void* virtualAddr, void* physicalAddr, MemoryMapFlags flags)
+    {
+        uint64_t pd4Index, pd3Index, pd2Index, pageIndex;
+        PageFrameAllocator::GetPageMapIndices((uint64_t)virtualAddr, &pd4Index, &pd3Index, &pd2Index, &pageIndex);
+        PageDirectoryEntry entry;
+        PageTable* localTable;
+        PageTable* prevTable;
+
+        entry = pml4Addr->entries[pd4Index];
+        if (!entry.GetFlag(PageEntryFlags::Present))
         {
-            pdp = (PageTable*)PageFrameAllocator::The()->RequestPage();
-            sl::memset(pdp, 0, PAGE_SIZE);
+            //allocate a physical page, zero-init it and set required flags
+            localTable = reinterpret_cast<PageTable*>(PageFrameAllocator::The()->RequestPage());
+            sl::memset(localTable, 0, PAGE_SIZE);
 
-            pageEntry.SetAddress((uint64_t)pdp >> 12);
-            pageEntry.SetFlag(PageEntryFlags::Present, true);
-            pageEntry.SetFlag(PageEntryFlags::ReadWrite, true);
-            pml4Addr->entries[pageDirectoryPtr] = pageEntry;
+            entry.SetAddress((uint64_t)localTable >> 12);
+            entry.SetFlag(PageEntryFlags::Present, true);
+            entry.SetFlag(PageEntryFlags::ReadWrite, true);
+            pml4Addr->entries[pd4Index] = entry;
         }
         else
-        {
-            pdp = (PageTable*)((uint64_t)pageEntry.GetAddress() << 12);
-        }
+            localTable = reinterpret_cast<PageTable*>((uint64_t)entry.GetAddress() << 12);
 
-        //Getting page directory
-        pageEntry = pdp->entries[pageDirectory];
-        PageTable* pd;
-        if (!pageEntry.GetFlag(PageEntryFlags::Present))
+        prevTable = localTable;
+        entry = localTable->entries[pd3Index];
+        if (!entry.GetFlag(PageEntryFlags::Present))
         {
-            pd = (PageTable*)PageFrameAllocator::The()->RequestPage();
-            sl::memset(pd, 0, PAGE_SIZE);
+            //same as above
+            localTable = reinterpret_cast<PageTable*>(PageFrameAllocator::The()->RequestPage());
+            sl::memset(localTable, 0, PAGE_SIZE);
 
-            pageEntry.SetAddress((uint64_t)pd >> 12);
-            pageEntry.SetFlag(PageEntryFlags::Present, true);
-            pageEntry.SetFlag(PageEntryFlags::ReadWrite, true);
-            pdp->entries[pageDirectory] = pageEntry;
+            entry.SetAddress((uint64_t)localTable >> 12);
+            entry.SetFlag(PageEntryFlags::Present, true);
+            entry.SetFlag(PageEntryFlags::ReadWrite, true);
+            prevTable->entries[pd3Index] = entry;
         }
         else
-        {
-            pd = (PageTable*)((uint64_t)pageEntry.GetAddress() << 12);
-        }
+            localTable = reinterpret_cast<PageTable*>((uint64_t)entry.GetAddress() << 12);
 
-        //Getting page table
-        pageEntry = pd->entries[pageTable];
-        PageTable* pt;
-        if (!pageEntry.GetFlag(PageEntryFlags::Present))
+        prevTable = localTable;
+        entry = localTable->entries[pd2Index];
+        if (!entry.GetFlag(PageEntryFlags::Present))
         {
-            pt = (PageTable*)PageFrameAllocator::The()->RequestPage();
-            sl::memset(pt, 0, PAGE_SIZE);
+            localTable = reinterpret_cast<PageTable*>(PageFrameAllocator::The()->RequestPage());
+            sl::memset(localTable, 0, PAGE_SIZE);
 
-            pageEntry.SetAddress((uint64_t)pt >> 12);
-            pageEntry.SetFlag(PageEntryFlags::Present, true);
-            pageEntry.SetFlag(PageEntryFlags::ReadWrite, true);
-            pd->entries[pageTable] = pageEntry;
+            entry.SetAddress((uint64_t)localTable >> 12);
+            entry.SetFlag(PageEntryFlags::Present, true);
+            entry.SetFlag(PageEntryFlags::ReadWrite, true);
+            prevTable->entries[pd2Index] = entry;
         }
         else
-        {
-            pt = (PageTable*)((uint64_t)pageEntry.GetAddress() << 12);
-        }
+            localTable = reinterpret_cast<PageTable*>((uint64_t)entry.GetAddress() << 12);
+    
+        //TODO: lazy allocation/ImmediateAlloc flag.
+        //since we dont know where the physical address came from, make sure it dosnt get re-assigned.
+        // if ((flags & MemoryMapFlags::EternalClaim) != MemoryMapFlags::None)
+        //     PageFrameAllocator::The()->ReservePage(physicalAddr);
+        // else
+        //     PageFrameAllocator::The()->LockPage(physicalAddr);
+        
+        entry = localTable->entries[pageIndex];
+        entry.SetAddress((uint64_t)physicalAddr >> 12);
+        entry.SetFlag(PageEntryFlags::Present, true);
 
-        //Getting the page entry itself
-        pageEntry = pt->entries[page];
-        pageEntry.SetAddress((uint64_t)physicalAddr >> 12);
-        pageEntry.SetFlag(PageEntryFlags::Present, true);
-        pageEntry.SetFlag(PageEntryFlags::ReadWrite, true);
-        pt->entries[page] = pageEntry;
+        //set any requested flags
+        if ((flags & MemoryMapFlags::WriteAllow) != MemoryMapFlags::None)
+            entry.SetFlag(PageEntryFlags::ReadWrite, true);
+        if ((flags & MemoryMapFlags::ExecuteAllow) == MemoryMapFlags::None && noExecuteSupport)
+            entry.SetFlag(PageEntryFlags::NoExecute, true);
+        if ((flags & MemoryMapFlags::DisableCache) != MemoryMapFlags::None)
+            entry.SetFlag(PageEntryFlags::CacheDisabled, true);
+        if ((flags & MemoryMapFlags::DisablePrivChecks) == MemoryMapFlags::None)
+            entry.SetFlag(PageEntryFlags::SuperOnly, true);
+
+        //update values in page table
+        localTable->entries[pageIndex] = entry;
     }
 
     void PageTableManager::UnmapMemory(void* virtualAddr)
@@ -146,6 +183,7 @@ namespace Kernel
         childTable->entries[page] = entry;
 
         PageFrameAllocator::The()->FreePage(physicalAddress);
+        Drivers::CPU::InvalidatePageTable(childTable); //TODO: this is processor specific, we'll need to sync this up across multiple cores later.
     }
 
     void PageTableManager::MakeCurrentMap()

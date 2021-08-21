@@ -45,7 +45,7 @@ namespace Kernel::Drivers
         Log(sl::UIntToString(baseAddress, BASE_HEX).Data());
 
         //ensure hpet memory is identity mapped
-        PageTableManager::The()->MapMemory((void*)baseAddress, (void*)baseAddress);
+        PageTableManager::The()->MapMemory((void*)baseAddress, (void*)baseAddress, MemoryMapFlags::WriteAllow | MemoryMapFlags::EternalClaim);
 
         capabilities.squish = ReadRegister((uint64_t)HPETRegister::GeneralCapabilitiesID);
         string format = "HPET capabilities: rev=%u, timers=%u, main_counter64=%u, period=0x%x";

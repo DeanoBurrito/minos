@@ -49,7 +49,7 @@ namespace Kernel
 
         //identity map all pages for now. TODO: only map what we need
         for (uint64_t i = 0; i < PageFrameAllocator::The()->GetTotalMemory(); i += PAGE_SIZE)
-            PageTableManager::The()->MapMemory((void*)i, (void*)i);
+            PageTableManager::The()->MapMemory((void*)i, (void*)i, MemoryMapFlags::WriteAllow);
 
         //identity map GOP framebuffer and lock pages
         uint64_t fbBase = (uint64_t)bootInfo->gop.baseAddress;
@@ -57,7 +57,7 @@ namespace Kernel
         PageFrameAllocator::The()->LockPages((void*)fbBase, fbSize / PAGE_SIZE + 1);
 
         for (uint64_t i = fbBase; i < fbBase + fbSize; i += PAGE_SIZE)
-            PageTableManager::The()->MapMemory((void*)i, (void*)i);
+            PageTableManager::The()->MapMemory((void*)i, (void*)i, MemoryMapFlags::WriteAllow);
 
         PageTableManager::The()->MakeCurrentMap();
 

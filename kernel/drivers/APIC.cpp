@@ -74,9 +74,8 @@ namespace Kernel::Drivers
     void IOAPIC::Init(uint8_t apicId, uint32_t physAddr, uint32_t gsiBase)
     {
         id = apicId;
-        virtualAddr = (uint64_t)PageFrameAllocator::The()->RequestPage();
-        physicalAddr = physAddr;
-        PageTableManager::The()->MapMemory((void*)virtualAddr, (void*)physicalAddr);
+        physicalAddr = virtualAddr = physAddr;
+        PageTableManager::The()->MapMemory((void*)virtualAddr, (void*)physicalAddr, MemoryMapFlags::WriteAllow | MemoryMapFlags::EternalClaim);
 
         Log("IOAPIC initialized at: 0x", false);
         Log(sl::UIntToString(physAddr, BASE_HEX).Data(), false);
@@ -141,7 +140,7 @@ namespace Kernel::Drivers
         localApicAddr = reinterpret_cast<uint32_t*>(madt->localAddress);
 
         //ensure page that contains LAPIC registers is locked and identity mapped
-        PageTableManager::The()->MapMemory(localApicAddr, localApicAddr);
+        PageTableManager::The()->MapMemory(localApicAddr, localApicAddr, MemoryMapFlags::WriteAllow | MemoryMapFlags::EternalClaim);
 
         //This 'refreshes' the LAPIC, enabling the hardware if it was disabled at boot for some reason.
         SetLocalBase(GetLocalBase());
