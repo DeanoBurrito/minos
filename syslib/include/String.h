@@ -3,6 +3,9 @@
 #include <stddef.h>
 #include <Memory.h>
 #include <stdint-gcc.h>
+#include <Limits.h>
+
+#define TOKEN_NOT_FOUND UINT64_UPPER_LIMIT
 
 namespace sl
 {   
@@ -29,6 +32,8 @@ namespace sl
         bool IsEmpty() const;
         size_t Size() const;
         String SubString(size_t start, size_t length) const;
+
+        size_t Find(const char token, size_t offset = 0) const;
 
         char& At(size_t index);
         const char& At(size_t index) const;

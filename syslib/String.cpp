@@ -102,6 +102,17 @@ namespace sl
         return temp;
     }
 
+    size_t String::Find(const char token, size_t offset) const
+    {
+        size_t where = memfirst(buffer, offset, token, length);
+        
+        if (where > 0)
+            return where;
+        if (buffer[0] == token)
+            return 0;
+        return TOKEN_NOT_FOUND;
+    }
+
     char& String::At(size_t index)
     {
         if (index >= length)
