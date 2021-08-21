@@ -99,7 +99,7 @@ PSF1_Font* load_font(EFI_FILE* directory, CHAR16* path, EFI_HANDLE imageHandle, 
     return fontObj;
 }
 
-void init_memmap(BootInfo *bInfo)
+UINTN init_memmap(BootInfo *bInfo)
 {
     EFI_MEMORY_DESCRIPTOR *map = NULL;
     UINTN mapSize;
@@ -111,11 +111,27 @@ void init_memmap(BootInfo *bInfo)
     uefi_call_wrapper(ST->BootServices->AllocatePool, 3, EfiLoaderData, mapSize, (void**)&map);
     uefi_call_wrapper(ST->BootServices->GetMemoryMap, 5, &mapSize, map, &mapKey, &descriptorSize, &descriptorVersion);
 
-    bInfo->memoryMap.descriptor = map;
-    bInfo->memoryMap.descriptorSize = descriptorSize;
-    bInfo->memoryMap.size = mapSize;
-    bInfo->memoryMap.key = mapKey;
-    bInfo->memoryMap.descriptorVersion = descriptorVersion;
+    //marshal descriptors into boot info
+    bInfo->memoryDescriptorsCount = mapSize / descriptorSize;
+    uefi_call_wrapper(ST->BootServices->AllocatePool, 3, EfiLoaderData, bInfo->memoryDescriptorsCount * sizeof(MemoryRegionDescriptor), (void**)&bInfo->memoryDescriptors);
+    MemoryRegionDescriptor* descriptor = bInfo->memoryDescriptors;
+
+    for (size_t i  = 0; i < bInfo->memoryDescriptorsCount; i++)
+    {
+        descriptor->physicalStart = map->PhysicalStart;
+        descriptor->virtualStart = map->VirtualStart;
+        descriptor->numberOfPages = map->NumberOfPages;
+        
+        if (map->Type == EfiConventionalMemory)
+            descriptor->flags = MEMORY_DESCRIPTOR_FREE;
+        else
+            descriptor->flags = MEMORY_DESCRIPTOR_RESERVED;
+        
+        descriptor++;
+        map = (EFI_MEMORY_DESCRIPTOR*)((uint64_t)map + descriptorSize);
+    }
+
+    return mapKey;
 }
 
 int memcmp(const void* aPtr, const void* bPtr, size_t n)
@@ -245,11 +261,11 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable
     init_gop(&bootInfo);
     Print(L"GOP: base=0x%x size=0x%x width=%d height=%d pps=%d format=%d\n\r", bootInfo.gop.baseAddress, bootInfo.gop.bufferSize, bootInfo.gop.width, bootInfo.gop.height, bootInfo.gop.pixelsPerScanline, bootInfo.gop.pixelFormat);
 
-    init_memmap(&bootInfo);
+    UINTN memoryMapKey = init_memmap(&bootInfo);
     Print(L"\n\r");
 
     //VERY IMPORTANT: if we neglect this, UEFI will assume continued ownership of system, and we'll be in all sorts of chaos ;-;
-    systemTable->BootServices->ExitBootServices(imageHandle, bootInfo.memoryMap.key);
+    systemTable->BootServices->ExitBootServices(imageHandle, memoryMapKey);
     
     void (*KernelMain)(BootInfo*) = ((__attribute__((sysv_abi)) void (*)(BootInfo*) ) header.e_entry);
     KernelMain(&bootInfo);

@@ -1,5 +1,4 @@
 #include <StringExtras.h>
-#include <EfiDefs.h>
 #include <PageFrameAllocator.h>
 
 namespace Kernel
@@ -43,25 +42,24 @@ namespace Kernel
 
     void PageFrameAllocator::Init(BootInfo* bootInfo)
     {
-        descriptorSize = bootInfo->memoryMap.descriptorSize;
-        descriptorCount = bootInfo->memoryMap.size / bootInfo->memoryMap.descriptorSize;
-        descriptorMapSize = bootInfo->memoryMap.size;
-        rootDescriptor = bootInfo->memoryMap.descriptor;
-
-        //find largest segment of usable memory
-        EfiMemoryDescriptor* largestDescriptor = nullptr;
+        rootDescriptor = bootInfo->memoryDescriptors;
+        descriptorCount = bootInfo->memoryDescriptorsCount;
+        
+        //find largest segment of usuable memory
+        MemoryRegionDescriptor* largest = nullptr;
+        MemoryRegionDescriptor* scan = rootDescriptor;
         uint64_t largestSize = 0;
-        for (int i = 0; i < descriptorCount; i++)
+        for (size_t i = 0; i < descriptorCount; i++)
         {
-            EfiMemoryDescriptor* localDesc = (EfiMemoryDescriptor*)((uint64_t)rootDescriptor + (i * descriptorSize));
-            if (localDesc->type == (uint32_t)EfiMemoryDescriptorType::EfiConventionalMemory)
+            if (scan->flags == MEMORY_DESCRIPTOR_FREE)
             {
-                if (localDesc->numberOfPages * PAGE_SIZE > largestSize)
+                if (scan->numberOfPages > largestSize)
                 {
-                    largestSize = localDesc->numberOfPages * PAGE_SIZE;
-                    largestDescriptor = localDesc;
+                    largestSize = scan->numberOfPages;
+                    largest = scan;
                 }
             }
+            scan++;
         }
 
         //initialize bitmap
@@ -69,18 +67,16 @@ namespace Kernel
         freeMemory = memorySize;
         uint64_t bitmapSize = memorySize / PAGE_SIZE / 8 + 1;
 
-        InitBitmap(bitmapSize, (void*)largestDescriptor->physicalStart);
+        InitBitmap(bitmapSize, (void*)largest->physicalStart);
 
         //lock bitmap pages, and set bits for reserved memory
         LockPages(&pageBitmap, pageBitmap.size / PAGE_SIZE + 1);
-        for (int i = 0; i < descriptorCount; i++)
+        scan = rootDescriptor;
+        for (size_t i = 0; i < descriptorCount; i++)
         {
-            EfiMemoryDescriptor* localDesc = (EfiMemoryDescriptor*)((uint64_t)rootDescriptor + (i * descriptorSize));
-            if (localDesc->type != (uint32_t)EfiMemoryDescriptorType::EfiConventionalMemory)
-            {
-                //not conventional memory, reserve it
-                ReservePages((void*)localDesc->physicalStart, localDesc->numberOfPages);
-            }
+            if (scan->flags == MEMORY_DESCRIPTOR_RESERVED)
+                ReservePages((void*)scan->physicalStart, scan->numberOfPages);
+            scan++;
         }
     }
 
@@ -171,10 +167,11 @@ namespace Kernel
         if (memoryBytes > 0)
             return memoryBytes;
 
+        MemoryRegionDescriptor* scan = rootDescriptor;
         for (uint64_t i = 0; i < descriptorCount; i++)
         {
-            EfiMemoryDescriptor* descriptor = (EfiMemoryDescriptor*)((uint64_t)rootDescriptor + (i * descriptorSize));
-            memoryBytes += descriptor->numberOfPages * PAGE_SIZE;
+            memoryBytes += scan->numberOfPages * PAGE_SIZE;
+            scan++;
         }
 
         return memoryBytes;

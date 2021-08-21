@@ -25,10 +25,8 @@ namespace Kernel
     class PageFrameAllocator
     {
     private:
-        EfiMemoryDescriptor* rootDescriptor;
+        MemoryRegionDescriptor* rootDescriptor;
         uint64_t descriptorCount;
-        uint64_t descriptorSize;
-        uint64_t descriptorMapSize;
 
         Bitmap pageBitmap;
         uint64_t freeMemory;

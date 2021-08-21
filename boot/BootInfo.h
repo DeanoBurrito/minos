@@ -12,14 +12,16 @@
 #define PIXEL_FORMAT_RedGreenBlueReserved_8BPP 1
 #define PIXEL_FORMAT_BlueGreenRedReserved_8BPP 2
 
+#define MEMORY_DESCRIPTOR_RESERVED 0x0
+#define MEMORY_DESCRIPTOR_FREE 0x1
+
 typedef struct
 {
-    uint64_t type;
     uint64_t physicalStart;
     uint64_t virtualStart;
     uint64_t numberOfPages;
-    uint64_t attribute;
-} EfiMemoryDescriptor;
+    uint64_t flags;
+} MemoryRegionDescriptor;
 
 typedef struct
 {
@@ -35,15 +37,8 @@ typedef struct
 
     PSF1_Font *font;
 
-    struct EfiMemoryMap
-    {
-        EfiMemoryDescriptor *descriptor;
-
-        uint64_t size;
-        uint64_t descriptorSize;
-        uint64_t key;
-        uint32_t descriptorVersion;
-    } memoryMap;
+    uint64_t memoryDescriptorsCount;
+    MemoryRegionDescriptor* memoryDescriptors;
 
     void* rsdp;
 } BootInfo;
