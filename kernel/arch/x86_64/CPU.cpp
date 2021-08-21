@@ -170,7 +170,7 @@ namespace Kernel::Drivers
         case CpuFeatureFlag::CLF:
             return (cpuId_leaf1_edx & (1 << 19)) != 0;
         case CpuFeatureFlag::NX:
-            return (cpuId_leaf1_edx & (1 << 10)) != 0;
+            return (cpuId_leaf1_edx & (1 << 20)) != 0;
         case CpuFeatureFlag::DTES:
             return (cpuId_leaf1_edx & (1 << 21)) != 0;
         case CpuFeatureFlag::ACPI:
