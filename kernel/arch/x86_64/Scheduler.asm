@@ -56,8 +56,13 @@ SchedulerTimerInterruptHandler:
     mov %gs, 0xB8(%rdi)
 
     # Now that registers have been saved, we're safe to call other routines, without fear of trashing anything
+    jmp LoadNextThread
 
 SkipSave:
+    #no need to save previous regs, just need to clean %rdi from the stack
+    pop %rdi
+
+LoadNextThread:
     # Call switchnext() to load the next thread
     call Scheduler_SwitchNext
 
