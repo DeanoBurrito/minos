@@ -14,6 +14,7 @@
 #include <drivers/ACPI.h>
 #include <drivers/APIC.h>
 #include <drivers/HPET.h>
+#include <drivers/8253PIT.h>
 #include <multiprocessing/Scheduler.h>
 #include <kshell/KShell.h>
 #include <InitDisk.h>
@@ -110,6 +111,11 @@ namespace Kernel
         //scheduler timer callback
         idtr.SetEntry((void*)SchedulerTimerInterruptHandler, INTERRUPT_VECTOR_TIMER, IDT_ATTRIBS_InterruptGate, 0x08);
 
+        //setting up irq0 (pin2) to send us ticks
+        idtr.SetEntry((void*)InterruptHandlers::DefaultTimerHandler, INTERRUPT_VECTOR_TIMER_CALIBRATE, IDT_ATTRIBS_InterruptGate, 0x08);
+        auto pitRedirect = IOAPIC::CreateRedirectEntry(INTERRUPT_VECTOR_TIMER_CALIBRATE, Drivers::APIC::Local()->GetID(), IOAPIC_PIN_POLARITY_ACTIVE_HIGH, IOAPIC_TRIGGER_MODE_EDGE, true);
+        Drivers::IOAPIC::ioApics.PeekFront()->WriteRedirectEntry(2, pitRedirect); //TODO: magic numbers here!
+
         //load idt and enable interrupts
         CPU::LoadIDT(&idtr);
         CPU::EnableInterrupts();
@@ -122,6 +128,7 @@ namespace Kernel
     {
         Log("Initializing drivers.");
 
+        Drivers::PIT::Init();
         Drivers::ACPI::The()->Init(bootInfo->rsdp);
         Drivers::HPET::The()->Init();
         Drivers::APIC::Local()->Init();
@@ -134,6 +141,8 @@ namespace Kernel
     {
         using namespace Kernel::Multiprocessing;
         Log("Exiting kernel init, preparing to run scheduled tasks.");
+
+        Drivers::APIC::Local()->CalibrateTimer();
 
         //prepare to move to scheduled threads
         Scheduler::The()->Init();

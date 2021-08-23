@@ -1,7 +1,5 @@
-*Project Refactoring - First order of business*
-    -Remove identity mapping all memory. If devices need mapped memory, we should be mapping + locking it as we need it.
-
---------------------------------
+HPET:
+    -Investigate what's actually going on here, PIT still seems to be active even after being disabled. HPET timers are not generating interrupts.
 
 Strings (syslib):
     -Formatting functions, for converting PODs to strings, emplacing within strings, and extracting.
@@ -13,6 +11,7 @@ Memory:
     -Turn KHeap into a generic heap allocator, and rename it.
     -Ability to reserve pages, backed with a 'read only' a static page of zeros. Replace with real page only once written to.
     -Kernel-Eternal mapping: memory that'll never be freed during system runtime (all the globals), mark it as reserved into of claimed.
+    -Investigate crashes upon only mapping kernel-memory, why do we need to identity map ALL memory?
 
 Logging:
     -Improve use of kernel Log()

@@ -48,16 +48,26 @@ namespace Kernel::Drivers
         PageTableManager::The()->MapMemory((void*)baseAddress, (void*)baseAddress, MemoryMapFlags::WriteAllow | MemoryMapFlags::EternalClaim);
 
         capabilities.squish = ReadRegister((uint64_t)HPETRegister::GeneralCapabilitiesID);
+        capabilities.timersCount++; //NOTE: this value is the highest timer, zero-indexed, so the count is val+1.
+        comparatorCount = capabilities.timersCount;
+
         string format = "HPET capabilities: rev=%u, timers=%u, main_counter64=%u, period=0x%x";
         Log(sl::FormatToString(0, &format, capabilities.revisionId, capabilities.timersCount, capabilities.largeMainCounter, capabilities.mainCounterPeriod).Data());
 
+        //TODO: since timers are only allowed certain routing, we should try and reserve those here.
+
         //enable main counter, disable legacy routing.
-        WriteRegister((uint64_t)HPETRegister::GeneralConfig, 0x1);
+        WriteRegister((uint64_t)HPETRegister::GeneralConfig, 0b01);
     }
 
     void HPET::PrintInfo()
     {
         //TODO: low hanging fruit here
+    }
+
+    uint8_t HPET::GetTimerCount()
+    {
+        return comparatorCount;
     }
 
     TimerConfigCapabilities HPET::GetTimerCapabilities(uint8_t index)

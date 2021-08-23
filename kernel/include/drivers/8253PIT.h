@@ -17,7 +17,9 @@ namespace Kernel::Drivers
     private:
 
     public:
-        static void StartTimer(uint16_t hertz);
+        static uint64_t ticks;
+
+        static void Init();
         static void Disable();
     };
 }

@@ -1,15 +1,20 @@
 #include <drivers/APIC.h>
 #include <drivers/ACPI.h>
 #include <drivers/8259PIC.h>
+#include <drivers/HPET.h>
+#include <drivers/8253PIT.h>
 #include <PageTableManager.h>
-#include <PageFrameAllocator.h>
+#include <Interrupts.h>
 #include <KLog.h>
 #include <StringExtras.h>
+#include <Formatting.h>
 #include <drivers/CPU.h>
+#include <Maths.h>
 
 namespace Kernel::Drivers
 {
     sl::LinkedList<IOAPIC*> IOAPIC::ioApics;
+    sl::List<IOApicSourceOverride> IOAPIC::ioApicSourceOverrides;
 
     uint32_t IOAPIC::ReadRegister(uint64_t offset)
     {
@@ -19,7 +24,7 @@ namespace Kernel::Drivers
             The same is true for reading the register
         */
         *(uint32_t*)virtualAddr = offset;
-        return *(uint32_t*)(virtualAddr + 0x10);
+        return (*(uint32_t*)(virtualAddr + 0x10));
     }
 
     void IOAPIC::WriteRegister(uint64_t offset, uint32_t value)
@@ -37,6 +42,9 @@ namespace Kernel::Drivers
             return;
         }
 
+        //more than any known ioapic is known to have, so this should be fine. It can expand dynamically if needed.
+        ioApicSourceOverrides.Reserve(0x20);
+
         uint64_t madtLength = (uint64_t)madt + madt->header.length;
         MADTEntry* entry = reinterpret_cast<MADTEntry*>((uint64_t)madt + 0x2C);
         while ((uint64_t)entry < madtLength)
@@ -44,6 +52,7 @@ namespace Kernel::Drivers
             switch (entry->type)
             {
             case MADTEntryType::IOAPIC:
+            {
                 uint8_t apicId = reinterpret_cast<uint8_t>(*(uint8_t*)((uint64_t)entry + 0x2));
                 uint32_t physicalAddr = reinterpret_cast<uint32_t>(*(uint32_t*)((uint64_t)entry + 0x4));
                 uint32_t gsiBase = reinterpret_cast<uint32_t>(*(uint32_t*)((uint64_t)entry + 0x8));
@@ -51,6 +60,25 @@ namespace Kernel::Drivers
                 IOAPIC* ioApic = new IOAPIC();
                 ioApic->Init(apicId, physicalAddr, gsiBase);
                 ioApics.PushBack(ioApic);
+                break;
+            }
+
+            case MADTEntryType::IOAPIC_SourceOverride:
+            {
+                IOApicSourceOverride sourceOverride;
+                sourceOverride.busSource = reinterpret_cast<uint8_t>(*(uint8_t*)((uint64_t)entry + 0x2));
+                sourceOverride.irqSource = reinterpret_cast<uint8_t>(*(uint8_t*)((uint64_t)entry + 0x3));
+                sourceOverride.globalSystemInterrupt = reinterpret_cast<uint32_t>(*(uint32_t*)((uint64_t)entry + 0x4));
+                sourceOverride.flags.byte = reinterpret_cast<uint16_t>(*(uint16_t*)((uint64_t)entry + 0x8)); //narrowing, but the upper 8 bits arent used anyway.
+                ioApicSourceOverrides.InsertAt(sourceOverride.busSource, sourceOverride);
+
+                string format = "IOAPIC Source override: bus=0x%x, irq=0x%x, gsi=0x%x, flags=0x%x";
+                Log(sl::FormatToString(0, &format, sourceOverride.busSource, sourceOverride.irqSource, sourceOverride.globalSystemInterrupt, sourceOverride.flags.byte).Data());
+                break;
+            }
+
+            case MADTEntryType::IOAPIC_NonMaskableSourceOverride:
+                Log("Got IOAPIC NM source override.");
                 break;
             }
 
@@ -75,12 +103,15 @@ namespace Kernel::Drivers
     {
         id = apicId;
         physicalAddr = virtualAddr = physAddr;
+        globalInterruptBase = gsiBase;
+
+        //ensure page container registers is identity mapped.
         PageTableManager::The()->MapMemory((void*)virtualAddr, (void*)physicalAddr, MemoryMapFlags::WriteAllow | MemoryMapFlags::EternalClaim);
 
-        Log("IOAPIC initialized at: 0x", false);
-        Log(sl::UIntToString(physAddr, BASE_HEX).Data(), false);
-        Log(", id=0x", false);
-        Log(sl::UIntToString(apicId, BASE_HEX).Data());
+        inputCount = (ReadRegister(IOAPIC_REGISTER_VERSION_MAXREDIRECTS) >> 16) + 1;
+
+        string format = "IOAPIC initialized at: 0x%X, id=0x%X, inputs=0x%X, gsi_base=%x";
+        Log(sl::FormatToString(0, &format, physAddr, apicId, inputCount, gsiBase).Data());
     }
 
     void IOAPIC::WriteRedirectEntry(uint8_t entryNum, const IOApicRedirectEntry& entry)
@@ -95,6 +126,11 @@ namespace Kernel::Drivers
         entry.packedLowerHalf = ReadRegister(IOAPIC_REGISTER_REDIRECT_START + (entryNum * 2));
         entry.packedUpperHalf = ReadRegister(IOAPIC_REGISTER_REDIRECT_START + (entryNum * 2) + 1);        
         return entry;
+    }
+
+    uint32_t APIC::CreateTimerLVT(uint8_t vector, uint8_t timerMode, bool enabled)
+    {
+        return vector | (timerMode << 17) | ((enabled ? 0 : 1) << 16);
     }
     
     APIC localApic;
@@ -208,6 +244,26 @@ namespace Kernel::Drivers
         localApicAddr[((uint64_t)reg) * 4] = value;
     }
 
+    void APIC::CalibrateTimer()
+    {
+        //setup APIC timer without starting it.
+        WriteRegister(LocalApicRegisters::TimerDivideConfig, 0x3);
+
+        //set initial count to reset apic timer, and start HPET timer.
+        WriteRegister(LocalApicRegisters::TimerInitialCount, 0xFFFF'FFFF);
+
+        uint64_t endTicks = PIT::ticks + APIC_TIMER_DESIRED_MS;
+        while (PIT::ticks < endTicks);
+
+        //get number of apic clock ticks, 
+        timerInterval = 0xFFFF'FFFF - ReadRegister(LocalApicRegisters::TimerCurrentCount);
+        Log("APIC timer calibrated for tick count: ", false);
+        Log(sl::UIntToString(timerInterval, 10).Data());
+
+        //stop apic timer, HPET was 1 shot so no need to disable it.
+        WriteRegister(LocalApicRegisters::TimerInitialCount, 0x0);
+    }
+
     uint64_t APIC::GetLocalBase()
     {
         return CPU::ReadMSR(APIC_BASE_MSR) & 0xffff'f000; //filter out control bits
@@ -226,10 +282,9 @@ namespace Kernel::Drivers
 
     void APIC::StartTimer(uint8_t interruptVectorNum)
     {
-        WriteRegister(LocalApicRegisters::TimerDivideConfig, 0x0);
-        //TODO: implement a nice way to r/w LVTs
-        WriteRegister(LocalApicRegisters::LvtTimer, 0x20'000 | interruptVectorNum); //0x20000 = period mode, 0x20 = irq0
-        WriteRegister(LocalApicRegisters::TimerInitialCount, 0x200000); //TODO: use external clock to set this to a known value.
+        WriteRegister(LocalApicRegisters::TimerDivideConfig, 0x3);
+        WriteRegister(LocalApicRegisters::LvtTimer, CreateTimerLVT(interruptVectorNum, LAPIC_TIMER_MODE_PERIODIC, true));
+        WriteRegister(LocalApicRegisters::TimerInitialCount, timerInterval);
     }
 
     uint8_t APIC::GetID()

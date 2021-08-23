@@ -91,6 +91,7 @@ namespace Kernel::Drivers
 
         void Init();
         void PrintInfo();
+        uint8_t GetTimerCount();
 
         TimerConfigCapabilities GetTimerCapabilities(uint8_t index);
         void SetTimerCapabilities(uint8_t index, TimerConfigCapabilities caps);

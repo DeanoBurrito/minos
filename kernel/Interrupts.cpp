@@ -3,6 +3,7 @@
 #include <drivers/CPU.h>
 #include <drivers/Ps2Keyboard.h>
 #include <drivers/APIC.h>
+#include <drivers/8253PIT.h>
 #include <KLog.h>
 #include <StringExtras.h>
 
@@ -43,6 +44,8 @@ namespace InterruptHandlers
 
     __attribute__((interrupt)) void DefaultTimerHandler(interrupt_frame* frame)
     {
+        Kernel::Drivers::PIT::ticks++;
+
         Kernel::Drivers::APIC::Local()->SendEOI();
     }
 }

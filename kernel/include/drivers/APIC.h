@@ -2,10 +2,12 @@
 
 #include <stdint-gcc.h>
 #include <templates/LinkedList.h>
+#include <templates/List.h>
 
 //MADT doesnt always specify that we need to, but we probably should before enabled LAPIC.
 #define FORCE_DISABLE_LEGACY_PIC true
 #define APIC_BASE_MSR 0x1B
+#define APIC_TIMER_DESIRED_MS 10
 
 namespace Kernel::Drivers
 {
@@ -72,6 +74,10 @@ namespace Kernel::Drivers
         TimerDivideConfig = 0x3E,
     };
 
+#define LAPIC_TIMER_MODE_ONESHOT 0x0
+#define LAPIC_TIMER_MODE_PERIODIC 0x1
+#define LAPIC_TIMER_MODE_TSC_DEADLINE 0x2
+
 //read/write the apic's id (bits 24-27 only, rest are ignored)
 #define IOAPIC_REGISTER_ID 0x0
 //bits 0-7 contain revision, max redirection entries count in 16-23
@@ -123,6 +129,26 @@ namespace Kernel::Drivers
         } __attribute__((packed));
     } __attribute__((packed));
 
+    struct IOApicSourceOverride
+    {
+        uint8_t busSource;
+        uint8_t irqSource;
+        uint8_t globalSystemInterrupt;
+        
+        union
+        {
+            uint8_t byte;
+            struct 
+            {
+                uint8_t reserved0 : 1;
+                bool activeLow : 1;
+                uint8_t reserved1 : 1;
+                bool levelTriggered : 1;
+
+            };
+        } flags;
+    };
+
     class IOAPIC
     {
     private:
@@ -130,12 +156,14 @@ namespace Kernel::Drivers
         uint64_t physicalAddr;
         uint64_t virtualAddr;
         uint32_t globalInterruptBase;
+        uint8_t inputCount;
 
         uint32_t ReadRegister(uint64_t offset);
         void WriteRegister(uint64_t offset, uint32_t value);
 
     public:
         static sl::LinkedList<IOAPIC*> ioApics;
+        static sl::List<IOApicSourceOverride> ioApicSourceOverrides;
         static void InitAll();
         static IOApicRedirectEntry CreateRedirectEntry(uint8_t gsiVector, uint8_t physDestination, uint8_t pinPolarity, uint8_t triggerMode, bool enabled);
 
@@ -149,10 +177,14 @@ namespace Kernel::Drivers
     private:
         uint32_t* localApicAddr;
         uint8_t id;
+        uint64_t timerInterval;
 
         void SetLocalBase(uint64_t addr);
         uint32_t ReadRegister(LocalApicRegisters reg);
         void WriteRegister(LocalApicRegisters reg, uint32_t value);
+
+        //LVT helpers
+        static uint32_t CreateTimerLVT(uint8_t vector, uint8_t timerMode, bool enabled);
 
     public:
         static APIC* Local();
@@ -160,6 +192,7 @@ namespace Kernel::Drivers
         void Init();
         void PrintTablesInfo();
         uint64_t GetLocalBase(); //useful for identity mapping and locking.
+        void CalibrateTimer();
 
         void SendEOI();
         void StartTimer(uint8_t interruptVectorNumber);

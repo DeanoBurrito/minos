@@ -3,12 +3,15 @@
 
 namespace Kernel::Drivers
 {
-    void PIT::StartTimer(uint16_t hertz)
+    uint64_t PIT::ticks;
+    
+    void PIT::Init()
     {
-        uint16_t divisor = PIT_FREQ_HZ / hertz; 
-        CPU::PortWrite8(PORT_PIT_COMMAND, 0x36);
-        CPU::PortWrite8(PORT_PIT_CHANNEL_0, divisor & 0xFF);
-        CPU::PortWrite8(PORT_PIT_CHANNEL_0, (divisor & 0xFF00) >> 8);
+        //Fixed 1MHz-ish timer
+        //uint16_t divisor = PIT_FREQ_HZ / hertz; 
+        CPU::PortWrite8(PORT_PIT_COMMAND, 0x34);
+        CPU::PortWrite8(PORT_PIT_CHANNEL_0, 0xA9);
+        CPU::PortWrite8(PORT_PIT_CHANNEL_0, 0x04);
     }
 
     void PIT::Disable()
