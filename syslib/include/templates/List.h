@@ -2,6 +2,8 @@
 
 #include <stddef.h>
 
+#define SL_LIST_EXPANSION_FORMULA(currentCap) ((currentCap) + ((currentCap) / 2))
+
 namespace sl
 {
     //Variable length array, similar to std::vector or C#'s List<T>
@@ -12,18 +14,6 @@ namespace sl
         Value* buffer;
         size_t capacity;
         size_t count;
-
-        void ExpandBuffer()
-        {
-            size_t newCapacity = capacity + (capacity / 2);
-            Value* newBuffer = new Value[newCapacity]; //reserve 50% more space each time
-            for (int i = 0; i < count; i++)
-                newBuffer[i] = buffer[i];
-            
-            delete[] buffer;
-            buffer = newBuffer;
-            capacity = newCapacity;
-        }
 
     public:
         List()
@@ -55,6 +45,20 @@ namespace sl
             return capacity;
         }
 
+        void Reserve(size_t reserveFor)
+        {
+            if (reserveFor < capacity)
+                return;
+            
+            Value* newBuffer = new Value[reserveFor];
+            for (int i = 0; i < count; i++)
+                newBuffer[i] = buffer[i];
+            
+            delete[] buffer;
+            buffer = newBuffer;
+            capacity = reserveFor;
+        }
+
         Value First()
         {
             if (count > 0)
@@ -77,7 +81,7 @@ namespace sl
         void PushBack(const Value& val)
         {
             if (count == capacity)
-                ExpandBuffer();
+                Reserve(SL_LIST_EXPANSION_FORMULA(capacity));
 
             buffer[count] = val;
             count++;
@@ -99,7 +103,7 @@ namespace sl
             else
             {
                 if (count == capacity)
-                    ExpandBuffer();
+                    Reserve(SL_LIST_EXPANSION_FORMULA(capacity));
                 
                 //copy existing items over by 1
                 for (int i = count; i > index; i--)

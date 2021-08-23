@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint.h>
+#include <stdint-gcc.h>
 
 __attribute__((always_inline)) static uint32_t Float32Bits(float arg)
 {

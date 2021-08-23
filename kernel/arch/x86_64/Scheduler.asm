@@ -57,12 +57,12 @@ SchedulerTimerInterruptHandler:
 
     # Now that registers have been saved, we're safe to call other routines, without fear of trashing anything
 
-    # Send EOI before we load anything back onto the stack, as this will corrupt it
-    call Asm_SendEOI
-
 SkipSave:
     # Call switchnext() to load the next thread
     call Scheduler_SwitchNext
+
+    # Send EOI before we load anything back onto the stack, as this will corrupt it
+    call Asm_SendEOI
 
     mov (Scheduler_currentThreadData), %rdi
 
