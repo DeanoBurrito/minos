@@ -113,6 +113,32 @@ namespace sl
         return TOKEN_NOT_FOUND;
     }
 
+    List<String> String::Split(const char token) const
+    {
+        size_t segmentStart = 0;
+        size_t segmentLength = 0;
+        List<String> list;
+
+        for (int i = 0; i < length; i++)
+        {
+            if (At(i) == token)
+            {
+                if (segmentLength > 0)
+                    list.PushBack(move(SubString(segmentStart, segmentLength)));
+                
+                segmentStart = i + 1; //we dont want to prepend the next word with the delim
+                segmentLength = 0;
+            }
+            else
+                segmentLength++;
+        }
+
+        if (segmentLength > 0)
+            list.PushBack(move(SubString(segmentStart, segmentLength)));
+
+        return list;
+    }
+
     char& String::At(size_t index)
     {
         if (index >= length)

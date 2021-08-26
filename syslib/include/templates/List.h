@@ -40,6 +40,11 @@ namespace sl
             return count;
         }
 
+        bool Empty()
+        {
+            return count == 0;
+        }
+
         size_t Capacity()
         {
             return capacity;
@@ -49,6 +54,9 @@ namespace sl
         {
             if (reserveFor < capacity)
                 return;
+
+            if (reserveFor < capacity + 1)
+                reserveFor = capacity + 1;
             
             Value* newBuffer = new Value[reserveFor];
             for (int i = 0; i < count; i++)

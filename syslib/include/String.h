@@ -4,6 +4,7 @@
 #include <Memory.h>
 #include <stdint-gcc.h>
 #include <Limits.h>
+#include <templates/List.h>
 
 #define TOKEN_NOT_FOUND UINT64_UPPER_LIMIT
 
@@ -34,6 +35,7 @@ namespace sl
         String SubString(size_t start, size_t length) const;
 
         size_t Find(const char token, size_t offset = 0) const;
+        List<String> Split(const char token) const;
 
         char& At(size_t index);
         const char& At(size_t index) const;
