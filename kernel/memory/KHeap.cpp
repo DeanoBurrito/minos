@@ -137,6 +137,9 @@ namespace Kernel
 
     void KHeap::Free(void* address)
     {
+        if (address == nullptr)
+            return;
+        
         HeapSegmentHeader* header = (HeapSegmentHeader*)address - 1; //pointer maths, -1 here will decrement in steps of sizeof(HeapSegmentHeader);
         header->free = true;
         header->CombineForward(lastSegment);
