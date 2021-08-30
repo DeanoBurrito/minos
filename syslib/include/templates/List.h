@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <Memory.h>
 
 #define SL_LIST_EXPANSION_FORMULA(currentCap) ((currentCap) + ((currentCap) / 2))
 
@@ -33,6 +34,52 @@ namespace sl
         {
             if (buffer != nullptr)
                 delete[] buffer;
+        }
+
+        List(const List& other)
+        {
+            buffer = new Value[other.capacity];
+            capacity = other.capacity;
+            count = other.count;
+            memcopy(other.buffer, buffer, count);
+        }
+        
+        List& operator=(const List& other)
+        {
+            if (buffer)
+                delete[] buffer;
+            
+            buffer = new Value[other.capacity];
+            capacity = other.capacity;
+            count = other.count;
+            memcopy(other.buffer, buffer, count);
+
+            return *this;
+        }
+
+        List(List&& from)
+        {
+            buffer = from.buffer;
+            count = from.count;
+            capacity = from.capacity;
+
+            from.buffer = nullptr; 
+            from.count = from.capacity = 0;
+        }
+
+        List& operator=(List&& from)
+        {
+            if (buffer)
+                delete[] buffer;
+            
+            buffer = from.buffer;
+            count = from.count;
+            capacity = from.capacity;
+
+            from.buffer = nullptr; 
+            from.count = from.capacity = 0;
+
+            return *this;
         }
 
         size_t Size()
