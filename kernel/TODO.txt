@@ -1,9 +1,12 @@
+-Investigate crashes upon only mapping kernel-memory, why do we need to identity map ALL memory?
+
 HPET:
     -Investigate what's actually going on here, PIT still seems to be active even after being disabled. HPET timers are not generating interrupts.
 
 Strings (syslib):
     -Formatting functions, for converting PODs to strings, emplacing within strings, and extracting.
     -Go back and replace c-string strings within kernel to our new type-safe friend.
+    -Goal: Keep core string class lightweight, move extended functionality into other headers, import as needed.
 
 Memory:
     -Implement lazy allocation.
@@ -11,16 +14,16 @@ Memory:
     -Turn KHeap into a generic heap allocator, and rename it.
     -Ability to reserve pages, backed with a 'read only' a static page of zeros. Replace with real page only once written to.
     -Kernel-Eternal mapping: memory that'll never be freed during system runtime (all the globals), mark it as reserved into of claimed.
-    -Investigate crashes upon only mapping kernel-memory, why do we need to identity map ALL memory?
 
 Logging:
     -Improve use of kernel Log()
     -Implement 2 stage logging. Log() only copies message details into a memory buffer. Actually accessing/displaying is implemented elsewhere, this should speed up Log().
 
 Multiprocessing:
+    -Re-work sceduler. Its too complex for how simple it should be right now. 
     -Trampoline for booting APs. Synchronising multiple cores.
     -Implement processes: a single program unit (GDT/handles/virtual memory map), each with a number of threads.
-    -Semaphore, mutex and spinlocks. ScopeGuard that can operate on any of the above
+    -Semaphore, mutex and spinlocks. ScopeGuard that can operate on any of the above.
 
 Virtual File System:
     -Basic tree structure in memory, single root.
@@ -29,14 +32,10 @@ Virtual File System:
     -ext2 driver, FAT32 driver
     -proc/sys like parameter dump trees
 
-Platform Layer:
-    -A lot of kernel init/management is platform specific (arm has no idea what an APIC is, why bother searching for it).
-     Perhaps delegating parts of kernel init (like setting up interrupts) to platform-specific code. Keep the core generic.
-        -Maybe have a platform specific core (tightly integrated with that platform's bootloader), and keep the surrounds generic?
-    -SystemClock: Wrapper around platform-specific timing devices (rtc/pit), can provide single-shot/periodic timers.
-
-Init disk:
-    -Bootloader should just kernel elf. Make a ramdisk and embed it into elf during linking stage.
+Platform Core:
+    -x86_64 core: tighly integrated bootloader and kernel core. Handles all the platform specific stuff, and dispatches to general code where it can.
+    -Arm core: similar to x86, but for ARM platforms.
+    -Generic surrounds. The rest of the kernel can be independant of cpu. 
 
 Bootloader:
     -Bootloader specific stub to collecting info into BootInfo* struct.
@@ -48,8 +47,10 @@ Userland:
     -POSIX libc implementation
     -Userspace shell/kernel shell
     -Windowing system
+    -Networking stack
 
 Drivers:
+    -PCI(e)
     -QEMU gpu driver
     -Networking
     -ACHI

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Memory.h>
+
 namespace sl
 {    
     template <typename Value>
@@ -19,7 +21,26 @@ namespace sl
     private:
         LinkedListEntry<Value>* head;
         LinkedListEntry<Value>* tail;
-        unsigned long count;
+        size_t count;
+
+        void DoCopy(const LinkedList& other)
+        {
+            count = 0;
+            LinkedListEntry<Value>* scan = other.head;
+            LinkedListEntry<Value>* last = nullptr;
+            while (scan != nullptr)
+            {
+                LinkedListEntry<Value>* current = new LinkedListEntry<Value>(scan->val);
+                current->prev = last;
+                last = current;
+                count++;
+
+                if (head == nullptr)
+                    head = current;
+            }
+
+            tail = last;
+        }
 
     public:
         LinkedList()
@@ -27,6 +48,34 @@ namespace sl
             //TODO: this is slow af. Worth going to a bucket based implementation at some point.
             head = tail = nullptr;
             count = 0;
+        }
+
+        LinkedList(const LinkedList& other)
+        {
+            DoCopy(other);
+        }
+
+        LinkedList& operator=(const LinkedList& other)
+        {
+            Clear();
+            DoCopy(other);
+            return *this;
+        }
+
+        LinkedList(LinkedList&& from)
+        {
+            swap(from.head, head);
+            swap(from.tail, tail);
+            swap(from.count, count);
+        }
+
+        LinkedList& operator=(LinkedList&& from)
+        {
+            Clear();
+            swap(from.head, head);
+            swap(from.tail, tail);
+            swap(from.count, count);
+            return *this;
         }
 
         ~LinkedList()
@@ -133,6 +182,7 @@ namespace sl
                 delete deleteMe;
             }
             count = 0;
+            head = tail = nullptr;
         }
 
         LinkedListEntry<Value>* Find(const Value value)

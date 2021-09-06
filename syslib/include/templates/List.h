@@ -12,6 +12,7 @@ namespace sl
     class List
     {
     private:
+        Value defaultValue; //TODO: find a way to return nothing, without this
         Value* buffer;
         size_t capacity;
         size_t count;
@@ -178,16 +179,16 @@ namespace sl
         }
 
         size_t Find(const Value& val)
-        {}
+        { return 0; }
 
         size_t FindR(const Value& val)
-        {}
+        { return 0; }
 
-        Value operator[](size_t index)
+        Value& operator[](size_t index)
         {
             if (index < count)
                 return buffer[index];
-            return Value();
+            return defaultValue;
         }
     };
 }
