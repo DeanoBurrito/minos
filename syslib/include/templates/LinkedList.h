@@ -19,6 +19,7 @@ namespace sl
     class LinkedList
     {
     private:
+        Value defaultValue;
         LinkedListEntry<Value>* head;
         LinkedListEntry<Value>* tail;
         size_t count;
@@ -101,14 +102,14 @@ namespace sl
         Value PeekBack()
         {
             if (tail == nullptr)
-                return Value();
+                return defaultValue;
             return tail->val;
         }
 
         Value PeekFront()
         {
             if (head == nullptr)
-                return Value();
+                return defaultValue;
             return head->val;
         }
 
@@ -125,7 +126,7 @@ namespace sl
         Value PopBack()
         {
             if (tail == nullptr)
-                return Value();
+                return defaultValue;
 
             Value retval = tail->val;
             if (tail->prev != nullptr)
@@ -149,7 +150,7 @@ namespace sl
         Value PopFront()
         {
             if (head == nullptr)
-                return Value();
+                return defaultValue;
             
             Value retval = head->val;
             if (head->next != nullptr)
@@ -300,6 +301,26 @@ namespace sl
                 tail = newEntry;
             
             count++;
+        }
+
+        Value& At(size_t index)
+        {
+            if (index >= count)
+                return defaultValue;
+
+            size_t current = 0;
+            LinkedListEntry<Value>* scan = head;
+            while (current != index && scan != nullptr)
+            {
+                current++;
+                scan = scan->next;
+            }
+            return scan->val;
+        }
+
+        Value& operator[](size_t index)
+        {
+            return At(index);
         }
     };
 }
