@@ -9,25 +9,23 @@
 
 namespace InterruptHandlers
 {
-    __attribute__((interrupt)) void DoubleFault(interrupt_frame* frame)
+    __attribute__((interrupt)) void DoubleFault(interrupt_frame* frame, uint64_t errorCode)
     {
         Kernel::Panic("Fault Fault x2. (double fault)");
 
         Kernel::Drivers::CPU::Halt();
     }
     
-    __attribute__((interrupt)) void GeneralProtectionFault(interrupt_frame* frame)
+    __attribute__((interrupt)) void GeneralProtectionFault(interrupt_frame* frame, uint64_t errorCode)
     {
         Kernel::Log("General Protection fault, error code: 0x", false);
-        uint64_t errorCode = 0xdeadc0de; //not all zeros, so if it is a zero, we'll know its been set correctly
-        asm volatile ("pop %0" : "=g"(errorCode));
         Kernel::Log(sl::UIntToString(errorCode, BASE_HEX).Data()); //NOTE: this will allocate memory, if its a memory issue, thisll overwrite the error codes we want to see.
 
         Kernel::Panic("Protection Fault.");
         Kernel::Drivers::CPU::Halt();
     }
 
-    __attribute__((interrupt)) void PageFault(interrupt_frame* frame)
+    __attribute__((interrupt)) void PageFault(interrupt_frame* frame, uint64_t errorCode)
     {
         Kernel::Panic("Page Fault!"); //CR2 contains our culprit
 
