@@ -80,21 +80,6 @@ namespace Kernel
         }
     }
 
-    void PageFrameAllocator::GetPageMapIndices(uint64_t virtualAddress, uint64_t* pdpIndex, uint64_t* pdIndex, uint64_t* ptIndex, uint64_t* pageIndex)
-    {
-        virtualAddress >>= 12;
-        *pageIndex = virtualAddress & 0x1ff;
-
-        virtualAddress >>= 9;
-        *ptIndex = virtualAddress & 0x1ff;
-
-        virtualAddress >>= 9;
-        *pdIndex = virtualAddress & 0x1ff;
-
-        virtualAddress >>= 9;
-        *pdpIndex = virtualAddress & 0x1ff;
-    }
-
     void PageFrameAllocator::FreePage(void* addr)
     {
         uint64_t index = (uint64_t)addr / PAGE_SIZE;

@@ -39,7 +39,6 @@ namespace Kernel
 
     public:
         static PageFrameAllocator* The();
-        static void GetPageMapIndices(uint64_t virtualAddress, uint64_t* pdpIndex, uint64_t* pdIndex, uint64_t* ptIndex, uint64_t* pageIndex);
 
         void Init(BootInfo* bootInfo);
 

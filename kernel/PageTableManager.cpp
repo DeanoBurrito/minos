@@ -49,6 +49,21 @@ namespace Kernel
         return &globalPageTableManager;
     }
 
+    void PageTableManager::GetPageMapIndices(uint64_t virtualAddress, uint64_t* pdpIndex, uint64_t* pdIndex, uint64_t* ptIndex, uint64_t* pageIndex)
+    {
+        virtualAddress >>= 12;
+        *pageIndex = virtualAddress & 0x1ff;
+
+        virtualAddress >>= 9;
+        *ptIndex = virtualAddress & 0x1ff;
+
+        virtualAddress >>= 9;
+        *pdIndex = virtualAddress & 0x1ff;
+
+        virtualAddress >>= 9;
+        *pdpIndex = virtualAddress & 0x1ff;
+    }
+
     void PageTableManager::Init(PageTable* pml4Address)
     {
         pml4Addr = pml4Address;
@@ -71,7 +86,7 @@ namespace Kernel
     void PageTableManager::MapMemory(void* virtualAddr, void* physicalAddr, MemoryMapFlags flags)
     {
         uint64_t pd4Index, pd3Index, pd2Index, pageIndex;
-        PageFrameAllocator::GetPageMapIndices((uint64_t)virtualAddr, &pd4Index, &pd3Index, &pd2Index, &pageIndex);
+        GetPageMapIndices((uint64_t)virtualAddr, &pd4Index, &pd3Index, &pd2Index, &pageIndex);
         PageDirectoryEntry entry;
         PageTable* localTable;
         PageTable* prevTable;
@@ -150,7 +165,7 @@ namespace Kernel
     void PageTableManager::UnmapMemory(void* virtualAddr)
     {
         uint64_t pageDirectoryPtr, pageDirectory, pageTable, page;
-        PageFrameAllocator::GetPageMapIndices((uint64_t)virtualAddr, &pageDirectoryPtr, &pageDirectory, &pageTable, &page);
+        GetPageMapIndices((uint64_t)virtualAddr, &pageDirectoryPtr, &pageDirectory, &pageTable, &page);
 
         PageDirectoryEntry entry;
         PageTable* childTable;
