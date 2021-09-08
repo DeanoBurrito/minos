@@ -49,6 +49,7 @@ namespace sl
             //TODO: this is slow af. Worth going to a bucket based implementation at some point.
             head = tail = nullptr;
             count = 0;
+            defaultValue = Value();
         }
 
         LinkedList(const LinkedList& other)
