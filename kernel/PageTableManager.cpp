@@ -177,9 +177,8 @@ namespace Kernel
             return;
 
         //clear flag, place back in page table, and then release physical page
-        entry.SetFlag(PageEntryFlags::Present, false);
         physicalAddress = (void*)(entry.GetAddress() << 12);
-        entry.SetAddress(0);
+        entry.value = 0; //set address to 0, and reset all flags to default state
         childTable->entries[page] = entry;
 
         PageFrameAllocator::The()->FreePage(physicalAddress);
