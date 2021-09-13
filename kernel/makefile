@@ -15,7 +15,7 @@ TARGET = $(BUILD_DIR)/$(TARGET_NAME)
 
 #flags
 CXX_INC_DIRS = -I ./include -I $(SYSLIB_DIR)/include -I $(BOOTLOADER_DIR)
-CXX_FLAGS = $(ARCH_CXX_FLAGS) -ffreestanding -O2 -fno-rtti -fno-exceptions -mno-red-zone -mcmodel=large -g -Wall -DMINOS_PLATFORM_X86_64
+CXX_FLAGS = $(ARCH_CXX_FLAGS) -ffreestanding -O0 -fno-rtti -fno-exceptions -mno-red-zone -mcmodel=large -g -Wall -DMINOS_PLATFORM_X86_64
 LD_FLAGS = $(ARCH_LD_FLAGS) -ffreestanding -O2 -nostdlib -fno-rtti -fno-exceptions -g -zmax-page-size=0x1000
 LD_LIBS = -L $(SYSLIB_DIR)/$(BUILD_DIR) -lsyslib -lgcc
 LD_SCRIPT = $(ARCH_DIR)/linker.lds
