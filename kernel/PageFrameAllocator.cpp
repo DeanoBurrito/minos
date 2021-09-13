@@ -140,9 +140,9 @@ namespace Kernel
         return nullptr;
     }
 
-    MemoryUsage PageFrameAllocator::GetMemoryUsage()
+    Memory::MemoryUsage PageFrameAllocator::GetMemoryUsage()
     {
-        MemoryUsage usage(GetTotalMemory(), freeMemory, reservedMemory, usedMemory);
+        Memory::MemoryUsage usage(GetTotalMemory(), freeMemory, reservedMemory, usedMemory);
         return usage;
     }
 
