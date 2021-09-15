@@ -6,7 +6,7 @@
 #include <drivers/CPU.h>
 #include <arch/x86_64//IDT.h>
 #include <arch/x86_64/GDT.h>
-#include <Interrupts.h>
+#include <arch/x86_64/Interrupts.h>
 #include <drivers/Serial.h>
 #include <KLog.h>
 #include <StringExtras.h>

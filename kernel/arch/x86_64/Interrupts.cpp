@@ -1,4 +1,4 @@
-#include <Interrupts.h>
+#include <arch/x86_64/Interrupts.h>
 #include <Panic.h>
 #include <drivers/CPU.h>
 #include <drivers/Ps2Keyboard.h>
