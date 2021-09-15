@@ -34,8 +34,6 @@ namespace Kernel
 {
     using namespace Kernel::Drivers;
 
-    extern void InitPlatformInterrupts(IDTR* idtr);
-
     void InitMemory(BootInfo* bootInfo)
     {
         //assemble memory map into something we can use.
@@ -102,10 +100,13 @@ namespace Kernel
         idtr.limit = 0x0FFF;
         idtr.offset = (uint64_t)PageFrameAllocator::The()->RequestPage();
 
-        //init any platform specific interrupts
-        Log("Initializing platform specific interrupts");
-        InitPlatformInterrupts(&idtr);
+        //init cpu specific interrupts
+        Log("Initializing platform interrupts");
+        idtr.SetEntry((void*)InterruptHandlers::DoubleFault, INTERRUPT_VECTOR_DOUBLE_FAULT, IDT_ATTRIBS_InterruptGate, 0x08);
+        idtr.SetEntry((void*)InterruptHandlers::GeneralProtectionFault, INTERRUPT_VECTOR_GENERAL_PROTECTION_FAULT, IDT_ATTRIBS_InterruptGate, 0x08);
+        idtr.SetEntry((void*)InterruptHandlers::PageFault, INTERRUPT_VECTOR_PAGE_FAULT, IDT_ATTRIBS_InterruptGate, 0x8);
 
+        Log("Initializing software interrupts");
         //redirect entry for irq2 (ps2 keyboard)
         auto keyboardRedirect = IOAPIC::CreateRedirectEntry(INTERRUPT_VECTOR_PS2KEYBOARD, Drivers::APIC::Local()->GetID(), IOAPIC_PIN_POLARITY_ACTIVE_HIGH, IOAPIC_TRIGGER_MODE_EDGE, true);
         Drivers::IOAPIC::ioApics.PeekFront()->WriteRedirectEntry(1, keyboardRedirect);
