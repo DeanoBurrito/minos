@@ -1,4 +1,30 @@
--Investigate crashes upon only mapping kernel-memory, why do we need to identity map ALL memory?
+Refactoring:
+    -The great unfucking: since compiler flags have been ignored for the past weeks (I still cant believe it), lots of code is getting optimized away.
+        -Investigate and get codebase back to compiling and running with -O2 and -O3 enabled.
+
+    -A number of files have been left in 'most convinient' locations, rather than where they probably belong.
+        -Example: x86 specific devices (APIC, HPET, PIT) are platform specific, and should be moved into that folder.
+        -Example: KernelMain is also platform specific, and we should move this over there - begin moving towards to the 'specific core - general surrounds' model
+
+    -Move build system up to its parent folder - kernel should only be responsible for itself now. It dosnt need to be aware of the rest of the system.
+        -We can get rid of a lot of the hacks from the kernel makefile now.
+        -More streamlined platform selection system.
+            -I like the idea of being able to declare in a platform specific header: REQUIRE_PLATFORM(x86_64) or something similar.
+            -Maybe look into defines that map to static_assert?
+
+    -Virtual memory mapping: move to only mapping what we need, rather than identity mapping everything.
+        -Current this crashes, probably due to forgetting to map something vital.
+
+    -Move away from compiler specific things.
+        -stdint-gcc.h instead of stdint.h is a big one. I'd like to simple define what gcc needs to compile properly, instead of using tightly bound headers.
+        -__attribute__ is gcc specific, clang does support it, but i'm not a fan.
+            -we could move to the c++ built in [[gnu::attribute_here]] style - that does have a similar issue though
+            -Current design is leaning towards a header file with defines, with these resolving based on environment (detecting compiler)
+                -__attribute__((packed)) would become MINOS_ATTRIB_PACKED
+                -__attribute__((aligned(0x1234))) would become MINOS_ATTRIB_ALIGNED(0x1234)
+                -this is also lacklustre in retrospect.
+                
+    -Refocus on adding features from the list below
 
 HPET:
     -Investigate what's actually going on here, PIT still seems to be active even after being disabled. HPET timers are not generating interrupts.
@@ -18,6 +44,7 @@ Memory:
 Logging:
     -Improve use of kernel Log()
     -Implement 2 stage logging. Log() only copies message details into a memory buffer. Actually accessing/displaying is implemented elsewhere, this should speed up Log().
+    -Backing store for logging is circular queue - oldest messages get dropped once capacity is reached.
 
 Multiprocessing:
     -Re-work sceduler. Its too complex for how simple it should be right now. 
