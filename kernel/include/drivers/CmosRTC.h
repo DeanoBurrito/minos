@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint-gcc.h>
+#include <stdint.h>
 
 #define PORT_CMOS_SELECT 0x70
 #define PORT_CMOS_DATA 0x71

@@ -4,7 +4,7 @@
 //Platform selection: set MINOS_PLATFORM to the desired target
 #define MINOS_PLATFORM_NONE 0
 #define MINOS_PLATFORM_X86_64 1
-#define MINOS_PLATFORM MINOS_PLATFORM_NONE
+//#define MINOS_PLATFORM MINOS_PLATFORM_NONE
 
 //Platform and feature macros
 #define PLATFORM_REQUIRED(x) static_assert(x == MINOS_PLATFORM, "Required platform not specified: ##x");

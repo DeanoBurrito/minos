@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint-gcc.h>
+#include <stdint.h>
 
 #define IDT_ATTRIBS_InterruptGate 0b10001110
 #define IDT_ATTRIBS_CallGate 0b10001100

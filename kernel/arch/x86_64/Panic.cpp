@@ -15,6 +15,8 @@ namespace Kernel
         KRenderer::The()->Write((const char*)"    ");
         KRenderer::The()->WriteLine(reason);
 
+        //TODO: display current register state (if we can)
+
         Drivers::CPU::Halt();
     }
 }

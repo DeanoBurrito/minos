@@ -2,7 +2,7 @@
 
 #include <stddef.h>
 #include <Memory.h>
-#include <stdint-gcc.h>
+#include <stdint.h>
 #include <Limits.h>
 #include <templates/List.h>
 

@@ -1,11 +1,7 @@
 #pragma once
 
 #include <stddef.h>
-#ifdef __cplusplus
-#include <stdint-gcc.h>
-#else
 #include <stdint.h>
-#endif
 #include "PSF1.h"
 
 #define PIXEL_FORMAT_Unknown 0

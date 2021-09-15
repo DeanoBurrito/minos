@@ -1,7 +1,7 @@
 #pragma once
 
 //https://www.gnu.org/software/grub/manual/multiboot/multiboot.html#Boot-information-format
-#include <stdint-gcc.h>
+#include <stdint.h>
 
 struct MbInfo
 {

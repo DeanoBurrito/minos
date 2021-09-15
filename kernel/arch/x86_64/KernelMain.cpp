@@ -4,7 +4,8 @@
 #include <PageTableManager.h>
 #include <Memory.h>
 #include <drivers/CPU.h>
-#include <IDT.h>
+#include <arch/x86_64//IDT.h>
+#include <arch/x86_64/GDT.h>
 #include <Interrupts.h>
 #include <drivers/Serial.h>
 #include <KLog.h>
@@ -18,6 +19,9 @@
 #include <multiprocessing/Scheduler.h>
 #include <kshell/KShell.h>
 #include <InitDisk.h>
+#include <Platform.h>
+
+PLATFORM_REQUIRED(MINOS_PLATFORM_X86_64)
 
 extern "C"
 {
@@ -72,7 +76,7 @@ namespace Kernel
         GDTDescriptor rootDescriptor;
         rootDescriptor.size = sizeof(GDT) - 1;
         rootDescriptor.offset = (uint64_t)&defaultGdt;
-        CPU::LoadGDT(&rootDescriptor);
+        CPU::LoadTable(CpuTable::x86_64_GDT, &rootDescriptor);
 
         //gather any cpu specific details
         CPU::Init();
@@ -117,7 +121,7 @@ namespace Kernel
         Drivers::IOAPIC::ioApics.PeekFront()->WriteRedirectEntry(2, pitRedirect); //TODO: magic numbers here!
 
         //load idt and enable interrupts
-        CPU::LoadIDT(&idtr);
+        CPU::LoadTable(CpuTable::X86_64_IDT, &idtr);
         CPU::EnableInterrupts();
 
         Log("IDT loaded at: 0x", false);

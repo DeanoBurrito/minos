@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stddef.h>
-#include <stdint-gcc.h>
+#include <stdint.h>
 #include <memory/MemoryUsage.h>
 #include <Memory.h>
 #include <Bitmap.h>

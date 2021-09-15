@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint-gcc.h>
+#include <stdint.h>
 
 //These are defined by intel spec, and we cant change
 #define INTERRUPT_VECTOR_DOUBLE_FAULT 0x08

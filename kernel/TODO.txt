@@ -2,6 +2,8 @@ Refactoring:
     -The great unfucking: since compiler flags have been ignored for the past weeks (I still cant believe it), lots of code is getting optimized away.
         -Investigate and get codebase back to compiling and running with -O2 and -O3 enabled.
 
+    -Investigate why booting can fail immediately after HPET init. Always in the same spot, but on random builds.
+
     -A number of files have been left in 'most convinient' locations, rather than where they probably belong.
         -Example: x86 specific devices (APIC, HPET, PIT) are platform specific, and should be moved into that folder.
         -Example: KernelMain is also platform specific, and we should move this over there - begin moving towards to the 'specific core - general surrounds' model

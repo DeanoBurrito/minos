@@ -1,4 +1,4 @@
-#include <IDT.h>
+#include <arch/x86_64/IDT.h>
 
 namespace Kernel
 {

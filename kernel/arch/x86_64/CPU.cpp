@@ -215,19 +215,20 @@ namespace Kernel::Drivers
 
     extern "C" 
     {
-        extern void LoadGDT_impl(GDTDescriptor* address);
-    }
-    
-    void CPU::LoadGDT(GDTDescriptor* address)
-    {
-        LoadGDT_impl(address);
+        extern void LoadGDT_impl(void* address);
     }
 
-    void CPU::LoadIDT(IDTR *idtr)
+    void CPU::LoadTable(CpuTable table, void* addr)
     {
-        asm volatile("lidt 0(%0)"
-                     :
-                     : "r"(idtr));
+        switch (table)
+        {
+            case CpuTable::x86_64_GDT:
+                LoadGDT_impl(addr);
+                return;
+            case CpuTable::X86_64_IDT:
+                asm volatile("lidt 0(%0)" : : "r"(addr));
+                return;
+        }
     }
 
     void CPU::Halt()

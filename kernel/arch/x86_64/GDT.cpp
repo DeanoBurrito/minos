@@ -1,4 +1,4 @@
-#include <GDT.h>
+#include <arch/x86_64/GDT.h>
 
 namespace Kernel
 {

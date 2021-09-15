@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint-gcc.h>
+#include <stdint.h>
 
 #define PORT_PIT_CHANNEL_0 0x40
 #define PORT_PIT_CHANNEL_1 0x41

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint-gcc.h>
+#include <stdint.h>
 #include <templates/LinkedList.h>
 #include <multiprocessing/Thread.h>
 
