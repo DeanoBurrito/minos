@@ -3,6 +3,7 @@
 #include <PageTableManager.h>
 #include <drivers/CPU.h>
 #include <multiprocessing/Scheduler.h>
+#include <Platform.h>
 
 namespace Kernel::Multiprocessing
 {

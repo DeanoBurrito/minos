@@ -5,8 +5,6 @@
 #include <Bitmap.h>
 #include <memory/MemoryUsage.h>
 
-#define PAGE_SIZE 4096
-
 namespace Kernel
 {
     class PageFrameAllocator

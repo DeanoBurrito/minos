@@ -1,5 +1,8 @@
 #include <cpuid.h>
 #include <drivers/CPU.h>
+#include <Platform.h>
+
+PLATFORM_REQUIRED(MINOS_PLATFORM_X86_64)
 
 namespace Kernel::Drivers
 {   

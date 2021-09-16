@@ -18,14 +18,8 @@ Refactoring:
     -Virtual memory mapping: move to only mapping what we need, rather than identity mapping everything.
         -Current this crashes, probably due to forgetting to map something vital.
 
-    -Move away from compiler specific things.
-        -stdint-gcc.h instead of stdint.h is a big one. I'd like to simple define what gcc needs to compile properly, instead of using tightly bound headers.
-        -__attribute__ is gcc specific, clang does support it, but i'm not a fan.
-            -we could move to the c++ built in [[gnu::attribute_here]] style - that does have a similar issue though
-            -Current design is leaning towards a header file with defines, with these resolving based on environment (detecting compiler)
-                -__attribute__((packed)) would become MINOS_ATTRIB_PACKED
-                -__attribute__((aligned(0x1234))) would become MINOS_ATTRIB_ALIGNED(0x1234)
-                -this is also lacklustre in retrospect.
+    -Move away from compiler specific things
+    -keep platform specific things in the respective arch folder
                 
     -Refocus on adding features from the list below
 

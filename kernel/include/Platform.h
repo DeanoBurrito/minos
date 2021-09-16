@@ -25,3 +25,8 @@
 #else
     #error "kernel/Platform.h has no compiler selected, or build system is not overriding to a proper value."
 #endif
+
+//---- ARCHITECTURE DEFINITIONS ----
+#ifdef MINOS_PLATFORM_X86_64
+    #include <arch/x86_64/ArchitectureDefs.h>
+#endif

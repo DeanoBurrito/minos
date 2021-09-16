@@ -6,6 +6,9 @@
 #include <drivers/8253PIT.h>
 #include <KLog.h>
 #include <StringExtras.h>
+#include <Platform.h>
+
+PLATFORM_REQUIRED(MINOS_PLATFORM_X86_64)
 
 namespace InterruptHandlers
 {

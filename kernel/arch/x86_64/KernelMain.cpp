@@ -65,7 +65,7 @@ namespace Kernel
         PageTableManager::The()->MakeCurrentMap();
 
         //initialize kernel heap at an arbitrarily large address
-        KHeap::The()->Init((void*)0x100'000'000, 0x1000);
+        KHeap::The()->Init((void*)0x100'000'000, PAGE_SIZE);
     }
 
     void InitPlatformEarly(BootInfo* bootInfo)
@@ -172,6 +172,7 @@ extern "C" __attribute__((noreturn)) void KernelMain(BootInfo* bootInfo)
     LoadInitDisk();
     InitDrivers(bootInfo);
     InitInterrupts(bootInfo);
+    Panic("Manual trigger");
 
     ExitKernelInit();
 
