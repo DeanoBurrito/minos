@@ -2,14 +2,14 @@
 
 #include <stdint.h>
 
-__attribute__((always_inline)) static uint32_t Float32Bits(float arg)
+inline __attribute__((always_inline, unused)) static uint32_t Float32Bits(float arg)
 {
     union { float f; uint32_t i; } un;
     un.f = arg;
     return un.i;
 }
 
-__attribute__((always_inline)) static uint64_t Float64Bits(double arg)
+inline __attribute__((always_inline, unused)) static uint64_t Float64Bits(double arg)
 {
     union { double d; uint64_t i; } un;
     un.d = arg;

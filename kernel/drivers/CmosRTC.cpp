@@ -45,7 +45,7 @@ namespace Kernel::Drivers
         {
             *seconds = (*seconds & 0x0F) + ((*seconds / 16) * 10);
             *minutes = (*minutes & 0x0F) + ((*minutes / 16) * 10);
-            *hours = (*hours & 0x0F) + (((*hours & 0x70) / 16) * 10) | (*hours & 0x80);
+            *hours = ((*hours & 0x0F) + (((*hours & 0x70) / 16) * 10)) | (*hours & 0x80);
         }
 
         //convert to 24 if needed, either by status B or the flag being set

@@ -119,7 +119,7 @@ namespace sl
         size_t segmentLength = 0;
         List<String> list;
 
-        for (int i = 0; i < length; i++)
+        for (size_t i = 0; i < length; i++)
         {
             if (At(i) == token)
             {
