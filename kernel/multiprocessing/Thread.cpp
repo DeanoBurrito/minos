@@ -77,7 +77,7 @@ namespace Kernel::Multiprocessing
         KernelThread* thread = Scheduler::The()->GetCurrentThread();
         Scheduler::The()->UnscheduleThread(thread);
         //free the used memory
-        for (int i = 0; i < thread->stackPages; i++)
+        for (size_t i = 0; i < thread->stackPages; i++)
         {
             PageTableManager::The()->UnmapMemory((void*)((uint64_t)thread + i * PAGE_SIZE));
             PageFrameAllocator::The()->FreePage((void*)((uint64_t)thread + i * PAGE_SIZE));

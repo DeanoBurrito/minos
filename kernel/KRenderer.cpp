@@ -92,7 +92,7 @@ namespace Kernel
     {
         unsigned int *pixPtr = (unsigned int*)framebuffer.baseAddress;
         uint32_t fgFormatted = fgCol.GetFormatted(framebuffer.pixelFormat);
-        uint32_t bgFormatted = bgCol.GetFormatted(framebuffer.pixelFormat);
+        //uint32_t bgFormatted = bgCol.GetFormatted(framebuffer.pixelFormat); //NOTE: unused, cant current draw backgrounds with how we draw text right now.
 
         char* fontPtr = (char*)font->glyphBuffer + (c * font->psf1_haeder->charSize);
 
@@ -133,7 +133,7 @@ namespace Kernel
     {
         if (where.x < 0 || where.y < 0)
             return;
-        if (where.x > framebuffer.width / fontWidth || where.y > framebuffer.height / fontHeight)
+        if ((unsigned)where.x > framebuffer.width / fontWidth || (unsigned)where.y > framebuffer.height / fontHeight)
             return;
 
         cursorPos.x = where.x;

@@ -14,7 +14,7 @@ namespace Kernel
     {
         pageBitmap.size = size;
         pageBitmap.buffer = (uint8_t*)bufferAddr;
-        for (int i = 0; i < size; i++)
+        for (size_t i = 0; i < size; i++)
         {
             *(uint8_t*)(pageBitmap.buffer + i) = 0;
         }
@@ -35,7 +35,7 @@ namespace Kernel
 
     void PageFrameAllocator::ReservePages(void* addr, uint64_t count)
     {
-        for (int i = 0; i < count; i++)
+        for (size_t i = 0; i < count; i++)
         {
             ReservePage((void*)((uint64_t)addr + (i * PAGE_SIZE)));
         }
@@ -98,7 +98,7 @@ namespace Kernel
 
     void PageFrameAllocator::FreePages(void* addr, uint64_t count)
     {
-        for (int i = 0; i < count; i++)
+        for (size_t i = 0; i < count; i++)
         {
             FreePage((void*)((uint64_t)addr + (i * PAGE_SIZE)));
         }
@@ -119,7 +119,7 @@ namespace Kernel
 
     void PageFrameAllocator::LockPages(void* addr, uint64_t count)
     {
-        for (int i = 0; i < count; i++)
+        for (size_t i = 0; i < count; i++)
         {
             LockPage((void*)((uint64_t)addr + (i * PAGE_SIZE)));
         }
@@ -154,7 +154,7 @@ namespace Kernel
             return memoryBytes;
 
         MemoryRegionDescriptor* scan = rootDescriptor;
-        for (uint64_t i = 0; i < descriptorCount; i++)
+        for (size_t i = 0; i < descriptorCount; i++)
         {
             memoryBytes += scan->numberOfPages * PAGE_SIZE;
             scan++;

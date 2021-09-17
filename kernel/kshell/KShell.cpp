@@ -112,12 +112,12 @@ namespace Kernel::Shell
 
     void KShell::ClearLine(uint32_t lineNum, uint32_t startCol, uint32_t endCol, Colour clearColour)
     {
-        if (endCol > displaySize.x)
-            endCol = displaySize.x;
-        uint32_t top = lineNum * characterSize.y;
-        uint32_t left = startCol * characterSize.x;
-        uint32_t height = characterSize.y;
-        uint32_t width = (endCol - startCol) * characterSize.x;
+        if (endCol > (unsigned)displaySize.x)
+            endCol = (unsigned)displaySize.x;
+        uint32_t top = lineNum * (unsigned)characterSize.y;
+        uint32_t left = startCol * (unsigned)characterSize.x;
+        uint32_t height = (unsigned)characterSize.y;
+        uint32_t width = (endCol - startCol) * (unsigned)characterSize.x;
 
         KRenderer::The()->DrawRect(Position(left, top), Position(width, height), clearColour, true);
     }
@@ -134,10 +134,10 @@ namespace Kernel::Shell
                 //check for unread logs, display them if we need to
                 while (LogsUnread() > 0)
                 {
-                    unsigned long logsCount = KSHELL_INCOMING_LOGS_MAX;
+                    size_t logsCount = KSHELL_INCOMING_LOGS_MAX;
                     ReceiveLogs(incomingLogsBuffer, &logsCount);
                     
-                    for (int i = 0; i < logsCount; i++)
+                    for (size_t i = 0; i < logsCount; i++)
                         WriteLine(incomingLogsBuffer[i]);
                 }
                 
@@ -148,7 +148,7 @@ namespace Kernel::Shell
                 if (keysCount == 0)
                     continue; //jump into loop again, looks like someone else consumed keyboard keys
 
-                for (int i = 0; i < keysCount; i++)
+                for (size_t i = 0; i < keysCount; i++)
                     ProcessKey(incomingKeysBuffer[i]);
             }
             else

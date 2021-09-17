@@ -107,7 +107,7 @@ namespace sl
                 reserveFor = capacity + 1;
             
             Value* newBuffer = new Value[reserveFor];
-            for (int i = 0; i < count; i++)
+            for (size_t i = 0; i < count; i++)
                 newBuffer[i] = buffer[i];
             
             delete[] buffer;
@@ -162,7 +162,7 @@ namespace sl
                     Reserve(SL_LIST_EXPANSION_FORMULA(capacity));
                 
                 //copy existing items over by 1
-                for (int i = count; i > index; i--)
+                for (size_t i = count; i > index; i--)
                     buffer[i] = buffer[i - 1];
                 buffer[index] = val;
             }
@@ -173,7 +173,7 @@ namespace sl
             if (index >= count)
                 return;
             
-            for (int i = index; i < count - 1; i++)
+            for (size_t i = index; i < count - 1; i++)
                 buffer[i] = buffer[i + 1];
             count--;
         }

@@ -15,7 +15,7 @@ namespace Kernel::Drivers
     bool ACPI::ChecksumValid(SDTHeader* header)
     {
         uint64_t checksum = 0;
-        for (int i = 0; i < header->length; i++)
+        for (size_t i = 0; i < header->length; i++)
             checksum += (reinterpret_cast<uint8_t*>(header))[i];
         
         return (checksum & 0xFF) == 0;
@@ -45,7 +45,7 @@ namespace Kernel::Drivers
             revisionPtrSize = 8;
 
             uint64_t checksum = 0;
-            for (int i = 0; i < sizeof(RSDP2); i++) 
+            for (size_t i = 0; i < sizeof(RSDP2); i++) 
                 checksum += ((uint8_t*)rsdPtr)[i];
             if ((checksum & 0xFF) != 0)
                 LogError("RSDP checksum mismatch! Init will continue, but this should not be ignored.");
