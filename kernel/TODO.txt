@@ -5,10 +5,6 @@ Refactoring:
     -Investigate why booting can fail immediately after HPET init. Always in the same spot, but on random builds.
     -Investigate why overrides.mk is only triggering for Interrupts.cpp
 
-    -A number of files have been left in 'most convinient' locations, rather than where they probably belong.
-        -Example: x86 specific devices (APIC, HPET, PIT) are platform specific, and should be moved into that folder.
-        -Example: KernelMain is also platform specific, and we should move this over there - begin moving towards to the 'specific core - general surrounds' model
-
     -Move build system up to its parent folder - kernel should only be responsible for itself now. It dosnt need to be aware of the rest of the system.
         -We can get rid of a lot of the hacks from the kernel makefile now.
         -More streamlined platform selection system.
@@ -19,7 +15,6 @@ Refactoring:
         -Current this crashes, probably due to forgetting to map something vital.
 
     -Move away from compiler specific things
-    -keep platform specific things in the respective arch folder
                 
     -Refocus on adding features from the list below
 

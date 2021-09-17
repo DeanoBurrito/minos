@@ -22,15 +22,20 @@ I have do plans to eventually port it to Aarch64 (raspberry pi 3/4), and add a s
 Best compatability is with QEMU, as that's what I develop it on.
 
 # Project Layout
-Currently there are 3 top-level directories, each of these is a mostly isolated sub-project.
+Currently there are a number of top-level directories, each of these is a mostly isolated sub-project.
 - `boot/`: This is where the bootloaders live. They're mutually exclusive when building, and can be selected in the kernel makefile. 
 - `kernel/`: Here is the kernel itself, this is where the exciting buiness happens. There's some shared headers in boot dir, in order to receive data from the bootloader.
-- `kernel/arch/xyz/`: Architecture specific code, where xyz is the target arch (x86_64 for example). Only one arch directory can be linked at a time, and essentially serves as the HAL.
-- `kernel-disk/`: Kernel ramdisk. Currently implemented as DOS style FAT12/FAT16 disk (created using mtools). This is embedded IN the kernel elf, so so small files only, but it has the benefit that post-bootloader we have access to a filesystem without actually needing drivers.
+- `kernel-disk/`: Kernel init disk. Loaded with the kernel binary, contains code and data that is not essential enough to be built into the kernel itself.
 - `syslib/`: System library. Contains a collection of utility code, nothing specific to kernel or user development.
 - `userlib/`: Userspace library. Contains code for performing syscalls and other useful functions. 
 
 The `build/` and `include/` directories in each project same the same purpose, storing compiled and linked files, and for holding header files.
+
+### Kernel Source Layout
+For the kernel, there are some more notable directories.
+- `arch/` contains cpu isa specific code (x86/x86_64/arm6/etc...). There is readme in that directory going into more detail
+- `arch/platform/` contains platform specific code (think raspbi 2 vs raspbi 4), where functionality may require more than a driver.
+- `kshell/` contains code relating to the kernel-mode shell. 
 
 # Build System
 Its super simple, its all makefiles. The root makefile is currently in the `kernel/` directory, 
@@ -56,7 +61,7 @@ Just here to feel like there's progress being made.
 - [x] APIC/IOAPIC drivers
 - [x] HPET driver
 - [ ] Initdisk support
-- [ ] Complete virtual memory manager
+- [x] Complete virtual memory manager
 - [ ] Working kernel scheduler
 - [ ] FPU and SSE support
 - [ ] Completed string formatting
@@ -70,3 +75,5 @@ Just here to feel like there's progress being made.
 - [ ] Multicore scheduling
 - [ ] Filesystem drivers
 - [ ] Libc implementation
+- [ ] Basic networking
+- [ ] IP-based protocol stacks (TCP, UDP)

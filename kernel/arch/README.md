@@ -16,6 +16,8 @@ where any magic numbers can be defined.
 Outside of these requirements, architectures can do what they need to here. Exposing functionality can be done in the
 matching directory in the `include/arch/` folder.
 
+The x86_64 implementation is currently the reference implementation, if any clarification is needed, it should be available there.
+
 # Platform specific features
 Some platforms that share ISAs may have unique features that need more than a simple device driver.
 In this case the `platform` folder can contain a uniquely named folder for that platform. 
