@@ -2,6 +2,7 @@
 #include <KLog.h>
 #include <drivers/CPU.h>
 #include <Memory.h>
+#include <InterruptScopeGuard.h>
 
 namespace Kernel::Drivers
 {
