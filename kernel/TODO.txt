@@ -18,6 +18,9 @@ Refactoring:
                 
     -Refocus on adding features from the list below
 
+Panic:
+    -Capturing register state of a particular frame. If we're smart this can be reused for scheduling.
+
 HPET:
     -Investigate what's actually going on here, PIT still seems to be active even after being disabled. HPET timers are not generating interrupts.
 
