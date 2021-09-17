@@ -20,6 +20,10 @@ Refactoring:
 
 Panic:
     -Capturing register state of a particular frame. If we're smart this can be reused for scheduling.
+    -Panic has a lot of dependencies right now (krenderer, memory working correctly). This should be totally self contained.
+        -Ideally panic should be an entirely self-contained package of code, we can initialize with known-good details
+        like the framebuffer details(by copy, not ref).
+    -The only assumption allowed is it being identity mapped. Code and data should be closely located, and ideally at a known address.
 
 HPET:
     -Investigate what's actually going on here, PIT still seems to be active even after being disabled. HPET timers are not generating interrupts.
