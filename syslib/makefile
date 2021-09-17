@@ -5,7 +5,7 @@ TARGET = $(BUILD_DIR)/$(TARGET_NAME)
 
 #flags
 CXX_INC_DIRS = -I ./include
-CXX_FLAGS = -ffreestanding -O2 -fno-rtti -fno-exceptions -mno-red-zone -mcmodel=large -Wall
+CXX_FLAGS = -fno-omit-frame-pointer -ffreestanding -O2 -fno-rtti -fno-exceptions -mno-red-zone -mcmodel=large -Wall
 CPP_SRCS = $(shell find -name "*.cpp")
 
 #toolchain selection
