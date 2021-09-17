@@ -1,5 +1,6 @@
 #include <StringExtras.h>
 #include <PageFrameAllocator.h>
+#include <Platform.h>
 
 namespace Kernel
 {

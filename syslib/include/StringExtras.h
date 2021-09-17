@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint-gcc.h>
+#include <stdint.h>
 #include <String.h>
 
 //to make life easier when supporting different text encodings (utf8)

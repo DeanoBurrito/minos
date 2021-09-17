@@ -1,11 +1,9 @@
 #pragma once
 
-#include <stdint-gcc.h>
+#include <stdint.h>
 #include <BootInfo.h>
 #include <Bitmap.h>
 #include <memory/MemoryUsage.h>
-
-#define PAGE_SIZE 4096
 
 namespace Kernel
 {

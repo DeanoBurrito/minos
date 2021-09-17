@@ -1,7 +1,7 @@
 #include <InitDisk.h>
 #include <KLog.h>
 #include <StringExtras.h>
-#include <stdint-gcc.h>
+#include <stdint.h>
 
 namespace Kernel
 {

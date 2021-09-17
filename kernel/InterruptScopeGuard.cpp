@@ -1,17 +1,18 @@
+#include <InterruptScopeGuard.h>
 #include <drivers/CPU.h>
 
-namespace Kernel::Drivers
+namespace Kernel
 {
     InterruptScopeGuard::InterruptScopeGuard()
     {
-        previouslyEnabled = CPU::InterruptsEnabled();
-        CPU::DisableInterrupts();
+        previouslyEnabled = Drivers::CPU::InterruptsEnabled();
+        Drivers::CPU::DisableInterrupts();
     }
 
     InterruptScopeGuard::~InterruptScopeGuard()
     {
         if (previouslyEnabled)
-            CPU::EnableInterrupts();
+            Drivers::CPU::EnableInterrupts();
     }
 
     void InterruptScopeGuard::NeverReset()

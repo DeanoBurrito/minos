@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint-gcc.h>
+#include <stdint.h>
 #include <drivers/ACPIHeaders.h>
 
 namespace Kernel::Drivers

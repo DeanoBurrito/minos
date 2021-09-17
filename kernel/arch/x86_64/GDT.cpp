@@ -1,4 +1,7 @@
-#include <GDT.h>
+#include <arch/x86_64/GDT.h>
+#include <Platform.h>
+
+PLATFORM_REQUIRED(MINOS_PLATFORM_X86_64)
 
 namespace Kernel
 {

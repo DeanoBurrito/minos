@@ -1,6 +1,7 @@
 #include <PageTableManager.h>
 #include <PageFrameAllocator.h> 
 #include <memory/KHeap.h>
+#include <Platform.h>
 
 //malloc will round up to the nearest 'x' bytes. 0x10 = 16 bytes
 #define MALLOC_CHUNK_SIZE 0x10

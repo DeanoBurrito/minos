@@ -1,28 +1,10 @@
 #pragma once
 
-#include <stdint-gcc.h>
+#include <stdint.h>
+#include <PageFrameAllocator.h>
 
 namespace Kernel
 {
-    enum class PageEntryFlags : uint64_t
-    {
-        Present = 0,
-        ReadWrite = 1,
-        SuperOnly = 2,
-        WriteThrough = 3,
-        CacheDisabled = 4,
-        Accessed = 5,
-        Reserved0 = 6,
-        LargePages = 7,
-        Reserved1 = 8,
-
-        ImplSpecific_0 = 9,
-        ImplSpecific_1 = 10,
-        ImplSpecific_2 = 11,
-
-        NoExecute = 63,
-    };
-
     enum class MemoryMapFlags : uint64_t
     {
         None = 0,
@@ -44,34 +26,20 @@ namespace Kernel
     MemoryMapFlags operator&(MemoryMapFlags a, MemoryMapFlags b);
     MemoryMapFlags operator|(MemoryMapFlags a, MemoryMapFlags b);
 
-    struct PageDirectoryEntry
-    {
-        uint64_t value;
-
-        void SetFlag(PageEntryFlags flag, bool enabled);
-        bool GetFlag(PageEntryFlags flag);
-        void SetAddress(uint64_t address);
-        uint64_t GetAddress();
-    };
-
-    struct PageTable
-    {
-        PageDirectoryEntry entries[512];
-    } __attribute__((aligned(0x1000)));
+    //NOTE: actual implementation is in platform-specific PageTableDefs.h
+    struct PageTable;
 
     class PageTableManager
     {
     private:
-        PageTable* pml4Addr;
+        PageTable* topLevelAddr;
         void* dummyPage; //readonly dummy page, lazily replaced with real pages as needed.
         bool noExecuteSupport;
-
-        static void GetPageMapIndices(uint64_t virtualAddress, uint64_t* pdpIndex, uint64_t* pdIndex, uint64_t* ptIndex, uint64_t* pageIndex);
 
     public:
         static PageTableManager* The();
 
-        void Init(PageTable* pml4Address);
+        void Init(PageTable* topLvlAddress);
         //map 1 page at the specified virtual address, with the requested flags.
         void MapMemory(void* virtualAddr, MemoryMapFlags flags);
         //maps a physical page to a virtual page, with requested flags. If physicalAddr is nullptr, it will be allocated.

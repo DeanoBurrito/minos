@@ -2,8 +2,10 @@
 #include <PageFrameAllocator.h>
 #include <Memory.h>
 #include <drivers/CPU.h>
+#include <arch/x86_64/PageTableDefs.h>
+#include <Platform.h>
 
-#define X86_MSR_EFER 0xC0000080
+PLATFORM_REQUIRED(MINOS_PLATFORM_X86_64)
 
 namespace Kernel
 {   
@@ -49,7 +51,7 @@ namespace Kernel
         return &globalPageTableManager;
     }
 
-    void PageTableManager::GetPageMapIndices(uint64_t virtualAddress, uint64_t* pdpIndex, uint64_t* pdIndex, uint64_t* ptIndex, uint64_t* pageIndex)
+    void GetPageMapIndices(uint64_t virtualAddress, uint64_t* pdpIndex, uint64_t* pdIndex, uint64_t* ptIndex, uint64_t* pageIndex)
     {
         virtualAddress >>= 12;
         *pageIndex = virtualAddress & 0x1ff;
@@ -64,9 +66,9 @@ namespace Kernel
         *pdpIndex = virtualAddress & 0x1ff;
     }
 
-    void PageTableManager::Init(PageTable* pml4Address)
+    void PageTableManager::Init(PageTable* topLvlAddress)
     {
-        pml4Addr = pml4Address;
+        topLevelAddr = topLvlAddress;
 
         using namespace Drivers;
         noExecuteSupport = CPU::FeatureSupported(CpuFeatureFlag::NX);
@@ -91,7 +93,7 @@ namespace Kernel
         PageTable* localTable;
         PageTable* prevTable;
 
-        entry = pml4Addr->entries[pd4Index];
+        entry = topLevelAddr->entries[pd4Index];
         if (!entry.GetFlag(PageEntryFlags::Present))
         {
             //allocate a physical page, zero-init it and set required flags
@@ -101,7 +103,7 @@ namespace Kernel
             entry.SetAddress((uint64_t)localTable >> 12);
             entry.SetFlag(PageEntryFlags::Present, true);
             entry.SetFlag(PageEntryFlags::ReadWrite, true);
-            pml4Addr->entries[pd4Index] = entry;
+            topLevelAddr->entries[pd4Index] = entry;
         }
         else
             localTable = reinterpret_cast<PageTable*>((uint64_t)entry.GetAddress() << 12);
@@ -172,7 +174,7 @@ namespace Kernel
         void* physicalAddress;
 
         //chain through each layer of page table, checking if pages are present. If yes, then we unmap it. Otherwise wtf?
-        entry = pml4Addr->entries[pageDirectoryPtr];
+        entry = topLevelAddr->entries[pageDirectoryPtr];
         if (!entry.GetFlag(PageEntryFlags::Present))
             return; //was never mapped in the first place
         childTable = reinterpret_cast<PageTable*>((uint64_t)entry.GetAddress() << 12);
@@ -202,6 +204,6 @@ namespace Kernel
 
     void PageTableManager::MakeCurrentMap()
     {
-        Drivers::CPU::LoadPageTableMap(pml4Addr);
+        Drivers::CPU::LoadPageTableMap(topLevelAddr);
     }
 }

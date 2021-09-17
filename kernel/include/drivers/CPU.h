@@ -1,7 +1,6 @@
 #pragma once
 
-#include <GDT.h>
-#include <IDT.h>
+#include <stdint.h>
 
 #define PORT_USUALLY_EMPTY 0x80
 
@@ -73,6 +72,12 @@ namespace Kernel::Drivers
         IA64,
         PBE,
     };
+
+    enum class CpuTable : uint8_t
+    {
+        x86_64_GDT,
+        X86_64_IDT,
+    };
     
     class CPU
     {
@@ -87,8 +92,7 @@ namespace Kernel::Drivers
 
         static void LoadPageTableMap(void* toplevelAddress);
         static void InvalidatePageTable(void* tableAddress);
-        static void LoadGDT(GDTDescriptor* address);
-        static void LoadIDT(IDTR* idtr);
+        static void LoadTable(CpuTable table, void* addr);
         static void Halt();
 
         static void WriteMSR(uint32_t id, uint64_t value);
@@ -106,22 +110,5 @@ namespace Kernel::Drivers
 
         static char* GetArchitectureName();
         static char* GetVendorName();
-    };
-
-    class InterruptScopeGuard
-    {
-    private:
-        bool previouslyEnabled;
-    public:
-        InterruptScopeGuard();
-        ~InterruptScopeGuard();
-
-        //never resets the interrupt flag on destruction
-        void NeverReset();
-
-        InterruptScopeGuard(const InterruptScopeGuard&) = delete;
-        void operator=(const InterruptScopeGuard&) = delete;
-        InterruptScopeGuard(InterruptScopeGuard&&) = delete;
-        void operator=(InterruptScopeGuard&&) = delete;
     };
 }

@@ -4,8 +4,9 @@
 #include <PageTableManager.h>
 #include <Memory.h>
 #include <drivers/CPU.h>
-#include <IDT.h>
-#include <Interrupts.h>
+#include <arch/x86_64//IDT.h>
+#include <arch/x86_64/GDT.h>
+#include <arch/x86_64/Interrupts.h>
 #include <drivers/Serial.h>
 #include <KLog.h>
 #include <StringExtras.h>
@@ -18,6 +19,9 @@
 #include <multiprocessing/Scheduler.h>
 #include <kshell/KShell.h>
 #include <InitDisk.h>
+#include <Platform.h>
+
+PLATFORM_REQUIRED(MINOS_PLATFORM_X86_64)
 
 extern "C"
 {
@@ -29,8 +33,6 @@ extern void _init();
 namespace Kernel
 {
     using namespace Kernel::Drivers;
-
-    extern void InitPlatformInterrupts(IDTR* idtr);
 
     void InitMemory(BootInfo* bootInfo)
     {
@@ -63,7 +65,7 @@ namespace Kernel
         PageTableManager::The()->MakeCurrentMap();
 
         //initialize kernel heap at an arbitrarily large address
-        KHeap::The()->Init((void*)0x100'000'000, 0x1000);
+        KHeap::The()->Init((void*)0x100'000'000, PAGE_SIZE);
     }
 
     void InitPlatformEarly(BootInfo* bootInfo)
@@ -72,7 +74,7 @@ namespace Kernel
         GDTDescriptor rootDescriptor;
         rootDescriptor.size = sizeof(GDT) - 1;
         rootDescriptor.offset = (uint64_t)&defaultGdt;
-        CPU::LoadGDT(&rootDescriptor);
+        CPU::LoadTable(CpuTable::x86_64_GDT, &rootDescriptor);
 
         //gather any cpu specific details
         CPU::Init();
@@ -98,10 +100,13 @@ namespace Kernel
         idtr.limit = 0x0FFF;
         idtr.offset = (uint64_t)PageFrameAllocator::The()->RequestPage();
 
-        //init any platform specific interrupts
-        Log("Initializing platform specific interrupts");
-        InitPlatformInterrupts(&idtr);
+        //init cpu specific interrupts
+        Log("Initializing platform interrupts");
+        idtr.SetEntry((void*)InterruptHandlers::DoubleFault, INTERRUPT_VECTOR_DOUBLE_FAULT, IDT_ATTRIBS_InterruptGate, 0x08);
+        idtr.SetEntry((void*)InterruptHandlers::GeneralProtectionFault, INTERRUPT_VECTOR_GENERAL_PROTECTION_FAULT, IDT_ATTRIBS_InterruptGate, 0x08);
+        idtr.SetEntry((void*)InterruptHandlers::PageFault, INTERRUPT_VECTOR_PAGE_FAULT, IDT_ATTRIBS_InterruptGate, 0x8);
 
+        Log("Initializing software interrupts");
         //redirect entry for irq2 (ps2 keyboard)
         auto keyboardRedirect = IOAPIC::CreateRedirectEntry(INTERRUPT_VECTOR_PS2KEYBOARD, Drivers::APIC::Local()->GetID(), IOAPIC_PIN_POLARITY_ACTIVE_HIGH, IOAPIC_TRIGGER_MODE_EDGE, true);
         Drivers::IOAPIC::ioApics.PeekFront()->WriteRedirectEntry(1, keyboardRedirect);
@@ -117,7 +122,7 @@ namespace Kernel
         Drivers::IOAPIC::ioApics.PeekFront()->WriteRedirectEntry(2, pitRedirect); //TODO: magic numbers here!
 
         //load idt and enable interrupts
-        CPU::LoadIDT(&idtr);
+        CPU::LoadTable(CpuTable::X86_64_IDT, &idtr);
         CPU::EnableInterrupts();
 
         Log("IDT loaded at: 0x", false);
@@ -167,6 +172,7 @@ extern "C" __attribute__((noreturn)) void KernelMain(BootInfo* bootInfo)
     LoadInitDisk();
     InitDrivers(bootInfo);
     InitInterrupts(bootInfo);
+    Panic("Manual trigger");
 
     ExitKernelInit();
 

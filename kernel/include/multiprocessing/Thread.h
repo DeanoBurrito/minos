@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint-gcc.h>
+#include <stdint.h>
 
 #define THREAD_DEFAULT_STACK_PAGES 4
 

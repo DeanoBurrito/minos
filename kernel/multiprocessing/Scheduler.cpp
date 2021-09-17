@@ -1,6 +1,5 @@
 #include <multiprocessing/Scheduler.h>
 #include <drivers/CPU.h>
-#include <Interrupts.h>
 
 namespace Kernel::Multiprocessing
 {

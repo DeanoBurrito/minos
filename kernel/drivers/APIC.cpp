@@ -4,7 +4,6 @@
 #include <drivers/HPET.h>
 #include <drivers/8253PIT.h>
 #include <PageTableManager.h>
-#include <Interrupts.h>
 #include <KLog.h>
 #include <StringExtras.h>
 #include <Formatting.h>
