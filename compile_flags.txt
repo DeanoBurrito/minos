@@ -1,9 +1,9 @@
 -xc++
--Ikernel/include
--I../cx-tools/lib/gcc/x86_64-elf/10.2.0/include
--I../gnu-efi/inc
--Iboot/
--Isyslib/include
 -std=c++17
+
+-Ikernel/include
+-Isyslib/include
+-Iboot/
+-I../cx-tools/lib/gcc/x86_64-elf/10.2.0/include
 
 -DMINOS_PLATFORM=MINOS_PLATFORM_X86_64
