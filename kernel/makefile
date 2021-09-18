@@ -20,7 +20,7 @@ LD_FLAGS = $(ARCH_LD_FLAGS) -ffreestanding -O2 -nostdlib -fno-rtti -fno-exceptio
 LD_LIBS = -L $(SYSLIB_DIR)/$(BUILD_DIR) -lsyslib -lgcc
 LD_SCRIPT = $(ARCH_DIR)/linker.lds
 ASM_FLAGS =
-CPP_SRCS = $(shell find -path ./arch -prune -false -o -path ./$(ASSETS_DIR) -prune -false -o -name "*.cpp") $(ARCH_CPP_SRCS)
+CPP_SRCS = $(shell find -path ./arch -prune -false -o -path ./$(ASSETS_DIR) -prune -false -o -name "*.cpp" | cut -c3-) $(ARCH_CPP_SRCS)
 ASM_SRCS = 
 QEMU_FLAGS = -machine q35 -smp cores=4 -serial mon:stdio -m 256M -drive if=pflash,format=raw,readonly,file=$(OVMF_DIR) -cdrom $(TARGET).iso
 
