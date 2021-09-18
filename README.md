@@ -1,7 +1,6 @@
 ![](https://tokei.rs/b1/github/deanoburrito/minos)
 
-# Minos - Minal Operating System
-(It's more of a hobby project, than anything serious really.)
+# Minos
 
 # Building
 Minos requires a few things to build properly:
