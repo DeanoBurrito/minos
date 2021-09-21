@@ -172,7 +172,6 @@ extern "C" __attribute__((noreturn)) void KernelMain(BootInfo* bootInfo)
     LoadInitDisk();
     InitDrivers(bootInfo);
     InitInterrupts(bootInfo);
-    Panic("Manual trigger");
 
     ExitKernelInit();
 
