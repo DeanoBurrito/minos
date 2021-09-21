@@ -10,6 +10,11 @@
 
 namespace sl
 {   
+    /*
+        The core string class is designed to be user-friendly wrapper around a c-style string in a buffer.
+        It is focused more on read performance, for writing to a string, check out StringBuilder.
+        The core class is meant to be as light as possible, with parsing and extra function provided in StringExtras
+    */
     class String
     {
     private:
