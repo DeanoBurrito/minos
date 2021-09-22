@@ -39,6 +39,9 @@ namespace sl
 
         GetCharactersWritten,
         ImplementationDefined,
+
+        //Minos defined
+        Custom_Bool,
     };
 
     enum class FormatLength : uint8_t
@@ -299,6 +302,13 @@ namespace sl
             sourcePos++;
             spec.specifier = FormatType::ImplementationDefined;
             break;
+        
+        case 'B':
+            spec.isBig = true;
+        case 'b':
+            sourcePos++;
+            spec.specifier = FormatType::Custom_Bool;
+            break;
 
         default:
             spec.specifier = FormatType::NoFormat;
@@ -451,6 +461,28 @@ namespace sl
         {
             void* consumedArg = va_arg(args, void*);
             return "NoFormatData";
+        }
+
+        case FormatType::Custom_Bool:
+        {
+            bool value;
+            switch (specifier.length)
+            {
+            case FormatLength::Long:
+                value = va_arg(args, long) != 0;
+                break;
+            case FormatLength::DoubleLong:
+                value = va_arg(args, long long) != 0;
+                break;
+            default:
+                value = va_arg(args, int) != 0;
+                break;
+            }
+            
+            if (specifier.isBig)
+                return value ? "TRUE" : "FALSE";
+            else
+                return value ? "true" : "false";
         }
         }
 

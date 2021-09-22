@@ -54,6 +54,8 @@ namespace sl
         'g/G' = use shorted representation of e/E or f/F.
         'n' = returns number of characters written so far by function, argment is int*.
         'p' = implementation defined sequence, argument is void*.
+
+        'b/B' = boolean. Interprets 0 as false, anything else as true. Big B for all capital, little for lowercase
     */
     
     class String;

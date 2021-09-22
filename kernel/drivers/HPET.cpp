@@ -51,7 +51,7 @@ namespace Kernel::Drivers
         capabilities.timersCount++; //NOTE: this value is the highest timer, zero-indexed, so the count is val+1.
         comparatorCount = capabilities.timersCount;
 
-        string format = "HPET capabilities: rev=%u, timers=%u, main_counter64=%u, period=0x%x";
+        string format = "HPET capabilities: rev=%u, timers=%u, main_counter64=%b, period=0x%x";
         Log(sl::FormatToString(0, &format, capabilities.revisionId, capabilities.timersCount, capabilities.largeMainCounter, capabilities.mainCounterPeriod).Data());
 
         //TODO: since timers are only allowed certain routing, we should try and reserve those here.
