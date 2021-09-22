@@ -2,7 +2,7 @@
 BOOTLOADER_DIR = ../boot
 SYSLIB_DIR = ../syslib
 KDISK_DIR = ../kernel-disk
-KDISK_FILE= $(KDISK_DIR)/$(BUILD_DIR)/kdisk.img
+KDISK_FILE= $(KDISK_DIR)/$(BUILD_DIR)/kdisk.bin
 
 #internal project settings
 ARCH = x86_64

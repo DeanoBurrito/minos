@@ -5,12 +5,32 @@
 
 namespace sl
 {
+    /*
+        Compiles away to a few instructions here and there. Makes pointer maths really easy, especially when
+        switching between integers and real pointers.
+    */
+    template <typename BackingType>
+    union IntPtr
+    {
+        BackingType raw;
+        void* ptr;
+
+        IntPtr() : raw(0) {}
+        IntPtr(BackingType r) : raw(r) {}
+        IntPtr(void* p) : ptr(p) {}
+    };
+
+    //99% of the time this is what we want, just saving some typing in the future.
+    typedef IntPtr<uint64_t> UIntPtr;
+    
+    //std::move replacement
     template <typename T>
     T&& move(T&& t)
     {
         return static_cast<T&&>(t);
     }
 
+    //std::swap replacement
     template <typename T>
     void swap(T& a, T& b)
     {
