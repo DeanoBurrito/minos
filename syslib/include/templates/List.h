@@ -23,12 +23,14 @@ namespace sl
             count = 0;
             capacity = 0;
             buffer = nullptr;
+            defaultValue = Value();
         }
 
         List(size_t reserveFor) : List()
         {
             capacity = reserveFor;
             buffer = new Value[capacity];
+            defaultValue = Value();
         }
 
         ~List()
@@ -115,18 +117,18 @@ namespace sl
             capacity = reserveFor;
         }
 
-        Value First()
+        Value& First()
         {
             if (count > 0)
                 return buffer[0];
-            return Value();
+            return defaultValue;
         }
 
-        Value Last()
+        Value& Last()
         {
             if (count > 0)
                 return buffer[count - 1];
-            return Value();
+            return defaultValue;
         }
 
         void Clear()
@@ -146,7 +148,7 @@ namespace sl
         Value PopBack()
         {
             if (count < 1)
-                return Value();
+                return defaultValue;
             
             count--;
             return buffer[count];

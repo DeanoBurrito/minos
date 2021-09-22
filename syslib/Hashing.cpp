@@ -7,7 +7,7 @@ namespace sl
         uint8_t counter = 0;
         const uint8_t* startPtr = reinterpret_cast<const uint8_t*>(start);
         for (size_t i = 0; i < count; i++)
-            counter += i * startPtr[count];
+            counter += (i + 1) * startPtr[count];
         
         return counter;
     }
@@ -17,7 +17,7 @@ namespace sl
         uint64_t counter = 0;
         const uint8_t* startPtr = reinterpret_cast<const uint8_t*>(start);
         for (size_t i = 0; i < count; i++)
-            counter += i * startPtr[count];
+            counter += (i + 1) * startPtr[count];
         
         return counter;
     }
