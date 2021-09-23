@@ -2,18 +2,30 @@
 .extern MultibootMain
 .global OldSchoolCoolMain
 
+.set MB_MAGIC, 0x1BADB002
+.set MB_LOAD_PAGE_ALIGNED, 1 << 0
+.set MB_REQUEST_MEMORY_INFO, 1 << 1
+.set MB_REQUEST_VIDEO_INFO, 1 << 2
+.set MB_OVERRIDE_LOAD_INFO, 1 << 16
+
+.set MB_FLAGS, MB_LOAD_PAGE_ALIGNED | MB_REQUEST_MEMORY_INFO
+.set MB_CHECKSUM, -(MB_MAGIC + MB_FLAGS)
+
 .align 4
 .section .multiboot
-    .long 0x1BADB002
-    .long 0x7
-    .long 0xE4524FF7
+    #multiboot header
+    .long MB_MAGIC
+    .long MB_FLAGS
+    .long MB_CHECKSUM
+    
+    #section load address overrides (if flag is set, otherwise ignored)
     .long 0
-
     .long 0
     .long 0
     .long 0
     .long 0
     
+    #video mode requested settings - 0 means dont care
     .long 0
     .long 0
     .long 0
@@ -27,6 +39,7 @@ OldSchoolCoolMain:
     pushl $0
     popf
 
+    #eax should contain 0x2BADB002, ebx is the address of multiboot struct.
     pushl %ebx
     pushl %eax
 

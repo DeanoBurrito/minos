@@ -5,7 +5,26 @@
 
 struct MbInfo
 {
-    uint32_t flags;
+    union flags
+    {
+        uint32_t raw;
+        struct
+        {
+            uint8_t memorySizeAvailable : 1;
+            uint8_t bootDeviceAvailable : 1;
+            uint8_t commandLineAvailable : 1;
+            uint8_t modsAvailable : 1;
+            uint8_t reserved0 : 1; 
+            uint8_t reserved1 : 1;
+            uint8_t memoryMapAvailable : 1;
+            uint8_t reserved2 : 1;
+            uint8_t configTableAvailable : 1;
+            uint8_t bootloaderNameAvailable : 1;
+            uint8_t reserved3 : 1; //normally APM, but we're using the chad ACPI
+            uint8_t vbeAvailable : 1; //only declares vbe1 and vbe2 interfaces, vbe3+ must be discovered ourselves.
+            uint8_t framebufferAvailable : 1;
+        };
+    } __attribute__((packed));
 
     //valid if flags[0]: lower memory available in kilobytes
     uint32_t memoryLower;
@@ -68,10 +87,11 @@ struct MbInfo
 #define MULTIBOOT_MAGIC 0x1BADBOO2
 #define MULTIBOOT_ECHO_MAGIC 0x2BADBOO2
 
+//NOTE: structure needs to be offset by -4 bytes when creating from pointers.
 struct MbMemoryMap
 {
     uint32_t size;
-    uint64_t baseAddress;
+    uint64_t baseAddress; 
     uint64_t length;
     uint32_t type;
 } __attribute__((packed));
