@@ -25,8 +25,8 @@ mb-pack: all
 
 run: all
 	@echo Running QEMU
-	@qemu-system-x86_64 -kernel $(TARGET)
+	@qemu-system-x86_64 -kernel $(TARGET) -serial mon:stdio
 
 debug: all
 	@echo Debugging in QEMU
-	@qemu-system-x86_64 -kernel $(TARGET) -s -S
+	@qemu-system-x86_64 -kernel $(TARGET) -serial mon:stdio -s -S
