@@ -1,6 +1,7 @@
 .code32
 .extern MultibootMain
 .global OldSchoolCoolMain
+.global error
 
 .set MB_MAGIC, 0x1BADB002
 .set MB_LOAD_PAGE_ALIGNED, 1 << 0

@@ -24,7 +24,7 @@ struct MbInfo
             uint8_t vbeAvailable : 1; //only declares vbe1 and vbe2 interfaces, vbe3+ must be discovered ourselves.
             uint8_t framebufferAvailable : 1;
         };
-    } __attribute__((packed));
+    } __attribute__((packed)) flags;
 
     //valid if flags[0]: lower memory available in kilobytes
     uint32_t memoryLower;
@@ -84,8 +84,8 @@ struct MbInfo
 #define MB_FRAMEBUFFER_TYPE_INDEXED 0
 #define MB_FRAMEBUFFER_TYPE_DIRECT 1
 
-#define MULTIBOOT_MAGIC 0x1BADBOO2
-#define MULTIBOOT_ECHO_MAGIC 0x2BADBOO2
+#define MULTIBOOT_MAGIC 0x1BADB002
+#define MULTIBOOT_ECHO_MAGIC 0x2BADB002
 
 //NOTE: structure needs to be offset by -4 bytes when creating from pointers.
 struct MbMemoryMap

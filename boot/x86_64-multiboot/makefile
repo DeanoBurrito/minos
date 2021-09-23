@@ -14,7 +14,8 @@ all:
 	@mkdir -p $(BUILD_DIR)
 	@$(ASM) --32 Main.asm -o $(BUILD_DIR)/Main.asm.o
 	@$(CPP) $(CPP_FLAGS) -c Main32.cpp -o $(BUILD_DIR)/Main32.o
-	@$(CPP) $(CPP_FLAGS) $(LD_FLAGS) $(BUILD_DIR)/Main.asm.o $(BUILD_DIR)/Main32.o -o $(TARGET)
+	@$(CPP) $(CPP_FLAGS) -c Loader.cpp -o $(BUILD_DIR)/Loader.o
+	@$(CPP) $(CPP_FLAGS) $(LD_FLAGS) $(BUILD_DIR)/Main.asm.o $(BUILD_DIR)/Main32.o $(BUILD_DIR)/Loader.o -o $(TARGET)
 
 clean:
 	@echo Deleting $(BUILD_DIR) ...
@@ -22,6 +23,9 @@ clean:
 
 mb-pack: all
 	@echo Creating bootable multiboot file ...
+	@tar -c $(BUILD_DIR)/kernel.elf -f $(BUILD_DIR)/kernel.tar
+	@objcopy --input binary --output elf32-i386 $(BUILD_DIR)/kernel.tar $(BUILD_DIR)/kernel.o
+	@$(CPP) $(CPP_FLAGS) $(LD_FLAGS) $(BUILD_DIR)/Main.asm.o $(BUILD_DIR)/Main32.o $(BUILD_DIR)/Loader.o $(BUILD_DIR)/kernel.o -o $(BUILD_DIR)/kernel-patched.elf
 
 run: all
 	@echo Running QEMU

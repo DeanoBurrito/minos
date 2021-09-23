@@ -1,7 +1,11 @@
-#include "Multiboot.h"
 #include <stddef.h>
+#include "Multiboot.h"
+#include "Loader.h"
+#include "../BootInfo.h"
 
 #define SERIAL_PORT 0x03F8
+
+extern "C" void error();
 
 inline __attribute__((always_inline)) void OutB(uint16_t port, uint8_t data)
 {
@@ -38,7 +42,28 @@ __attribute__((cdecl)) void MultibootMain(uint32_t magic, uint32_t infoAddr)
     OutB(SERIAL_PORT + 2, 0xC7); //fifio, cleared with usual settings
     OutB(SERIAL_PORT + 4, 0x0F); //skipping test and enabling settings
 
-    Log("Hello world!");
+    Log("Minos Multiboot-1 pre-kernel initialized.");
+    
+    MbInfo* multibootInfo = reinterpret_cast<MbInfo*>(infoAddr);
+    //Parse mb tables and create our own bootInfo
 
-    while (1);
+    //setup barebones gdt/idt/paging structure, jump into long mode
+
+    //Load Kernel
+    if (!KernelValid())
+    {
+        Log("Kernel file was invalid?! Aborting load.");
+        error();
+    }
+    else if (!LoadKernel())
+    {
+        Log("Failed to load kernel file. Aborting load.");
+        error();
+    }
+
+    //find kernel entry and jump to it
+    void (*KernelMain)(BootInfo*) = (__attribute__((sysv_abi)) void(*)(BootInfo*))GetKernelEntry();
+    //KernelMain(bootInfo);
+
+    Log("Kernel main has returned to pre-kernel!");
 }
