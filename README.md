@@ -61,7 +61,7 @@ Just here to feel like there's progress being made.
 ### Next Milestone
 - [x] APIC/IOAPIC drivers
 - [x] HPET driver
-- [ ] Initdisk support
+- [x] Initdisk support
 - [x] Complete virtual memory manager
 - [ ] Working kernel scheduler
 - [ ] FPU and SSE support
