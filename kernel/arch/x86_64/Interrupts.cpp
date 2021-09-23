@@ -4,6 +4,7 @@
 #include <drivers/Ps2Keyboard.h>
 #include <drivers/APIC.h>
 #include <drivers/8253PIT.h>
+#include <drivers/SystemClock.h>
 #include <KLog.h>
 #include <StringExtras.h>
 #include <Platform.h>
@@ -40,6 +41,12 @@ namespace InterruptHandlers
         uint8_t scancode = Kernel::Drivers::CPU::PortRead8(PORT_PS2_KEYBOARD);
         Kernel::Drivers::Ps2Keyboard::The()->HandlePacketByte(scancode);
 
+        Kernel::Drivers::APIC::Local()->SendEOI();
+    }
+
+    __attribute__((interrupt)) void SystemClockHandler(interrupt_frame* frame)
+    {
+        Kernel::Drivers::SystemClock::The()->clockTicks++;
         Kernel::Drivers::APIC::Local()->SendEOI();
     }
 

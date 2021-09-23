@@ -29,5 +29,6 @@ namespace InterruptHandlers
     __attribute__((interrupt)) void PageFault(interrupt_frame* frame, uint64_t errorCode);
 
     __attribute__((interrupt)) void PS2KeyboardHandler(interrupt_frame* frame);
+    __attribute__((interrupt)) void SystemClockHandler(interrupt_frame* frame);
     __attribute__((interrupt)) void DefaultTimerHandler(interrupt_frame* frame);
 }
