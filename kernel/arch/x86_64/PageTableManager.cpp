@@ -199,7 +199,7 @@ namespace Kernel
         childTable->entries[page] = entry;
 
         PageFrameAllocator::The()->FreePage(physicalAddress);
-        Drivers::CPU::InvalidatePageTable(childTable); //TODO: this is processor specific, we'll need to sync this up across multiple cores later.
+        Drivers::CPU::InvalidatePageTable(virtualAddr); //TODO: this is processor specific, we'll need to sync this up across multiple cores later.
     }
 
     void PageTableManager::MakeCurrentMap()
