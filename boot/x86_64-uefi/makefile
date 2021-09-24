@@ -42,15 +42,20 @@ iso: $(TARGET).img
 run: iso
 	@qemu-system-x86_64 -drive if=pflash,format=raw,readonly,file=$(OVMF_DIR) -cdrom $(TARGET).iso
 
-$(TARGET).img: $(TARGET).efi
-	@echo MAKING IMG
-	@dd if=/dev/zero of=$(TARGET).img bs=1k count=1440
-	@mformat -i $(TARGET).img -f 1440 ::
-	@mmd -i $(TARGET).img ::/EFI
-	@mmd -i $(TARGET).img ::/EFI/BOOT
-	@cp $(TARGET).efi BOOTX64.EFI
-	@mcopy -i $(TARGET).img BOOTX64.EFI ::/EFI/BOOT
-	@rm BOOTX64.EFI
+pack: all
+	@echo Packing kernel with x86_64-uefi bootloader
+	@cp $(TARGET).efi $(BUILD_DIR)/BOOTX64.EFI
+	@dd if=/dev/zero of=$(BUILD_DIR)/kernel-patched.img bs=1k count=2880
+	@mformat -i $(BUILD_DIR)/kernel-patched.img -f 2880 ::
+	@mmd -i $(BUILD_DIR)/kernel-patched.img ::/EFI
+	@mmd -i $(BUILD_DIR)/kernel-patched.img ::/EFI/BOOT
+	@mcopy -i $(BUILD_DIR)/kernel-patched.img $(BUILD_DIR)/BOOTX64.EFI ::EFI/BOOT/
+	@mcopy -i $(BUILD_DIR)/kernel-patched.img $(BUILD_DIR)/kernel.elf ::
+	@mcopy -i $(BUILD_DIR)/kernel-patched.img ../../kernel/assets ::/assets
+	@rm $(BUILD_DIR)/BOOTX64.EFI
+	@mkdir -p $(BUILD_DIR)/iso
+	@cp $(BUILD_DIR)/kernel-patched.img $(BUILD_DIR)/iso
+	@cd $(BUILD_DIR); xorriso -as mkisofs -R -f -e kernel-patched.img -no-emul-boot -o packed.iso iso
 
 $(TARGET).so: $(CC_OBJS)
 	@echo LINKING $<

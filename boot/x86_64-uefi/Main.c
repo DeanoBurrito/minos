@@ -163,7 +163,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable
     InitializeLib(imageHandle, systemTable);
     Print(L"EFI bootloader initialized, mapping system table and loading kernel...\n\r");
 
-    EFI_FILE* kernelFile = load_file(NULL, L"kernel-x86_64.elf", imageHandle, systemTable);
+    EFI_FILE* kernelFile = load_file(NULL, L"kernel.elf", imageHandle, systemTable);
     if (kernelFile == NULL)
     {
         Print(L"Unable to load kernel file!\n\r");

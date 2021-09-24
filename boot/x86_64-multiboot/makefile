@@ -1,7 +1,7 @@
 TARGET_NAME = multibooty.bin
 BUILD_DIR = build
 TARGET = $(BUILD_DIR)/$(TARGET_NAME)
-CPP_FLAGS = -ffreestanding -fno-rtti -fno-exceptions -Wall -O2 -zmax-page-size=0x1000 -g
+CPP_FLAGS = -ffreestanding -fno-rtti -fno-exceptions -mno-red-zone -Wall -O2 -zmax-page-size=0x1000 -g
 LD_FLAGS = -nostdlib -lgcc -T linker.lds
 
 ASM = i686-elf-as

@@ -39,7 +39,6 @@ CRTBEGIN_OBJ = $(shell $(CXX) $(CXX_FLAGS) -print-file-name=crtbegin.o)
 CRTEND_OBJ = $(shell $(CXX) $(CXX_FLAGS) -print-file-name=crtend.o)
 CRT_OBJS = $(CRTBEGIN_OBJ) $(CRTEND_OBJ) $(BUILD_DIR)/crti.o $(BUILD_DIR)/crtn.o
 BOOT_PLATFORM_DIR = $(BOOTLOADER_DIR)/$(ARCH)-$(BOOT_PLATFORM)
-BOOTLOADER_FILE = $(BOOT_PLATFORM_DIR)/build/booty.efi
 
 .PHONY: all clean iso run debug $(TARGET)
 
