@@ -36,9 +36,7 @@
 OldSchoolCoolMain:
     #setup stack, reset flags, prime stack for cdecl call and jump into main
     movl $(stack + 0x2000), %esp
-
-    pushl $0
-    popf
+    movl %esp, %ebp
 
     #eax should contain 0x2BADB002, ebx is the address of multiboot struct.
     pushl %ebx
@@ -48,10 +46,11 @@ OldSchoolCoolMain:
     #if we return, fall through to error code below
 
 error:
-    movl 0xDEADC0DE, %eax
-    movl 0xDEADC0DE, %ebx
-    movl 0xDEADC0DE, %ecx
-    movl 0xDEADC0DE, %edx
+    cli
+    mov $0xDEADC0DE, %eax
+    mov $0xDEADC0DE, %ebx
+    mov $0xDEADC0DE, %ecx
+    mov $0xDEADC0DE, %edx
 loop:
     hlt
     jmp loop
