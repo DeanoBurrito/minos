@@ -25,6 +25,7 @@ Time API:
     -Simple but unified way to get various forms of time (system uptime, real time) and the date.
     -A refactoring of the systemclock api.
     -Dont forget RDTSC exists, and is very precise once calibrated!
+    -Remove PIT::ticks and move any references to the new API instead.
 
 InterruptManager:
     -A nice system to 'claim' gsi/irq numbers for certain subsystems, and query which ones are available.
