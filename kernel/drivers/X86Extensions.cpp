@@ -53,6 +53,11 @@ namespace Kernel::Drivers
             Log("X86 extensions error: long mode requires SSE2 or greater support, but cpuid says this is unavailable. Cannot continue.");
             return;
         }
+        if (!CPU::FeatureSupported(CpuFeatureFlag::FXSR) && !xSaveSupport)
+        {
+            Log("X86 extensions error: neither XSAVE or FXSR features are available. Cannot continue.");
+            return;
+        }
         if (!xSaveSupport)
             Log("XSAVE extension is not supported, defaulting to FXSAVE instead.");
             
