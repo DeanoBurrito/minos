@@ -46,10 +46,10 @@ all: $(TARGET)
 
 clean:
 	@echo DELETING $(BUILD_DIR) ...
-	@rm -r $(BUILD_DIR)
-	@cd $(BOOT_PLATFORM_DIR); make clean;
-	@cd $(SYSLIB_DIR); make clean;
-	@cd $(KDISK_DIR); make clean;
+	@-rm -r $(BUILD_DIR)
+	@-cd $(BOOT_PLATFORM_DIR); make clean;
+	@-cd $(SYSLIB_DIR); make clean;
+	@-cd $(KDISK_DIR); make clean;
 
 
 $(TARGET): $(CPP_OBJS) $(ASM_OBJS) $(LD_SCRIPT) $(CRT_OBJS)
