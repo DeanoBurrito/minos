@@ -3,7 +3,6 @@
 #include <elf.h>
 #include <stddef.h>
 #include "../BootInfo.h"
-#include "../PSF1.h"
 
 void init_gop(BootInfo* bInfo)
 {
@@ -63,41 +62,42 @@ EFI_FILE* load_file(EFI_FILE* directory, CHAR16* path, EFI_HANDLE imageHandle, E
     return loadedFile;
 }
 
-PSF1_Font* load_font(EFI_FILE* directory, CHAR16* path, EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
-{
-    EFI_FILE* font = load_file(directory, path, imageHandle, systemTable);
+// PSF1_Font* load_font(EFI_FILE* directory, CHAR16* path, EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
+// {
+//     //TODO: obsolete, extract functionality into new psf1 driver and remove this code.
+//     EFI_FILE* font = load_file(directory, path, imageHandle, systemTable);
 
-    if (font == NULL)
-        return NULL;
+//     if (font == NULL)
+//         return NULL;
 
-    PSF1_Header* header;
-    uefi_call_wrapper(systemTable->BootServices->AllocatePool, 3, EfiLoaderData, sizeof(PSF1_Header), (void**)&header);
-    UINTN size = sizeof(PSF1_Header);
-    uefi_call_wrapper(font->Read, 3, font, &size, header);
+//     PSF1_Header* header;
+//     uefi_call_wrapper(systemTable->BootServices->AllocatePool, 3, EfiLoaderData, sizeof(PSF1_Header), (void**)&header);
+//     UINTN size = sizeof(PSF1_Header);
+//     uefi_call_wrapper(font->Read, 3, font, &size, header);
 
-    if (header->magic[0] != PSF1_Magic_0 || header->magic[1] != PSF1_Magic_1)
-        return NULL;
+//     if (header->magic[0] != PSF1_Magic_0 || header->magic[1] != PSF1_Magic_1)
+//         return NULL;
 
-    UINTN glyphBufferSize = header->charSize * 256;
-    if (header->mode == 1)
-    { //512 glyphs
-        glyphBufferSize = header->charSize * 512;
-    }
+//     UINTN glyphBufferSize = header->charSize * 256;
+//     if (header->mode == 1)
+//     { //512 glyphs
+//         glyphBufferSize = header->charSize * 512;
+//     }
 
-    void* glyphBuffer;
-    {
-        uefi_call_wrapper(font->SetPosition, 2, font, sizeof(PSF1_Header));
-        uefi_call_wrapper(systemTable->BootServices->AllocatePool, 3, EfiLoaderData, glyphBufferSize, (void**)&glyphBuffer);
-        uefi_call_wrapper(font->Read, 3, font, &glyphBufferSize, glyphBuffer);
-    }
+//     void* glyphBuffer;
+//     {
+//         uefi_call_wrapper(font->SetPosition, 2, font, sizeof(PSF1_Header));
+//         uefi_call_wrapper(systemTable->BootServices->AllocatePool, 3, EfiLoaderData, glyphBufferSize, (void**)&glyphBuffer);
+//         uefi_call_wrapper(font->Read, 3, font, &glyphBufferSize, glyphBuffer);
+//     }
 
-    PSF1_Font* fontObj;
-    uefi_call_wrapper(systemTable->BootServices->AllocatePool, 3, EfiLoaderData, sizeof(PSF1_Font), (void**)&fontObj);
-    fontObj->psf1_haeder = header;
-    fontObj->glyphBuffer = glyphBuffer;
+//     PSF1_Font* fontObj;
+//     uefi_call_wrapper(systemTable->BootServices->AllocatePool, 3, EfiLoaderData, sizeof(PSF1_Font), (void**)&fontObj);
+//     fontObj->psf1_haeder = header;
+//     fontObj->glyphBuffer = glyphBuffer;
 
-    return fontObj;
-}
+//     return fontObj;
+// }
 
 UINTN init_memmap(BootInfo *bInfo)
 {
@@ -244,18 +244,8 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable
 
         configTable++;
     }
-    
-    EFI_FILE* assetsDirectory = load_file(NULL, L"assets", imageHandle, systemTable);
-
-    PSF1_Font* font = load_font(assetsDirectory, L"zap-light16.psf", imageHandle, systemTable);
-    if (font == NULL)
-    {
-        Print(L"Unable to load default kernel font file.");
-        loop();
-    }
 
     BootInfo bootInfo;
-    bootInfo.font = font;
     bootInfo.rsdp = rsdp;
 
     init_gop(&bootInfo);

@@ -51,7 +51,6 @@ pack: all
 	@mmd -i $(BUILD_DIR)/kernel-patched.img ::/EFI/BOOT
 	@mcopy -i $(BUILD_DIR)/kernel-patched.img $(BUILD_DIR)/BOOTX64.EFI ::EFI/BOOT/
 	@mcopy -i $(BUILD_DIR)/kernel-patched.img $(BUILD_DIR)/kernel.elf ::
-	@mcopy -i $(BUILD_DIR)/kernel-patched.img ../../kernel/assets ::/assets
 	@rm $(BUILD_DIR)/BOOTX64.EFI
 	@mkdir -p $(BUILD_DIR)/iso
 	@cp $(BUILD_DIR)/kernel-patched.img $(BUILD_DIR)/iso

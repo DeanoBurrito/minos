@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdint.h>
-#include "PSF1.h"
 
 #define PIXEL_FORMAT_Unknown 0
 #define PIXEL_FORMAT_RedGreenBlueReserved_8BPP 1
@@ -45,8 +44,6 @@ typedef struct
         unsigned int pixelsPerScanline;
         unsigned int pixelFormat;
     } gop;
-
-    PSF1_Font *font;
 
     uint64_t memoryDescriptorsCount;
     MemoryRegionDescriptor* memoryDescriptors;

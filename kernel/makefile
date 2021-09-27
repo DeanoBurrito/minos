@@ -8,7 +8,6 @@ KDISK_FILE= $(KDISK_DIR)/$(BUILD_DIR)/kdisk.bin
 ARCH = x86_64
 BOOT_PLATFORM = uefi
 BUILD_DIR = build
-ASSETS_DIR = assets
 TARGET_NAME = kernel-$(ARCH).elf
 TARGET = $(BUILD_DIR)/$(TARGET_NAME)
 
@@ -19,7 +18,7 @@ LD_FLAGS = $(ARCH_LD_FLAGS) -ffreestanding -O2 -nostdlib -fno-rtti -fno-exceptio
 LD_LIBS = -L $(SYSLIB_DIR)/$(BUILD_DIR) -lsyslib -lgcc
 LD_SCRIPT = $(ARCH_DIR)/linker.lds
 ASM_FLAGS =
-CPP_SRCS = $(shell find -path ./arch -prune -false -o -path ./$(ASSETS_DIR) -prune -false -o -name "*.cpp" | cut -c3-) $(ARCH_CPP_SRCS)
+CPP_SRCS = $(shell find -path ./arch -prune -false -o -name "*.cpp" | cut -c3-) $(ARCH_CPP_SRCS)
 ASM_SRCS = 
 
 #architecture settings
