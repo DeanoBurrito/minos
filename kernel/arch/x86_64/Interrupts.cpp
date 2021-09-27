@@ -31,9 +31,24 @@ namespace InterruptHandlers
 
     __attribute__((interrupt)) void PageFault(interrupt_frame* frame, uint64_t errorCode)
     {
-        Kernel::Panic("Page Fault!"); //CR2 contains our culprit
+        uint64_t faultAddr = 0;
+        asm volatile("mov %%cr2, %0": "=g"(faultAddr));
+        Kernel::Log("Page fault, addr=0x", false);
+        Kernel::Log(sl::UIntToString(faultAddr, BASE_HEX).Data());
+        Kernel::Log("Error code: ", false);
+        Kernel::Log(sl::UIntToString(errorCode, BASE_HEX).Data());
 
-        Kernel::Drivers::CPU::Halt();
+        Kernel::Panic("Page Fault!");
+    }
+
+    __attribute__((interrupt)) void FPUError(interrupt_frame* frame)
+    {
+        Kernel::Panic("X87 Floating point unit error.");
+    }
+
+    __attribute__((interrupt)) void SIMDError(interrupt_frame* frame)
+    {
+        Kernel::Panic("SIMD/Extended CPU state erorr.");
     }
 
     __attribute__((interrupt)) void PS2KeyboardHandler(interrupt_frame* frame)

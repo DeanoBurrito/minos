@@ -16,6 +16,7 @@
 #include <drivers/APIC.h>
 #include <drivers/HPET.h>
 #include <drivers/8253PIT.h>
+#include <drivers/X86Extensions.h>
 #include <multiprocessing/Scheduler.h>
 #include <kshell/KShell.h>
 #include <InitDisk.h>
@@ -104,7 +105,9 @@ namespace Kernel
         Log("Initializing platform interrupts");
         idtr.SetEntry((void*)InterruptHandlers::DoubleFault, INTERRUPT_VECTOR_DOUBLE_FAULT, IDT_ATTRIBS_InterruptGate, 0x08);
         idtr.SetEntry((void*)InterruptHandlers::GeneralProtectionFault, INTERRUPT_VECTOR_GENERAL_PROTECTION_FAULT, IDT_ATTRIBS_InterruptGate, 0x08);
-        idtr.SetEntry((void*)InterruptHandlers::PageFault, INTERRUPT_VECTOR_PAGE_FAULT, IDT_ATTRIBS_InterruptGate, 0x8);
+        idtr.SetEntry((void*)InterruptHandlers::PageFault, INTERRUPT_VECTOR_PAGE_FAULT, IDT_ATTRIBS_InterruptGate, 0x08);
+        idtr.SetEntry((void*)InterruptHandlers::FPUError, INTERRUPT_VECTOR_FPU_ERROR, IDT_ATTRIBS_InterruptGate, 0x08);
+        idtr.SetEntry((void*)InterruptHandlers::SIMDError, INTERRUPT_VECTOR_SIMD_ERROR, IDT_ATTRIBS_InterruptGate, 0x08);
 
         Log("Initializing software interrupts");
         //redirect entry for irq2 (ps2 keyboard)
@@ -138,6 +141,7 @@ namespace Kernel
         Drivers::HPET::The()->Init();
         Drivers::APIC::Local()->Init();
         Drivers::IOAPIC::InitAll();
+        Drivers::X86Extensions::Local()->Init();
 
         KRenderer::The()->Init(bootInfo);
     }
