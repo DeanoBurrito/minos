@@ -30,7 +30,7 @@ namespace Kernel
 
     #define USTAR_FILENAME_LENGTH 100
     #define USTAR_FILESIZE_LENGTH 12
-    #define USTAR_SECTOR_SIZE 512;
+    #define USTAR_SECTOR_SIZE 512
 
     struct TarHeader
     {
@@ -85,9 +85,19 @@ namespace Kernel
 
     bool GetFileData(string filename, void** start, void** end, size_t* size)
     {
-        TarHeader* scan = reinterpret_cast<TarHeader*>(diskStart);
+        sl::UIntPtr scanPtr(diskStart);
+        TarHeader* scan = reinterpret_cast<TarHeader*>(scanPtr.ptr);
+
         while ((size_t)scan < diskEnd)
         {
+            if (sl::memcmp("ustar", scan->signature, 5) != 0)
+            {
+                //somehow we ended up reading a sector as a header, without a valid signature
+                scanPtr.raw += USTAR_SECTOR_SIZE;
+                scan = reinterpret_cast<TarHeader*>(scanPtr.ptr);
+                continue;
+            }
+            
             size_t strlen = sl::memfirst(scan->filename, 0, USTAR_FILENAME_LENGTH);
             if (filename.Size() < strlen)
                 strlen = filename.Size();
@@ -95,7 +105,7 @@ namespace Kernel
             if (sl::memcmp(scan->filename, filename.Data(), strlen) == 0)
             {
                 //bingo, matching filename
-                *size = OctalToUseful(scan->fileSize, USTAR_FILESIZE_LENGTH);
+                *size = OctalToUseful(scan->fileSize, USTAR_FILESIZE_LENGTH - 1);
 
                 sl::UIntPtr ip(scan);
                 ip.raw += USTAR_SECTOR_SIZE;
@@ -107,8 +117,13 @@ namespace Kernel
             }
 
             //it's a miss, calculate where the next header should be and look there
-            size_t offset = OctalToUseful(scan->fileSize, USTAR_FILESIZE_LENGTH) / USTAR_SECTOR_SIZE;
-            scan = reinterpret_cast<TarHeader*>((size_t)scan + offset + 1);
+            size_t fileSize = OctalToUseful(scan->fileSize, USTAR_FILESIZE_LENGTH - 1);
+            size_t remainder = USTAR_SECTOR_SIZE - (fileSize % USTAR_SECTOR_SIZE);
+            if (remainder == USTAR_SECTOR_SIZE)
+                remainder = 0; //if filesize is sector aligned, then dont consume next sector, itll be a header.
+
+            scanPtr.raw += USTAR_SECTOR_SIZE + fileSize + remainder; //consume header + all data sectors (rounding up to consunme the entire last one)
+            scan = reinterpret_cast<TarHeader*>(scanPtr.ptr);
         }
         
         *start = *end = size = nullptr;
