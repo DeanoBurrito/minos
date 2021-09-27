@@ -1,5 +1,6 @@
 #include <KRenderer.h>
 #include <KLog.h>
+#include <InitDisk.h>
 
 namespace Kernel
 {
@@ -34,9 +35,14 @@ namespace Kernel
             break;
         }
 
-        font = bootInfo->font;
-        fontWidth = 8;
-        fontHeight = 16;
+        size_t fontSize;
+        void *fontStart, *fontEnd;
+        if (!GetFileData("zap-light16.psf", &fontStart, &fontEnd, &fontSize))
+        {
+            LogError("Could not load font file from initdisk. Terminal issue (hahaha).");
+            return;
+        }
+        font = Shell::PSF1Font(fontStart);
 
         cursorPos = 0;
         bgColour = Colour(0x000000FF);
@@ -94,11 +100,11 @@ namespace Kernel
         uint32_t fgFormatted = fgCol.GetFormatted(framebuffer.pixelFormat);
         //uint32_t bgFormatted = bgCol.GetFormatted(framebuffer.pixelFormat); //NOTE: unused, cant current draw backgrounds with how we draw text right now.
 
-        char* fontPtr = (char*)font->glyphBuffer + (c * font->psf1_haeder->charSize);
+        char* fontPtr = (char*)font.glyphs + (c * font.header->charSize);
 
-        for (unsigned long y = where.y; y < where.y + fontHeight; y++)
+        for (unsigned long y = where.y; y < where.y + font.height; y++)
         {
-            for (unsigned long x = where.x; x < where.x + fontWidth; x++)
+            for (unsigned long x = where.x; x < where.x + font.width; x++)
             {
                 if ((*fontPtr & (0b10000000 >> (x - where.x))) > 0)
                 {
@@ -125,7 +131,7 @@ namespace Kernel
         for (int i = 0; i < len; i++)
         {   
             DrawChar(text[i], lastPos, fg, bg);
-            lastPos.x += fontWidth;
+            lastPos.x += font.width;
         }
     }
 
@@ -133,7 +139,7 @@ namespace Kernel
     {
         if (where.x < 0 || where.y < 0)
             return;
-        if ((unsigned)where.x > framebuffer.width / fontWidth || (unsigned)where.y > framebuffer.height / fontHeight)
+        if ((unsigned)where.x > framebuffer.width / font.width || (unsigned)where.y > framebuffer.height / font.height)
             return;
 
         cursorPos.x = where.x;
@@ -159,13 +165,13 @@ namespace Kernel
         while (text[len] != 0)
             len++;
 
-        DrawText(text, Position(cursorPos.x * fontWidth, cursorPos.y * fontHeight), fgColour, bgColour);
+        DrawText(text, Position(cursorPos.x * font.width, cursorPos.y * font.height), fgColour, bgColour);
         cursorPos.x += len;
     }
 
     void KRenderer::WriteLine(const char* text)
     {
-        DrawText(text, Position(cursorPos.x * fontWidth, cursorPos.y * fontHeight), fgColour, bgColour);
+        DrawText(text, Position(cursorPos.x * font.width, cursorPos.y * font.height), fgColour, bgColour);
         cursorPos.x = 0;
         cursorPos.y += 1;
     }
@@ -177,6 +183,6 @@ namespace Kernel
 
     Position KRenderer::GetFontCharacterSize()
     {
-        return Position(fontWidth, fontHeight);
+        return Position(font.width, font.height);
     }
 }

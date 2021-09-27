@@ -3,10 +3,10 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <BootInfo.h>
+#include <kshell/PSF1Font.h>
 
 namespace Kernel
 {
-
     enum class FramebufferPixelFormat
     {
         Unknown,
@@ -108,9 +108,7 @@ namespace Kernel
     {
     private:
         GopFramebuffer framebuffer;
-        PSF1_Font *font;
-        unsigned int fontWidth;
-        unsigned int fontHeight;
+        Shell::PSF1Font font;
 
         Position cursorPos;
         Colour bgColour;

@@ -1,5 +1,5 @@
 BUILD_DIR = build
-INCLUDED_FILES = example.txt
+INCLUDED_FILES = example.txt zap-light16.psf
 TARGET_NAME = kdisk
 
 TARGET = $(BUILD_DIR)/$(TARGET_NAME).bin
