@@ -54,38 +54,11 @@ Multiprocessing:
     -Trampoline for booting APs. Synchronising multiple cores.
     -Implement processes: a single program unit (GDT/handles/virtual memory map), each with a number of threads.
     -Semaphore, mutex and spinlocks. ScopeGuard that can operate on any of the above.
-
-Virtual File System:
-    -Basic tree structure in memory, single root.
-    -Easy mounting/unmounting
-    -Deferring parts of tree to specific drivers, drivers communicate tree status under their jurisdiction
-    -ext2 driver, FAT32 driver
-    -proc/sys like parameter dump trees
-
-Bootloader:
-    -Multiboot1 formatted bootloader for direct loading in qemu, speed up dev cycles.
-
-ACPI Extension:
-    -Look into AML, whether to use lai (acpica is too intense, if very robust) or to roll my own.
     
 Panic Subsystem:
     -Must be entirely self-contained, and disaster resistant. See implementation ideas in Panic.cpp file.
-
-Userland:
-    -syscall infrastructure
-    -Userspace shell/kernel shell
-    -Windowing system
-    -Networking stack
 
 Documentation:
     -Document class and function goals and intention as we go.
     -Any bulky documentation can be done in READMEs, and should be in obvious locations.
 
-Drivers:
-    -PCI(e)
-    -QEMU gpu driver
-    -Networking
-    -ACHI
-    -NVME
-
-Libc port would be nice.

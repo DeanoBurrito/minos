@@ -3,24 +3,31 @@
 # Minos
 
 # Building
-Minos requires a few things to build properly:
-- A linux-like environment. I use WSL personally, I imagine cygwin would work as well.
-- A cross compiler, preferably one in your `$PATH`. Minos is built with GCC 11, but this can be edited in kernel/makefile under CXX and LD vars. If you're unsure of how to get a hold of one, the os dev wiki have a great guide [here](https://wiki.osdev.org/GCC_Cross-Compiler)
-- GNU make (any recent version), mtools, xorriso.
-- GDB is always useful.
-- If you want to build and run using the default makefile, you'll need QEMU and ovmf.
+Minos is light on dependencies, and the build environment reflects that.
+If compiling for a platform other than the one you're running on, you will need a cross-compiler,
+the osdev wiki has a great guide on getting one setup [here](https://wiki.osdev.org/GCC_Cross-Compiler).
+Otherwise to build you will need the following:
+- A linux-like environment. Minos can be built on a full linux install, but WSL and cygwin work as well.
+- A compiler, the build system is setup to use a GCC cross compiler by default. This should be in your `$PATH`.
+- GNU make (or any compatable tool).
+- Xorriso and mtools for building images.
+- Gnu-efi is required for building the uefi bootloader, source available [here](https://sourceforge.net/p/gnu-efi/code/ci/master/tree/)
 
-Once you've got those, cd into `kernel/` and run `make all|iso|run|clean`. 
+Some nice to have's for running and debugging:
+- Qemu is the default VM used for running, not required for building. OVMF is required for booting uefi-bootloader
+- GDB is always useful for debugging. Note: yours may need to be configured for cross-platform debugging
+
+Once your environment is set up, the root makefile is current under the `kernel/` directory. 
 Each target does what you'd expect, but for the purpose of documentation:
-- `make all` builds the current kernel and leaves in the `build/` directory.
-- `make iso` builds the kernel and a bootloader, then creates a bootable iso.
+- `make all` builds the kernel in it's current config, and any required projects (syslib, initdisk).
+- `make iso` runs all, builds the current bootloader and creates a bootable iso.
 - `make run` same as iso, but launches qemu with the iso as a cdrom.
 - `make clean` removes all build related files (for all projects), forcing a complete rebuild.
 
 # Supported platforms
 Currently Minos only runs on x86_64 CPUs, and requires uefi support for the bootloader.
-I have do plans to eventually port it to Aarch64 (raspberry pi 3/4), and add a simple bios bootloader as well.
-Best compatability is with QEMU, as that's what I develop it on.
+There are plans to support Aarch32/64 (raspberry pi 1 -> 4 and pi zero), 
+and to add more x86_64 bootloaders.
 
 # Project Layout
 Currently there are a number of top-level directories, each of these is a mostly isolated sub-project.
@@ -34,7 +41,7 @@ The `build/` and `include/` directories in each project same the same purpose, s
 
 ### Kernel Source Layout
 For the kernel, there are some more notable directories.
-- `arch/` contains cpu isa specific code (x86/x86_64/arm6/etc...). There is readme in that directory going into more detail
+- `arch/` contains cpu isa specific code (x86/x86_64/arm6/etc...), check the local readme for more details.
 - `arch/platform/` contains platform specific code (think raspbi 2 vs raspbi 4), where functionality may require more than a driver.
 - `kshell/` contains code relating to the kernel-mode shell. 
 
@@ -44,21 +51,28 @@ however there are plans to restructure that at some point.
 This kernel makefile has references to all the other projects, and will manage them as required.
 This includes the different bootloaders.
 
+If your environment is set up differently to mine, all the relevant variables are in the top-most sections (interal and external references)
+
 # Other Notes
 compile_flags.txt is specific to my install of all these tools, and may not work for you.
 TODO.txt is notes for my future self on implementation notes and all that.
 
 # Development Goals
-Just here to feel like there's progress being made.
+Ultimately this is a hobby project, and so there's no real target feature-set.
+Various feature's I'd like to include are listed below, and organised into milestones.
 
-### Previous features
+<details>
+    <summary>Project milestones</summary>
+
+### Pre-Milestone 1 features
 - [x] Flexible UEFI bootloader
-- [x] IDT and GDT implemented and *understood*
+- [x] IDT and GDT implemented
 - [x] PS/2 Keyboard driver
 - [x] Basic memory manager and heap allocator
 - [x] String and string builders
+- [x] CMOS RTC
 
-### Next Milestone
+### Milestone 1 - Stable kernel
 - [x] APIC/IOAPIC drivers
 - [x] HPET driver
 - [x] Initdisk support
@@ -66,15 +80,36 @@ Just here to feel like there's progress being made.
 - [ ] Working kernel scheduler
 - [ ] FPU and SSE support
 - [ ] Completed string formatting
+- [ ] Slab allocator
 
-### Beyond that
-- [ ] Virtual file system
-- [ ] Userland
-- [ ] Expanded template library
+### Milestone 2 - Userland
+- [ ] Placeholder accounts - int based (0 = kernel, 1 = user)
+- [ ] Processes/Threads with permissions
+- [ ] Basic elf parser/loader
 - [ ] IPC and system calls
+- [ ] Loadable drivers (kernel/user via process permissions)
+- [ ] Virtual file system
+- [ ] FUSE interface
+
+### Milestone 2.1 - Revisting boot protocols
+- [ ] Multiboot 1
+- [ ] Stivale 2
+- [ ] Migrate UEFI bootloader to be fully c++
+
+### Milestone 3 - More drivers
+- [ ] PCI(e) subsystem
+- [ ] ACPI/AML driver (lai is worth looking into)
+- [ ] AHCI and NVME drivers
+- [ ] Ext2 filesystem driver
+- [ ] sys/proc-like filesystem driver
+- [ ] Networking stack
+- [ ] Qemu networking driver
+- [ ] Qemu graphics driver
+
+### Beyond That ...
+- [ ] Expanded template library
 - [ ] Multicore booting
 - [ ] Multicore scheduling
-- [ ] Filesystem drivers
-- [ ] Libc implementation
-- [ ] Basic networking
-- [ ] IP-based protocol stacks (TCP, UDP)
+- [ ] Libc implementation (port mlibc?)
+
+</details>
