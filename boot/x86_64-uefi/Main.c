@@ -261,7 +261,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable
         {
             if (strcmp((CHAR8*)"RSD PTR ", (CHAR8*)configTable->VendorTable, 8))
             {
-                rsdp = (uint64_t)configTable->VendorTable;
+                rsdp = configTable->VendorTable;
                 Print(L"RSDP: 0x%x\r\n", rsdp);
                 break;
             }
@@ -271,7 +271,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable
     }
 
     BootInfo bootInfo;
-    bootInfo.rsdp = rsdp;
+    bootInfo.rsdp = (uint64_t)rsdp;
 
     init_gop(&bootInfo);
     Print(L"GOP: base=0x%x size=0x%x width=%d height=%d pps=%d format=%d\n\r", bootInfo.framebuffer.base, bootInfo.framebuffer.bufferSize, bootInfo.framebuffer.width, bootInfo.framebuffer.height, bootInfo.framebuffer.stride, bootInfo.framebuffer.pixelFormat);
