@@ -75,7 +75,7 @@ namespace Kernel::Drivers
             mov %%cr0, %%rax \n\
             or %%rax, %0 \n\
             mov %%rax, %%cr0 \n\
-        " :: "g"(cr0Flags) : "rax");
+        " :: "r"(cr0Flags) : "rax");
         
         //setup cr4 (confirm fxsave use and #XM exception handlers)
         uint64_t cr4Flags = 0;
@@ -88,7 +88,7 @@ namespace Kernel::Drivers
             mov %%cr4, %%rax \n\
             or %%rax, %0 \n\
             mov %%rax, %%cr4 \n\
-        " :: "g"(cr4Flags) : "rax");
+        " :: "r"(cr4Flags) : "rax");
 
         asm volatile("finit"); //init FPU
         
