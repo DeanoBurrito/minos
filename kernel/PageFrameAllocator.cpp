@@ -52,7 +52,7 @@ namespace Kernel
         uint64_t largestSize = 0;
         for (size_t i = 0; i < descriptorCount; i++)
         {
-            if (scan->flags == MEMORY_DESCRIPTOR_FREE)
+            if (scan->flags.free)
             {
                 if (scan->numberOfPages > largestSize)
                 {
@@ -75,7 +75,7 @@ namespace Kernel
         scan = rootDescriptor;
         for (size_t i = 0; i < descriptorCount; i++)
         {
-            if (scan->flags == MEMORY_DESCRIPTOR_RESERVED)
+            if (!scan->flags.free)
                 ReservePages((void*)scan->physicalStart, scan->numberOfPages);
             scan++;
         }

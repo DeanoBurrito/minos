@@ -12,13 +12,13 @@ namespace Kernel
 
     void KRenderer::Init(const BootInfo* bootInfo)
     {
-        framebuffer.baseAddress = (uint64_t)bootInfo->gop.baseAddress;
-        framebuffer.bufferSize = bootInfo->gop.bufferSize;
-        framebuffer.width = bootInfo->gop.width;
-        framebuffer.height = bootInfo->gop.height;
-        framebuffer.pixelsPerScanline = bootInfo->gop.pixelsPerScanline;
+        framebuffer.baseAddress = bootInfo->framebuffer.base;
+        framebuffer.bufferSize = bootInfo->framebuffer.base;
+        framebuffer.width = bootInfo->framebuffer.width;
+        framebuffer.height = bootInfo->framebuffer.height;
+        framebuffer.pixelsPerScanline = bootInfo->framebuffer.stride;
 
-        switch (bootInfo->gop.pixelFormat)
+        switch (bootInfo->framebuffer.pixelFormat)
         {
         case PIXEL_FORMAT_RedGreenBlueReserved_8BPP:
             framebuffer.pixelFormat = FramebufferPixelFormat::RedGreenBlueAlpha_32BPP;

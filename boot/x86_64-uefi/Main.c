@@ -19,18 +19,24 @@ void init_gop(BootInfo* bInfo)
     else
         Print(L"GOP located, stashing info...\n\r");
 
-    bInfo->gop.baseAddress = (void*)gop->Mode->FrameBufferBase;
-    bInfo->gop.bufferSize = gop->Mode->FrameBufferSize;
-    bInfo->gop.width = gop->Mode->Info->HorizontalResolution;
-    bInfo->gop.height = gop->Mode->Info->VerticalResolution;
-    bInfo->gop.pixelsPerScanline = gop->Mode->Info->PixelsPerScanLine;
+    bInfo->framebuffer.base = gop->Mode->FrameBufferBase;
+    bInfo->framebuffer.bufferSize = gop->Mode->FrameBufferSize;
+    bInfo->framebuffer.width = gop->Mode->Info->HorizontalResolution;
+    bInfo->framebuffer.height = gop->Mode->Info->VerticalResolution;
+    bInfo->framebuffer.stride = gop->Mode->Info->PixelsPerScanLine;
 
-    if (gop->Mode->Info->PixelFormat == PixelRedGreenBlueReserved8BitPerColor)
-        bInfo->gop.pixelFormat = PIXEL_FORMAT_RedGreenBlueReserved_8BPP;
-    else if (gop->Mode->Info->PixelFormat == PixelBlueGreenRedReserved8BitPerColor)
-        bInfo->gop.pixelFormat = PIXEL_FORMAT_BlueGreenRedReserved_8BPP;
-    else
-        bInfo->gop.pixelFormat = PIXEL_FORMAT_Unknown;
+    switch (gop->Mode->Info->PixelFormat)
+    {
+    case PixelRedGreenBlueReserved8BitPerColor:
+        bInfo->framebuffer.pixelFormat = PIXEL_FORMAT_RedGreenBlueReserved_8BPP;
+        break;
+    case PixelBlueGreenRedReserved8BitPerColor:
+        bInfo->framebuffer.pixelFormat = PIXEL_FORMAT_BlueGreenRedReserved_8BPP;
+        break;
+    default:
+        bInfo->framebuffer.pixelFormat = PIXEL_FORMAT_Unknown;
+        break;
+    }
 }
 
 void loop()
@@ -122,10 +128,29 @@ UINTN init_memmap(BootInfo *bInfo)
         descriptor->virtualStart = map->VirtualStart;
         descriptor->numberOfPages = map->NumberOfPages;
         
-        if (map->Type == EfiConventionalMemory)
-            descriptor->flags = MEMORY_DESCRIPTOR_FREE;
-        else
-            descriptor->flags = MEMORY_DESCRIPTOR_RESERVED;
+        switch (map->Type)
+        {
+        case EfiConventionalMemory: //usable RAM
+            descriptor->flags.free = 1;
+            descriptor->flags.mustMap = 0;
+            break;
+            
+        case EfiLoaderData: //already in use, but we should map it anyway
+        case EfiLoaderCode: //(current program lives in these two)
+            descriptor->flags.free = 0;
+            descriptor->flags.mustMap = 1;
+            break;
+
+        case EfiACPIReclaimMemory:
+        case EfiACPIMemoryNVS: //we'll need ACPI anyway, so may as well have them mapped up front
+            descriptor->flags.free = 0;
+            descriptor->flags.mustMap = 1;
+            break;
+
+        default: //anything else has default flags (not free and no need to map)
+            descriptor->flags.raw = 0;
+            break;
+        }
         
         descriptor++;
         map = (EFI_MEMORY_DESCRIPTOR*)((uint64_t)map + descriptorSize);
@@ -236,7 +261,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable
         {
             if (strcmp((CHAR8*)"RSD PTR ", (CHAR8*)configTable->VendorTable, 8))
             {
-                rsdp = configTable->VendorTable;
+                rsdp = (uint64_t)configTable->VendorTable;
                 Print(L"RSDP: 0x%x\r\n", rsdp);
                 break;
             }
@@ -249,7 +274,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable
     bootInfo.rsdp = rsdp;
 
     init_gop(&bootInfo);
-    Print(L"GOP: base=0x%x size=0x%x width=%d height=%d pps=%d format=%d\n\r", bootInfo.gop.baseAddress, bootInfo.gop.bufferSize, bootInfo.gop.width, bootInfo.gop.height, bootInfo.gop.pixelsPerScanline, bootInfo.gop.pixelFormat);
+    Print(L"GOP: base=0x%x size=0x%x width=%d height=%d pps=%d format=%d\n\r", bootInfo.framebuffer.base, bootInfo.framebuffer.bufferSize, bootInfo.framebuffer.width, bootInfo.framebuffer.height, bootInfo.framebuffer.stride, bootInfo.framebuffer.pixelFormat);
 
     UINTN memoryMapKey = init_memmap(&bootInfo);
     Print(L"\n\r");

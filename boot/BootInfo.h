@@ -6,26 +6,33 @@
 #define PIXEL_FORMAT_RedGreenBlueReserved_8BPP 1
 #define PIXEL_FORMAT_BlueGreenRedReserved_8BPP 2
 
-#define MEMORY_DESCRIPTOR_RESERVED 0x0
-#define MEMORY_DESCRIPTOR_FREE 0x1
-
 /*
-    NOTE: all of these structs should be using explicitly sized integers, no size_t's here. Since bootloaders and kernel
-    can be compiled at different times, we have no idea (they should) if they're using the same stddefs.
-    Everything is also 8-byte aligned (64bit wordsize).
+    NOTE: I want everything here to be explicit in it's definition, as the bootloader/kernel could theoritically be compiled on separate platforms.
+    However unlikely, its not impossible, hence the use of explicitly sized integers. No size_t's or pointers depending on machine word size.
 */
+
+typedef uint64_t NativePtr;
 
 typedef struct
 {
-    uint64_t physicalStart;
-    uint64_t virtualStart;
+    NativePtr physicalStart;
+    NativePtr virtualStart;
     uint64_t numberOfPages;
-    uint64_t flags;
+    
+    union
+    {
+        uint64_t raw;
+        struct
+        {
+            uint8_t free : 1;
+            uint8_t mustMap : 1;
+        };
+    } flags;
 } MemoryRegionDescriptor __attribute__((aligned(8)));
 
 typedef struct
 {
-    uint64_t base;
+    NativePtr base;
     uint64_t bufferSize;
     uint64_t width;
     uint64_t height;
@@ -35,18 +42,13 @@ typedef struct
 
 typedef struct
 {
-    struct GOP
-    {
-        void *baseAddress;
-        uint64_t bufferSize;
-        unsigned int width;
-        unsigned int height;
-        unsigned int pixelsPerScanline;
-        unsigned int pixelFormat;
-    } gop;
+    BootFramebuffer framebuffer;
 
     uint64_t memoryDescriptorsCount;
     MemoryRegionDescriptor* memoryDescriptors;
 
-    void* rsdp;
+    NativePtr rsdp;
+
+    NativePtr kernelStartAddr;
+    uint64_t kernelSize; 
 } BootInfo __attribute__((aligned(8)));

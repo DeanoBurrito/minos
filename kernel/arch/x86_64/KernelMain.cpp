@@ -57,8 +57,8 @@ namespace Kernel
             PageTableManager::The()->MapMemory((void*)i, (void*)i, MemoryMapFlags::WriteAllow);
 
         //identity map GOP framebuffer and lock pages
-        uint64_t fbBase = (uint64_t)bootInfo->gop.baseAddress;
-        uint64_t fbSize = (uint64_t)bootInfo->gop.bufferSize + PAGE_SIZE;
+        uint64_t fbBase = (uint64_t)bootInfo->framebuffer.base;
+        uint64_t fbSize = (uint64_t)bootInfo->framebuffer.bufferSize + PAGE_SIZE;
         PageFrameAllocator::The()->LockPages((void*)fbBase, fbSize / PAGE_SIZE + 1);
 
         for (uint64_t i = fbBase; i < fbBase + fbSize; i += PAGE_SIZE)
@@ -143,7 +143,7 @@ namespace Kernel
         Log("Initializing drivers.");
 
         Drivers::PIT::Init();
-        Drivers::ACPI::The()->Init(bootInfo->rsdp);
+        Drivers::ACPI::The()->Init(reinterpret_cast<void*>(bootInfo->rsdp));
         Drivers::HPET::The()->Init();
         Drivers::APIC::Local()->Init();
         Drivers::IOAPIC::InitAll();
