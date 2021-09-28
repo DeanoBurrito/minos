@@ -19,6 +19,7 @@
 #include <drivers/X86Extensions.h>
 #include <multiprocessing/Scheduler.h>
 #include <kshell/KShell.h>
+#include <Formatting.h>
 #include <InitDisk.h>
 #include <Platform.h>
 
@@ -88,6 +89,11 @@ namespace Kernel
         SerialPort::COM1()->Init(PORT_COM1_ADDRESS);
         SetSerialLogging(true);
         Log("Platform early init finished. Serial logging enabled.");
+
+        //print out memory stats (now that we are able to)
+        Memory::MemoryUsage memUsage = PageFrameAllocator::The()->GetMemoryUsage();
+        string fstr = "Memory: 0x%llx bytes total, 0x%llx free, 0x%llx reserved, 0x%llx in-use.";
+        Log(sl::FormatToString(0, &fstr, memUsage.total, memUsage.free, memUsage.reserved, memUsage.used).Data());
 
         Log("GDT loaded at: 0x", false);
         Log(sl::UIntToString(rootDescriptor.offset, BASE_HEX).Data());
