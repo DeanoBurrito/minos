@@ -72,7 +72,6 @@ Various feature's I'd like to include are listed below, and organised into miles
 - [x] Basic kernel-mode renderer
 - [x] String and string builders
 - [x] CMOS RTC
-- [x] 4-Level Paging
 
 ### Milestone 1 - Stable kernel
 - [x] APIC/IOAPIC drivers
@@ -91,25 +90,28 @@ Various feature's I'd like to include are listed below, and organised into miles
 - [ ] Basic elf parser/loader
 - [ ] IPC and system calls
 - [ ] Loadable drivers (kernel/user via process permissions)
-- [ ] Virtual file system
-- [ ] FUSE interface
 
 ### Milestone 2.1 - Revisting boot protocols
 - [ ] Multiboot 1
 - [ ] Stivale 2
 - [ ] Migrate UEFI bootloader to be fully c++
+    
+### Milestone 3 - Userland++
+- [ ] Process 0 (init)
+- [ ] Multiple accounts
+- [ ] Userspace drivers and FUSE fs
+- [ ] Virtual (proc) filesystem
 
-### Milestone 3 - More drivers
+### Milestone 4 - More drivers
 - [ ] PCI(e) subsystem
 - [ ] ACPI/AML driver (lai is worth looking into)
 - [ ] AHCI and NVME drivers
 - [ ] Ext2 filesystem driver
-- [ ] sys/proc-like filesystem driver
-- [ ] Networking stack
 - [ ] Qemu networking driver
 - [ ] Qemu graphics driver
 
 ### Beyond That ...
+- [ ] Networking stack
 - [ ] Expanded template library
 - [ ] Multicore booting
 - [ ] Multicore scheduling
