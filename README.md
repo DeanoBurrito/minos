@@ -97,14 +97,17 @@ Various feature's I'd like to include are listed below, and organised into miles
 - [ ] Migrate UEFI bootloader to be fully c++
     
 ### Milestone 3 - Userland++
-- [ ] Process 0 (init)
+- [ ] Process 0 (init) - I'm coming for you, systemd.
 - [ ] Multiple accounts
 - [ ] Userspace drivers and FUSE fs
 - [ ] Virtual (proc) filesystem
-
-### Milestone 4 - More drivers
-- [ ] PCI(e) subsystem
+    
+### Milestone 4- AML interp
 - [ ] ACPI/AML driver (lai is worth looking into)
+- This is going to be a big detour, hence its own milestone.
+
+### Milestone 5- Driver-mania
+- [ ] PCI(e) subsystem
 - [ ] AHCI and NVME drivers
 - [ ] Ext2 filesystem driver
 - [ ] Qemu networking driver
