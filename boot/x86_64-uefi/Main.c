@@ -233,6 +233,8 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable
         uefi_call_wrapper(kernelFile->Read, 3, kernelFile, &size, phdrs);
     }
 
+    uint64_t kernelBegin = 0xdeadc0dedeadc0de; //so we can tell if we're loaded at 0x0
+    uint64_t kernelLength = 0;
     for (Elf64_Phdr* phdr = phdrs; (char*)phdr < (char*)phdrs + header.e_phnum * header.e_phentsize; phdr = (Elf64_Phdr*)((char*)phdr + header.e_phentsize))
     {
         switch (phdr->p_type)
@@ -242,6 +244,12 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable
                 int pages = (phdr->p_memsz + 0x1000 - 1) / 0x1000;
                 Elf64_Addr segment = phdr->p_paddr;
                 uefi_call_wrapper(systemTable->BootServices->AllocatePages, 4, AllocateAddress, EfiLoaderData, pages, &segment);
+
+                if (kernelBegin == 0xdeadc0dedeadc0de)
+                    kernelBegin = segment;
+                if (segment < kernelBegin)
+                    kernelBegin = segment;
+                kernelLength += pages * 0x1000;
 
                 uefi_call_wrapper(kernelFile->SetPosition, 2, kernelFile, phdr->p_offset);
                 UINTN size = phdr->p_filesz;
@@ -272,6 +280,8 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable
 
     BootInfo bootInfo;
     bootInfo.rsdp = (uint64_t)rsdp;
+    bootInfo.kernelStartAddr = kernelBegin;
+    bootInfo.kernelSize = kernelLength;
 
     init_gop(&bootInfo);
     Print(L"GOP: base=0x%x size=0x%x width=%d height=%d pps=%d format=%d\n\r", bootInfo.framebuffer.base, bootInfo.framebuffer.bufferSize, bootInfo.framebuffer.width, bootInfo.framebuffer.height, bootInfo.framebuffer.stride, bootInfo.framebuffer.pixelFormat);
