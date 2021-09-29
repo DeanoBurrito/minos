@@ -69,12 +69,15 @@ Various feature's I'd like to include are listed below, and organised into miles
 - [x] IDT and GDT implemented
 - [x] PS/2 Keyboard driver
 - [x] Basic memory manager and heap allocator
+- [x] Basic kernel-mode renderer
 - [x] String and string builders
 - [x] CMOS RTC
+- [x] 4-Level Paging
 
 ### Milestone 1 - Stable kernel
 - [x] APIC/IOAPIC drivers
-- [x] HPET driver
+- [x] Basic ACPI support (parsing tables)
+- [x] HPET driver - partial
 - [x] Initdisk support
 - [x] Complete virtual memory manager
 - [ ] Working kernel scheduler
