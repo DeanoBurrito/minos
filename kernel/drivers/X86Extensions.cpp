@@ -114,10 +114,7 @@ namespace Kernel::Drivers
                 xSaveMask |= 1 << 2; //save avx state (YMM)
             
             xSaveMask = xSaveMask & xSaveAllowed; //we'll #GP if we try to set a value in xcr0 that is not allowed
-            asm volatile(" \
-                xor %%rcx, %%rcx \n\
-                xsetbv \n\
-            " :: "a"((uint32_t)xSaveMask), "d"((uint32_t)(xSaveMask >> 32)): "rcx");
+            asm volatile("xsetbv" :: "a"(xSaveMask), "d"(xSaveMask >> 32), "c"(0));
 
             string fstr = "XSAVE allowed=0x%llx, selected=0x%llx";
             Log(sl::FormatToString(0, &fstr, xSaveAllowed, xSaveMask).Data());
@@ -151,20 +148,16 @@ namespace Kernel::Drivers
     void X86Extensions::SaveState(void* dest)
     {
         if (xSaveSupport)
-        {}
+            asm volatile("xsave (%0)" :: "r"(dest), "a"(xSaveMask), "d"(xSaveMask >> 32) : "memory");
         else
-        {
-            asm volatile("fxsave %0" :: "m"(dest));
-        }
+            asm volatile("fxsave (%0)" :: "r"(dest) : "memory");
     }
 
     void X86Extensions::LoadState(void* source)
     {
         if (xSaveSupport)
-        {}
+            asm volatile("xrstor (%0)" :: "r"(source), "a"(xSaveMask), "d"(xSaveMask >> 32) : "memory");
         else
-        {
-            asm volatile("fxrstor %0" :: "m"(source));
-        }
+            asm volatile("fxrstor (%0)" :: "r"(source));
     }
 }

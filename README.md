@@ -80,8 +80,8 @@ Various feature's I'd like to include are listed below, and organised into miles
 - [x] Initdisk support
 - [x] Complete virtual memory manager
 - [ ] Working kernel scheduler
-- [ ] FPU and SSE support
-- [ ] Completed string formatting
+- [x] FPU and SSE support
+- [x] Completed string formatting - missing doubles (who uses FP in kernel dev though tsk tsk)
 - [ ] Slab allocator
 
 ### Milestone 2 - Userland
