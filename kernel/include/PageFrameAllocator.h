@@ -7,8 +7,12 @@
 
 namespace Kernel
 {
+    class PageTableManager;
+    
     class PageFrameAllocator
     {
+    friend PageTableManager; //required so it can map the bitmap after VM is initialized.
+
     private:
         MemoryRegionDescriptor* rootDescriptor;
         uint64_t descriptorCount;
@@ -21,7 +25,7 @@ namespace Kernel
         uint64_t allocateStartIndex;
 
         void InitBitmap(uint64_t size, void* bufferAddr);
-
+        
     public:
         static PageFrameAllocator* The();
 

@@ -1,6 +1,7 @@
 #include <cpuid.h>
 #include <drivers/CPU.h>
 #include <Platform.h>
+#include <KLog.h>
 
 PLATFORM_REQUIRED(MINOS_PLATFORM_X86_64)
 
@@ -23,9 +24,13 @@ namespace Kernel::Drivers
         //perform cpu id, and cache results
         uint64_t higheshIdSupported = __get_cpuid_max(0x80000000, (unsigned int*)cpuIdVendorStr);
         if (higheshIdSupported == 0)
+        {
             cpuIdSupported = false;
+            Log("CPUID not supported!");
+        }
         else
             cpuIdSupported = true;
+
 
         if (cpuIdSupported)
         {

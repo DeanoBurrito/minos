@@ -39,7 +39,7 @@ namespace Kernel
     public:
         static PageTableManager* The();
 
-        void Init(PageTable* topLvlAddress);
+        void Init();
         //map 1 page at the specified virtual address, with the requested flags.
         void MapMemory(void* virtualAddr, MemoryMapFlags flags);
         //maps a physical page to a virtual page, with requested flags. If physicalAddr is nullptr, it will be allocated.
@@ -47,6 +47,6 @@ namespace Kernel
         //unmap page at the specified virtual address. This will free any backing memory, unless it was mapped with EternalClaim.
         void UnmapMemory(void* virtualAddr);
 
-        void MakeCurrentMap();
+        void MakeCurrent();
     };
 }

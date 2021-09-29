@@ -3,6 +3,9 @@
 #include <drivers/ACPI.h>
 #include <Memory.h>
 #include <stddef.h>
+#include <PageTableManager.h>
+#include <PageFrameAllocator.h>
+#include <Platform.h>
 
 namespace Kernel::Drivers
 {
@@ -25,6 +28,8 @@ namespace Kernel::Drivers
     {
         //NOTE: not checking for RSDP1 here as it only seems to appear in the earliest of early specs. Compatability issues should occur from other areas first.
         rsdp = reinterpret_cast<RSDP2*>(rsdPtr);
+        uint64_t tableSize = 0;
+
         if (rsdp->revision < 2)
         {
             Log("ACPI subsystem using revision 1. RSDP with 32bit pointers.");
@@ -37,6 +42,8 @@ namespace Kernel::Drivers
                 checksum += ((uint8_t*)rsdPtr)[i];
             if ((checksum & 0xFF) != 0)
                 LogError("RSDP checksum mismatch! Init will continue, but this should not be ignored.");
+
+            tableSize = 20 + rootHeader->length;
         }
         else
         {
@@ -49,12 +56,16 @@ namespace Kernel::Drivers
                 checksum += ((uint8_t*)rsdPtr)[i];
             if ((checksum & 0xFF) != 0)
                 LogError("RSDP checksum mismatch! Init will continue, but this should not be ignored.");
+            
+            tableSize = rsdp->length;
         }
+
+        //TODO: ensure tables are mapped into VM and physical pages locked.
 
         Log("ACPI subsystem intializing with RSDP=0x", false);
         Log(sl::UIntToString((uint64_t)rsdp, BASE_HEX).Data());
 
-        //https://uefi.org/htmlspecs/ACPI_Spec_6_4_html/
+        //PrintTables();
     }
 
     void ACPI::PrintSDT(SDTHeader* header, char* reusableBuffer)

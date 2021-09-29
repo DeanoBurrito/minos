@@ -7,19 +7,10 @@ Refactoring:
 
     -Virtual memory mapping: move to only mapping what we need, rather than identity mapping everything.
         -Current this crashes, probably due to forgetting to map something vital.
+        -Actual reason is we're trying to access parts of the paging structure which arent mapped.
+            -This leads to some weird solutions (recursive mapping) that I need to process.
                 
     -Refocus on adding features from the list below
-    -Use FlatPtr more!
-
-Required Mapped Virtual Memory:
-    -Currently used pagetable
-    -system-level bitmap
-    -kernel binary
-    -framebuffer
-    -gdt/idt
-    -acpi tables
-    -regions marked as reserved in memory tables.
-    -All device drivers should be smart enough to map themselves.
 
 Time API:
     -Simple but unified way to get various forms of time (system uptime, real time) and the date.

@@ -4,6 +4,7 @@
 #include <drivers/HPET.h>
 #include <drivers/8253PIT.h>
 #include <PageTableManager.h>
+#include <PageFrameAllocator.h>
 #include <KLog.h>
 #include <StringExtras.h>
 #include <Formatting.h>
@@ -105,6 +106,7 @@ namespace Kernel::Drivers
         globalInterruptBase = gsiBase;
 
         //ensure page container registers is identity mapped.
+        PageFrameAllocator::The()->LockPage((void*)physicalAddr);
         PageTableManager::The()->MapMemory((void*)virtualAddr, (void*)physicalAddr, MemoryMapFlags::WriteAllow | MemoryMapFlags::EternalClaim);
 
         inputCount = (ReadRegister(IOAPIC_REGISTER_VERSION_MAXREDIRECTS) >> 16) + 1;
@@ -175,6 +177,7 @@ namespace Kernel::Drivers
         localApicAddr = reinterpret_cast<uint32_t*>(madt->localAddress);
 
         //ensure page that contains LAPIC registers is locked and identity mapped
+        PageFrameAllocator::The()->LockPage(localApicAddr);
         PageTableManager::The()->MapMemory(localApicAddr, localApicAddr, MemoryMapFlags::WriteAllow | MemoryMapFlags::EternalClaim);
 
         //This 'refreshes' the LAPIC, enabling the hardware if it was disabled at boot for some reason.

@@ -66,10 +66,8 @@ namespace Kernel
         *pdpIndex = virtualAddress & 0x1ff;
     }
 
-    void PageTableManager::Init(PageTable* topLvlAddress)
+    void PageTableManager::Init()
     {
-        topLevelAddr = topLvlAddress;
-
         using namespace Drivers;
         noExecuteSupport = CPU::FeatureSupported(CpuFeatureFlag::NX);
         if (noExecuteSupport)
@@ -78,6 +76,18 @@ namespace Kernel
             currentEfer |= 1 << 11;
             CPU::WriteMSR(X86_MSR_EFER, currentEfer);
         }
+
+        //create top level page dir, clear it and map it into it's own space
+        topLevelAddr = reinterpret_cast<PageTable*>(PageFrameAllocator::The()->RequestPage());
+        MapMemory(topLevelAddr, topLevelAddr, MemoryMapFlags::WriteAllow);
+        sl::memset(topLevelAddr, 0, PAGE_SIZE);
+
+        //map the PMM's bitmap as well
+        //NOTE: this operates with page-sized chunks, however the bitmap can be way less than that. Possible memory use optimization here.
+        uint64_t startAddr = (uint64_t)PageFrameAllocator::The()->pageBitmap.buffer;
+        uint64_t endAddr = startAddr + PageFrameAllocator::The()->pageBitmap.size;
+        for (sl::UIntPtr bitmapPtr = startAddr; bitmapPtr.raw < endAddr; bitmapPtr.raw += PAGE_SIZE)
+            MapMemory(bitmapPtr.ptr, bitmapPtr.ptr, MemoryMapFlags::WriteAllow);
     }
 
     void PageTableManager::MapMemory(void* virtualAddr, MemoryMapFlags flags)
@@ -202,7 +212,7 @@ namespace Kernel
         Drivers::CPU::InvalidatePageTable(virtualAddr); //TODO: this is processor specific, we'll need to sync this up across multiple cores later.
     }
 
-    void PageTableManager::MakeCurrentMap()
+    void PageTableManager::MakeCurrent()
     {
         Drivers::CPU::LoadPageTableMap(topLevelAddr);
     }

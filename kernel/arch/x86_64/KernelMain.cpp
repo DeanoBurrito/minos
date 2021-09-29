@@ -37,49 +37,64 @@ namespace Kernel
     using namespace Kernel::Drivers;
 
     void InitMemory(BootInfo* bootInfo)
-    {
+    {        
         //assemble memory map into something we can use.
         PageFrameAllocator::The()->Init(bootInfo);
 
-        //get size of kernel in pages, so we can protect the space used by the binary
-        uint64_t kernelSize = (uint64_t)&_KernelEnd - (uint64_t)&_KernelStart;
-        uint64_t kernelPages = kernelSize / PAGE_SIZE + 1; //round up to nearest page
-        PageFrameAllocator::The()->LockPages(&_KernelStart, kernelPages);
+        //make sure kernel and framebuffer have their physical pages reserved.
+        uint64_t kernelSizePages = (uint64_t)&_KernelEnd - (uint64_t)&_KernelStart;
+        kernelSizePages = kernelSizePages / PAGE_SIZE + 1; //round up to nearest page size
+        PageFrameAllocator::The()->ReservePages((void*)bootInfo->kernelStartAddr, kernelSizePages);
+        
+        uint64_t framebufferSizePages = bootInfo->framebuffer.bufferSize / PAGE_SIZE + 1;
+        PageFrameAllocator::The()->ReservePages((void*)bootInfo->framebuffer.base, framebufferSizePages);
 
-        //create page table, init it as kernel table
-        PageTable* kernelPageTable = (PageTable*)PageFrameAllocator::The()->RequestPage();
-        sl::memset(kernelPageTable, 0, PAGE_SIZE); //zero page table = everything is absent
+        //initialize virtual memory
+        PageTableManager::The()->Init();
 
-        PageTableManager::The()->Init(kernelPageTable);
+        //identity map kernel and framebuffer
+        uint64_t framebufferEnd = bootInfo->framebuffer.base + bootInfo->framebuffer.bufferSize;
+        for (sl::UIntPtr kernelPtr = bootInfo->kernelStartAddr; kernelPtr.raw < (uint64_t)&_KernelEnd; kernelPtr.raw += PAGE_SIZE)
+            PageTableManager::The()->MapMemory(kernelPtr.ptr, kernelPtr.ptr, MemoryMapFlags::WriteAllow | MemoryMapFlags::ExecuteAllow);
+        for (sl::UIntPtr fbPtr = bootInfo->framebuffer.base; fbPtr.raw < framebufferEnd; fbPtr.raw += PAGE_SIZE)
+            PageTableManager::The()->MapMemory(fbPtr.ptr, fbPtr.ptr, MemoryMapFlags::WriteAllow);
 
+        //identity map any regions requested by pre-kernel
+        MemoryRegionDescriptor* memRegion = bootInfo->memoryDescriptors;
+        for (size_t i = 0; i < bootInfo->memoryDescriptorsCount; i++)
+        {
+            if (memRegion->flags.mustMap)
+            {
+                for (size_t j = 0; j < memRegion->numberOfPages; j++)
+                    PageTableManager::The()->MapMemory(
+                        (void*)(memRegion->virtualStart + (j * PAGE_SIZE)), 
+                        (void*)(memRegion->physicalStart + (j * PAGE_SIZE)), 
+                        MemoryMapFlags::WriteAllow | MemoryMapFlags::ExecuteAllow);
+            }
+
+            memRegion++;
+        }
+
+        //---- THE FINAL HURDLE
         //identity map all pages for now. TODO: only map what we need
         for (uint64_t i = 0; i < PageFrameAllocator::The()->GetTotalMemory(); i += PAGE_SIZE)
             PageTableManager::The()->MapMemory((void*)i, (void*)i, MemoryMapFlags::WriteAllow);
+        //----
 
-        //identity map GOP framebuffer and lock pages
-        uint64_t fbBase = (uint64_t)bootInfo->framebuffer.base;
-        uint64_t fbSize = (uint64_t)bootInfo->framebuffer.bufferSize + PAGE_SIZE;
-        PageFrameAllocator::The()->LockPages((void*)fbBase, fbSize / PAGE_SIZE + 1);
-
-        for (uint64_t i = fbBase; i < fbBase + fbSize; i += PAGE_SIZE)
-            PageTableManager::The()->MapMemory((void*)i, (void*)i, MemoryMapFlags::WriteAllow);
-
-        PageTableManager::The()->MakeCurrentMap();
+        //switch to our own virtual memory map
+        PageTableManager::The()->MakeCurrent();
 
         //initialize kernel heap at an arbitrarily large address
         KHeap::The()->Init((void*)0x100'000'000, PAGE_SIZE);
     }
 
+    GDTDescriptor defaultGdtDescriptor;
     void InitPlatformEarly(BootInfo* bootInfo)
     {
-        //load out default gdt
-        GDTDescriptor rootDescriptor;
-        rootDescriptor.size = sizeof(GDT) - 1;
-        rootDescriptor.offset = (uint64_t)&defaultGdt;
-        CPU::LoadTable(CpuTable::x86_64_GDT, &rootDescriptor);
-
-        //gather any cpu specific details
-        CPU::Init();
+        //load our default gdt
+        defaultGdtDescriptor.size = sizeof(GDT) - 1;
+        defaultGdtDescriptor.offset = (uint64_t)&defaultGdt;
+        CPU::LoadTable(CpuTable::x86_64_GDT, &defaultGdtDescriptor);
         
         //call global constructors
         _init();
@@ -95,8 +110,15 @@ namespace Kernel
         string fstr = "Memory: 0x%llx bytes total, 0x%llx free, 0x%llx reserved, 0x%llx in-use.";
         Log(sl::FormatToString(0, &fstr, memUsage.total, memUsage.free, memUsage.reserved, memUsage.used).Data());
 
+        //gather any cpu specific details
+        CPU::Init();
+
+        //print other fun facts
+        fstr = "Kernel loaded at 0x%llx, size 0x%llx bytes.";
+        Log(sl::FormatToString(0, &fstr, bootInfo->kernelStartAddr, bootInfo->kernelSize).Data());
+
         Log("GDT loaded at: 0x", false);
-        Log(sl::UIntToString(rootDescriptor.offset, BASE_HEX).Data());
+        Log(sl::UIntToString(defaultGdtDescriptor.offset, BASE_HEX).Data());
     }
 
     IDTR idtr;
@@ -106,6 +128,7 @@ namespace Kernel
 
         idtr.limit = 0x0FFF;
         idtr.offset = (uint64_t)PageFrameAllocator::The()->RequestPage();
+        PageTableManager::The()->MapMemory((void*)idtr.offset, (void*)idtr.offset, MemoryMapFlags::WriteAllow | MemoryMapFlags::ExecuteAllow);
 
         //init cpu specific interrupts
         Log("Initializing platform interrupts");
