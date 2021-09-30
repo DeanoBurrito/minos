@@ -146,7 +146,7 @@ namespace Kernel
         //ps2 keyboard
         idtr.SetEntry((void*)InterruptHandlers::PS2KeyboardHandler, INTERRUPT_VECTOR_PS2KEYBOARD, IDT_ATTRIBS_InterruptGate, 0x08);
         //scheduler timer callback
-        idtr.SetEntry((void*)SchedulerTimerInterruptHandler, INTERRUPT_VECTOR_TIMER, IDT_ATTRIBS_InterruptGate, 0x08);
+        idtr.SetEntry((void*)scheduler_HandleInterrupt, INTERRUPT_VECTOR_TIMER, IDT_ATTRIBS_InterruptGate, 0x08);
 
         //setting up irq0 (pin2) to send us ticks
         idtr.SetEntry((void*)InterruptHandlers::DefaultTimerHandler, INTERRUPT_VECTOR_TIMER_CALIBRATE, IDT_ATTRIBS_InterruptGate, 0x08);
@@ -186,7 +186,7 @@ namespace Kernel
         Scheduler::The()->Init();
         
         //setup kshell thread
-        KernelThread* kShellThread = KernelThread::Create(Shell::KShell::ThreadMain, nullptr, 1);
+        Thread* kShellThread = Thread::Create(Shell::KShell::ThreadMain, nullptr, 1);
         kShellThread->Start();
 
         //install scheduler handler, and start timer (TODO: move to SystemClock impl) and then yield immediately.
