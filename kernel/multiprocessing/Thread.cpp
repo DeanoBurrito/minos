@@ -1,5 +1,5 @@
 #include <multiprocessing/Thread.h>
-#include <multiprocessing/Scheduler.h>
+#include <drivers/X86Extensions.h>
 #include <PageTableManager.h>
 #include <PageFrameAllocator.h>
 #include <Platform.h>
@@ -20,7 +20,7 @@ namespace Kernel::Multiprocessing
     {
         static uint64_t nextStackBegin = 0x2'000'000'000; //TODO: have owner process give thread a starting stack address
         
-        InterruptScopeGuard intGuard = InterruptScopeGuard();
+        volatile InterruptScopeGuard intGuard {};
         stackPages = stackPages < THREAD_MIN_STACK_PAGES ? THREAD_MIN_STACK_PAGES : stackPages; //lower bound on memory allocated for stack
         
         //setup initial page, and next stack start in this space
@@ -52,12 +52,15 @@ namespace Kernel::Multiprocessing
         sl::MemWrite(sp.raw + 8, (uint64_t)0);
         sl::MemWrite(sp, (uint64_t)0);
 
+        //now that we have a thread structure, keep track of anything we need to.
         thread->priority = priority;
         thread->stackSize = stackPages * PAGE_SIZE - (sizeof(uint64_t) * 4) - sizeof(Thread);
         thread->stackBase = sp.ptr;
+        size_t xStateBufferSize = Drivers::X86Extensions::Local()->GetStateBufferSize(); //TODO: would be nice to also store this above the thread on the stack?
+        thread->extendedSavedState = new uint8_t[xStateBufferSize];
         
         //prep for scheduler: setup iretq frame, then push blank regs onto stack
-        uint64_t expectedSP = sp.raw - 5 - 16; //+5 for stack frame, +16 for registers
+        uint64_t expectedSP = sp.raw - 5 - 15; //+5 for stack frame, +15 for registers (rsp not saved)
         StackPush(sp, 0x10); //stack selector (data segment)
         StackPush(sp, expectedSP); //stack pointer
         StackPush(sp, 0x202); //rflags: interrupts enabled, and bit 1 is always high.
@@ -78,12 +81,18 @@ namespace Kernel::Multiprocessing
             StackPush(sp, 0); //r15 -> r8 (inclusive)
         
         thread->stackTop = sp.ptr;
+        //some sanity checks
         if (sp.raw != expectedSP)
             LogError("Thread stack top is not where expected!");
+        if (expectedSP != (uint64_t)thread->stackBase - (5 + 15))
+            LogError("Thread stack size is incorrect");
 
         return thread;
     }
 
     Thread::Thread()
+    {}
+
+    void Thread::Start()
     {}
 }

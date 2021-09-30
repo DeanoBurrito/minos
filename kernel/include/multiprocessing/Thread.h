@@ -33,5 +33,7 @@ namespace Kernel::Multiprocessing
 
     public:
         static Thread* Create(ThreadMainFunction mainFunc, void* arg, uint8_t priority, uint8_t stackPages = THREAD_DEFAULT_STACK_PAGES);
+
+        void Start();
     };
 }
