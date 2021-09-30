@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <BootInfo.h>
-#include <kshell/PSF1Font.h>
+#include <kshell/PSFonts.h>
 
 namespace Kernel
 {

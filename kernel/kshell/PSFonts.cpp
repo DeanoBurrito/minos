@@ -1,4 +1,4 @@
-#include <kshell/PSF1Font.h>
+#include <kshell/PSFonts.h>
 #include <Memory.h>
 
 namespace Kernel::Shell
