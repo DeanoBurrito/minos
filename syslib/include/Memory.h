@@ -22,6 +22,18 @@ namespace sl
 
     //99% of the time this is what we want, just saving some typing in the future.
     typedef IntPtr<uint64_t> UIntPtr;
+
+    template <typename WordType>
+    __attribute__((always_inline)) inline void MemWrite(sl::UIntPtr where, WordType val)
+    {
+        *reinterpret_cast<volatile WordType*>(where.ptr) = val;
+    }
+
+    template <typename WordType>
+    __attribute__((always_inline)) inline WordType MemRead(sl::UIntPtr where)
+    {
+        return *reinterpret_cast<volatile WordType*>(where.ptr);
+    }
     
     //std::move replacement
     template <typename T>

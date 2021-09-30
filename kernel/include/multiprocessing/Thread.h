@@ -4,8 +4,8 @@
 #include <stdint.h>
 
 #define THREAD_DEFAULT_STACK_PAGES 4
-#define THREAD_DATA_PROTECT_VALUE 0xDEADC0DEDEADC0DE
-#define THREAD_IMPL_DATA_COUNT 16
+#define THREAD_MIN_STACK_PAGES 2
+#define THREAD_DATA_PROTECT_VALUE 0xDEADC0DE
 
 namespace Kernel::Multiprocessing
 {
@@ -20,17 +20,18 @@ namespace Kernel::Multiprocessing
 
     private:
         uint8_t priority;
-        void* stackMax;
-        size_t stackPages;
+        size_t stackSize;
 
-        uint64_t implementationData[THREAD_IMPL_DATA_COUNT];
+        //absolute bottom of stack (highest mem address)
+        void* stackBase;
+        //rsp usually
+        void* stackTop;
+        //platform specific state that's not stack-stored (x86's (f)xsave stuff)
+        void* extendedSavedState;
 
         Thread();
-        static void ThreadArchInit(Thread* thread, uint64_t entryAddr, bool hasKernelPriv);
 
     public:
-        static Thread* Create(ThreadMainFunction mainFunc, uint8_t priority, uint8_t stackPages = THREAD_DEFAULT_STACK_PAGES);
-
-        void Sleep(size_t millis);
+        static Thread* Create(ThreadMainFunction mainFunc, void* arg, uint8_t priority, uint8_t stackPages = THREAD_DEFAULT_STACK_PAGES);
     };
 }

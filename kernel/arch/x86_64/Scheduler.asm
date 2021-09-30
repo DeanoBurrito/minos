@@ -34,7 +34,7 @@ scheduler_HandleInterrupt:
     push %r15
 
     #now save rsp so we can return to this data
-    mov %rsp, 0x08(%rdi)
+    mov %rsp, (%rdi)
 
     jmp RestoreRegs
 
@@ -50,7 +50,7 @@ RestoreRegs:
 
     #load fresh thread info, start operating on their stack
     mov (scheduler_nextThreadData), %rdi
-    mov 0x08(%rdi), %rsp
+    mov 0(%rdi), %rsp
 
     #load new stack pointer, pop all regs back into place, and issue iret (previous interrupt_frame should be in place)
     pop %r15

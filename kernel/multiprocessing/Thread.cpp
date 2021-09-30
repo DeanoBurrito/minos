@@ -5,49 +5,85 @@
 #include <Platform.h>
 #include <Memory.h>
 #include <InterruptScopeGuard.h>
+#include <KLog.h>
 
 namespace Kernel::Multiprocessing
 {
-    Thread* Thread::Create(ThreadMainFunction mainFunc, uint8_t nPriority, uint8_t nStackPages)
+    //just a convinience function
+    __attribute__((always_inline)) inline void StackPush(sl::UIntPtr sp, uint64_t word)
     {
-        InterruptScopeGuard intGuard = InterruptScopeGuard();
-        nStackPages = nStackPages > 1 ? nStackPages : 1; //at least allocate 1 page
+        sp.raw -= 8;
+        sl::MemWrite(sp, word);
+    }
+    
+    Thread* Thread::Create(ThreadMainFunction mainFunc, void* arg, uint8_t priority, uint8_t stackPages)
+    {
+        static uint64_t nextStackBegin = 0x2'000'000'000; //TODO: have owner process give thread a starting stack address
         
-        //TODO: when processes are added, let them assign the stack address for a thread
-        //NOTE: This can currently overwrite existing page maps if we're not careful. This will be solved when processes
-        //      are implemented, as they'll separate virtual memory space.
-        void* lastPage = nullptr;
-        for (size_t i = 0; i < nStackPages; i++)
-        {
-            void* stackPage = PageFrameAllocator::The()->RequestPage();
+        InterruptScopeGuard intGuard = InterruptScopeGuard();
+        stackPages = stackPages < THREAD_MIN_STACK_PAGES ? THREAD_MIN_STACK_PAGES : stackPages; //lower bound on memory allocated for stack
+        
+        //setup initial page, and next stack start in this space
+        sl::UIntPtr lastPage = PageFrameAllocator::The()->RequestPage();
+        PageTableManager::The()->MapMemory((void*)nextStackBegin, lastPage.ptr, MemoryMapFlags::WriteAllow); 
+        lastPage.raw += PAGE_SIZE;
 
-            if (!lastPage)
-                PageTableManager::The()->MapMemory(stackPage, stackPage, MemoryMapFlags::WriteAllow);
-            else
-                PageTableManager::The()->MapMemory((void*)((uint64_t)lastPage + PAGE_SIZE), stackPage, MemoryMapFlags::WriteAllow);
-            lastPage = stackPage;
+        nextStackBegin += nextStackBegin / 100; //arbitrary, placeholder until processes
+
+        for (size_t count = 1; count < stackPages; count++)
+        {
+            sl::UIntPtr nextPage = PageFrameAllocator::The()->RequestPage();
+            PageTableManager::The()->MapMemory(lastPage.ptr, nextPage.ptr, MemoryMapFlags::WriteAllow);
+            lastPage.raw += PAGE_SIZE;
         }
 
-        lastPage = (void*)((uint64_t)lastPage + PAGE_SIZE); //peak programmer. Amazing.
-        Thread* thread = reinterpret_cast<Thread*>((uint64_t)lastPage - sizeof(Thread) - 8);
-        sl::memset(thread, 0, sizeof(Thread));
+        //create thread structure on the new stack, and surround it with known protect values.
+        sl::UIntPtr sp = lastPage.raw - sizeof(uint64_t);
+        sl::MemWrite(sp, (uint64_t)THREAD_DATA_PROTECT_VALUE);
 
-        //stuff known crazy values above and below thread, just incase of erros adjusting stack. We can detect it.
-        *(uint64_t*)((uint64_t)lastPage - 8) = THREAD_DATA_PROTECT_VALUE;
-        *(uint64_t*)((uint64_t)thread - 8) = THREAD_DATA_PROTECT_VALUE;
+        sp.raw -= sizeof(Thread);
+        Thread* thread = reinterpret_cast<Thread*>(sp.ptr);
 
-        thread->priority = nPriority;
-        thread->stackMax = reinterpret_cast<void*>((uint64_t)thread - 16); //8 bytes for deadcode, 8 bytes of zeros for stopping stack traces.
-        thread->stackPages = nStackPages;
+        sp.raw -= sizeof(uint64_t);
+        sl::MemWrite(sp, (uint64_t)THREAD_DATA_PROTECT_VALUE);
 
-        ThreadArchInit(thread, (uint64_t)mainFunc, true);
+        //write 2 zero words to top of stack, to stop any stack traces.
+        sp.raw -= sizeof(uint64_t) * 2;
+        sl::MemWrite(sp.raw + 8, (uint64_t)0);
+        sl::MemWrite(sp, (uint64_t)0);
+
+        thread->priority = priority;
+        thread->stackSize = stackPages * PAGE_SIZE - (sizeof(uint64_t) * 4) - sizeof(Thread);
+        thread->stackBase = sp.ptr;
+        
+        //prep for scheduler: setup iretq frame, then push blank regs onto stack
+        uint64_t expectedSP = sp.raw - 5 - 16; //+5 for stack frame, +16 for registers
+        StackPush(sp, 0x10); //stack selector (data segment)
+        StackPush(sp, expectedSP); //stack pointer
+        StackPush(sp, 0x202); //rflags: interrupts enabled, and bit 1 is always high.
+        StackPush(sp, 0x8); //code selector
+        StackPush(sp, (uint64_t)mainFunc); //rip: address to return execution to
+
+        //TODO: this is specific to x86_64
+        //We're using sysv abi (64bit) for our calling convention here
+        StackPush(sp, (uint64_t)arg); //rdi last (1st arg)
+        StackPush(sp, 0); //rax
+        StackPush(sp, 0); //rbx
+        StackPush(sp, 0); //rcx
+        StackPush(sp, 0); //rdx
+        StackPush(sp, 0); //rsi 
+        StackPush(sp, (uint64_t)thread->stackTop); //rbp (same as rsp)
+
+        for (size_t count = 0; count < 8; count++)
+            StackPush(sp, 0); //r15 -> r8 (inclusive)
+        
+        thread->stackTop = sp.ptr;
+        if (sp.raw != expectedSP)
+            LogError("Thread stack top is not where expected!");
 
         return thread;
     }
 
     Thread::Thread()
-    {}
-
-    void Thread::Sleep(size_t millis)
     {}
 }
