@@ -88,6 +88,9 @@ namespace Kernel
         uint64_t endAddr = startAddr + PageFrameAllocator::The()->pageBitmap.size;
         for (sl::UIntPtr bitmapPtr = startAddr; bitmapPtr.raw < endAddr; bitmapPtr.raw += PAGE_SIZE)
             MapMemory(bitmapPtr.ptr, bitmapPtr.ptr, MemoryMapFlags::WriteAllow);
+
+        //map level 4 entry to itself.
+        topLevelAddr->entries[511].SetAddress((uint64_t)topLevelAddr >> 12);
     }
 
     void PageTableManager::MapMemory(void* virtualAddr, MemoryMapFlags flags)
