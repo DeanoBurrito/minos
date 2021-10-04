@@ -1,54 +1,50 @@
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
+#include <Memory.h>
 
 #define THREAD_DEFAULT_STACK_PAGES 4
+#define THREAD_MIN_STACK_PAGES 2
+#define THREAD_DATA_PROTECT_VALUE 0xDEADC0DE
 
 namespace Kernel::Multiprocessing
 {
-    struct KernelThreadData; //platform specific, see arch folder for implementation details
+    //forward declarations
     class Scheduler;
 
-    enum class ThreadStatus
+    typedef void (*ThreadMainFunction)(void* param);
+
+    enum class ThreadState
     {
         Running,
-        Sleeping,
-        Exited
+        Waiting,
     };
-    
-    class KernelThread
+
+    class Thread
     {
     friend Scheduler;
-    private:
-        //opaque handle to platform specific stuff during thread switching
-        KernelThreadData* data;
-        uint64_t threadId;
-        uint8_t priority;
-        uint8_t waitingOnCount;
-        uint64_t stackPages;
-        ThreadStatus status;
 
-        KernelThread();
-        bool CanRun();
+    private:
+        uint8_t priority;
+        size_t stackSize;
+
+        //absolute bottom of stack (highest mem address)
+        sl::UIntPtr stackBase;
+        //rsp usually
+        sl::UIntPtr stackTop;
+        //platform specific state that's not stack-stored (x86's (f)xsave stuff)
+        void* extendedSavedState;
+
+        ThreadState executionState;
+        //TODO: waiting list (what this thread needs before continuing)
+
+        Thread();
 
     public:
-        static KernelThread* Create(void (*threadMain)(void*), void* arg, uint8_t priority);
+        static Thread* Create(ThreadMainFunction mainFunc, void* arg, uint8_t priority, uint8_t stackPages = THREAD_DEFAULT_STACK_PAGES);
 
         void Start();
-        void Sleep();
-        void Sleep(int64_t timeout);
-        void Wake();
-        static void Exit();
-
-        uint8_t GetPriority();
-        uint64_t GetId();
-
-        void CancelTimerWakeup();
+        ThreadState GetState();
     };
-
-    //platform specific implementations, definitions are in platform folder
-    void InitKernelThreadData(KernelThreadData** data);
-    void SetKernelThreadEntry(KernelThreadData* data, uint64_t mainAddr, void* arg0, void* arg1);
-    void SetKernelThreadStack(KernelThreadData* data, uint64_t base);
-    void SetKernelThreadFlags(KernelThreadData* data, uint64_t codeSegment, uint64_t dataSegment, uint64_t flags);
 }

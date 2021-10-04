@@ -4,10 +4,8 @@
 
 #define PORT_USUALLY_EMPTY 0x80
 
+//TODO: this relies on our interrupt defines never changing. A more dynamic way to generate this would be nice.
 #define ISSUE_INTERRUPT_SCHEDULER_YIELD asm volatile("int $0x30");
-
-//TODO: figure this shit out.
-#define ISSUE_INTERRUPT(n) asm volatile("int $" ## n);
 
 namespace Kernel::Drivers
 {

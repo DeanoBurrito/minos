@@ -18,10 +18,30 @@ namespace sl
         IntPtr() : raw(0) {}
         IntPtr(BackingType r) : raw(r) {}
         IntPtr(void* p) : ptr(p) {}
+
+        //type safety is thrown to the wind here with reinterpret cast, but we've too cool for that.
+        //NOTE: we are not.
+        template <typename AsType>
+        AsType* As()
+        {
+            return reinterpret_cast<AsType*>(ptr);
+        }
     };
 
     //99% of the time this is what we want, just saving some typing in the future.
     typedef IntPtr<uint64_t> UIntPtr;
+
+    template <typename WordType>
+    __attribute__((always_inline)) inline void MemWrite(sl::UIntPtr where, WordType val)
+    {
+        *reinterpret_cast<volatile WordType*>(where.ptr) = val;
+    }
+
+    template <typename WordType>
+    __attribute__((always_inline)) inline WordType MemRead(sl::UIntPtr where)
+    {
+        return *reinterpret_cast<volatile WordType*>(where.ptr);
+    }
     
     //std::move replacement
     template <typename T>

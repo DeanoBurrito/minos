@@ -1,95 +1,89 @@
 #include <multiprocessing/Scheduler.h>
+#include <drivers/APIC.h>
 #include <drivers/CPU.h>
+#include <drivers/X86Extensions.h>
+
+extern "C"
+{
+    //top of stack to operate on
+    uint64_t scheduler_nextThreadData;
+
+    void scheduler_selectNext() 
+    {
+        //ah yes, thanks c++. Really keeping things simple.
+        Kernel::Multiprocessing::Scheduler::The()->SelectNext();
+    }
+
+    void scheduler_sendEOI() 
+    {
+        Kernel::Drivers::APIC::Local()->SendEOI();
+    }
+}
 
 namespace Kernel::Multiprocessing
 {
-    using Kernel::Drivers::CPU;
-    
-    extern "C" 
+    void IdleThread(void* ignored)
     {
-        //Current thread data, so we can access it from assembly routines
-        KernelThreadData* Scheduler_currentThreadData;
-        
-        //Wrapper method to select next thread data to load, callable from assembly
-        void Scheduler_SwitchNext()
-        {
-            Scheduler::The()->SelectNextThreadData();
-        }
+        while (1)
+            Drivers::CPU::Halt();
     }
     
-    void IdleMain(void* arg)
-    {
-        while (true)
-        {
-            //Dont work too hard
-            CPU::Halt();
-        }
-    }
-    
-    Scheduler schedulerInstance;
+    Scheduler localScheduler;
     Scheduler* Scheduler::The()
     {
-        return &schedulerInstance;
+        return &localScheduler;
+    }
+
+    void Scheduler::RegisterThread(Thread* thread)
+    {
+        threads.PushBack(thread);
+    }
+
+    void Scheduler::SelectNext()
+    {
+        //save the current state if we need to (nullptr == dont save), including the extended state.
+        Thread* currentThread = threads[currentIndex];
+        if (scheduler_nextThreadData)
+        {
+            Drivers::X86Extensions::Local()->SaveState(currentThread->extendedSavedState); //TODO: scheduler is platform independent, abstract this pls.
+            currentThread->stackTop.raw = scheduler_nextThreadData;
+        }
+
+        //selection: run any higher priority tasks first, if they're available to run
+        Thread* test = threads.First(); //first should always be idle thread
+        for (size_t index = 0; index < threads.Size(); index++)
+        {
+            Thread* selected = threads[index];
+            if (selected == nullptr || selected == test)
+                continue;
+            
+            if (selected->priority > test->priority && selected->GetState() == ThreadState::Running)
+            {
+                currentIndex = index;
+                test = threads[index];
+            }
+        }
+
+        currentThread = test;
+    
+        //set new stack top, and load extended state
+        scheduler_nextThreadData = currentThread->stackTop.raw;
+        Drivers::X86Extensions::Local()->LoadState(currentThread->extendedSavedState);
     }
 
     void Scheduler::Init()
     {
-        KernelThread* idleThread = KernelThread::Create(IdleMain, nullptr, 0); //lowest priority possible
+        threads.Reserve(0x100);
+        scheduler_nextThreadData = 0; //we dont want to save the initial thread's state, as we'll never return.
+        currentIndex = 0;
+        
+        //setup idle thread (this will automatically register itself)
+        Thread* idleThread = Thread::Create(IdleThread, nullptr, 0);
         idleThread->Start();
-        currentThread = nullptr;
-        Scheduler_currentThreadData = nullptr;
-
-        //TODO: setup quantum to a known value, check what timer sources we can install ourselves into.
     }
 
     void Scheduler::Yield()
     {
-        //manually trigger timer handler
-        //ISSUE_INTERRUPT(INTERRUPT_VECTOR_TIMER);
-        //ISSUE_INTERRUPT_SCHEDULER_YIELD; //TODO: URGENT this triggers infinite times? wtaf
-    }
-
-    //NOTE: This is called from within interrupt handler, dont do anything too crazy here
-    void Scheduler::SelectNextThreadData()
-    {
-        KernelThread* nextThread = threads.PeekFront();
-
-        //Thread selection
-        nextThread = threads.PeekBack(); //TODO: actual scheduling
-
-        //next thread has been selected, set pointer and return to assembly to load registers
-        Scheduler_currentThreadData = nextThread->data;
-        currentThread = nextThread;
-    }
-
-    void Scheduler::ScheduleThread(KernelThread* thread)
-    {
-        //run through list until we find a spot, or add it to the end.
-        auto scanHead = threads.Head();
-        while (scanHead != nullptr)
-        {
-            if (scanHead->val->GetPriority() >= thread->GetPriority())
-                break;
-
-            scanHead = scanHead->next;
-        }
-
-        if (scanHead == nullptr)
-            threads.InsertAfter(threads.Tail(), thread);
-        else
-            threads.InsertAfter(scanHead, thread);
-    }
-
-    void Scheduler::UnscheduleThread(KernelThread* thread)
-    {
-        threads.Remove(threads.Find(thread));
-        
-        if (currentThread == thread)
-            currentThread = nullptr;
-    }
-
-    KernelThread* Scheduler::GetCurrentThread()
-    { 
-        return currentThread;
+        ISSUE_INTERRUPT_SCHEDULER_YIELD;
     }
 }

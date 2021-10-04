@@ -6,11 +6,17 @@ Refactoring:
         -Which means it's likely APIC init. Its not the timer calibration as that dosnt run until later.
 
     -Virtual memory mapping: move to only mapping what we need, rather than identity mapping everything.
-        -Current this crashes, probably due to forgetting to map something vital.
-        -Actual reason is we're trying to access parts of the paging structure which arent mapped.
-            -This leads to some weird solutions (recursive mapping) that I need to process.
+        -Only need to recursively map the page table itself now.
+
+    -Move bitmap used by page frame alloc into a setup of macros (get/set/setvalue/clear), since its not a general purpose bitmap.
                 
     -Refocus on adding features from the list below
+
+Templates/Containers:
+    -Have a standard interface, (begin()/end(), first()/last()). Go back and fix LinkedList and List implementations.
+    -Frigg has a good hash table implementation.
+    -Would be nice to also have: queue, stack, tree.
+    -Get rid of Find(), move it and other algos to separate header. Keep data and code separate.
 
 Time API:
     -Simple but unified way to get various forms of time (system uptime, real time) and the date.
@@ -26,9 +32,6 @@ HPET:
         -This sounds more like a rework.
     -Added HPET support to time api.
 
-Strings (syslib):
-    -Formatting functions, for converting PODs to strings, emplacing within strings, and extracting.
-
 Memory:
     -Implement lazy allocation.
     -Stack frame allocator, allocator combinations (think main + fallback, AA talk on new cpp allocators!)
@@ -43,8 +46,12 @@ Logging:
 Multiprocessing:
     -Re-work sceduler. Its too complex for how simple it should be right now. 
     -Trampoline for booting APs. Synchronising multiple cores.
-    -Implement processes: a single program unit (GDT/handles/virtual memory map), each with a number of threads.
+    -Implement processes: a single program unit (handles/virtual memory map), each with a number of threads.
     -Semaphore, mutex and spinlocks. ScopeGuard that can operate on any of the above.
+
+String Formatting:
+    -Add non-integer numbers (single/double/extended precision)
+    -Add features: working within pre-defined buffer, enforcing max length.
     
 Panic Subsystem:
     -Must be entirely self-contained, and disaster resistant. See implementation ideas in Panic.cpp file.
