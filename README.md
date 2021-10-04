@@ -91,6 +91,10 @@ Various feature's I'd like to include are listed below, and organised into miles
 - [ ] Sync primatives (semaphore, mutex, spinlock)
 - [ ] Fix HPET and APIC bugs specificially.
 
+#### Milestone 1.2 - KShell functionality
+- [ ] Proper command parsing/exec
+- [ ] Implement a few useful debugging commands (mem dump, process tree)
+
 ### Milestone 2 - Userland
 - [ ] Placeholder accounts - int based (0 = kernel, 1 = user)
 - [ ] Processes/Threads with permissions
