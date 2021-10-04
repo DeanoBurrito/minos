@@ -17,8 +17,6 @@ namespace Kernel::Drivers
     private:
 
     public:
-        static uint64_t ticks;
-
         static void Init();
         static void Disable();
     };

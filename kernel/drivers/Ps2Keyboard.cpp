@@ -14,8 +14,10 @@ namespace Kernel::Drivers
     
     uint8_t packetBytes[PS2_PACKET_LENGTH];
     int packetLength = 0;
-    void Ps2Keyboard::HandlePacketByte(uint8_t packetByte)
+    void Ps2Keyboard::HandlePacketByte()
     {
+        uint8_t packetByte = CPU::PortRead8(PORT_PS2_KEYBOARD);
+        
         //NOTE: this is called from inside an interrupt, be careful.
         if (packetLength + 1 > PS2_PACKET_LENGTH)
         {

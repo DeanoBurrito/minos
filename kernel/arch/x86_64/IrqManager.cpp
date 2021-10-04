@@ -1,6 +1,7 @@
 #include <IrqManager.h>
 #include <arch/x86_64/IDT.h>
 #include <drivers/CPU.h>
+#include <drivers/APIC.h>
 #include <PageTableManager.h>
 #include <PageFrameAllocator.h>
 #include <Memory.h>
@@ -111,6 +112,12 @@ namespace Kernel
 
         Log("Forcibly cleared IDT entry 0x", false);
         Log(sl::UIntToString(vector, 16).Data());
+    }
+
+    void IrqManager::SendEOI()
+    {
+        //this is where we would select whether to communicate with PIC or APIC
+        Drivers::APIC::Local()->SendEOI();
     }
 
     void IrqManager::PrintVectorTable()

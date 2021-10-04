@@ -2,7 +2,7 @@
 #include <drivers/ACPI.h>
 #include <drivers/8259PIC.h>
 #include <drivers/HPET.h>
-#include <drivers/8253PIT.h>
+#include <drivers/SystemClock.h>
 #include <PageTableManager.h>
 #include <PageFrameAllocator.h>
 #include <KLog.h>
@@ -254,8 +254,9 @@ namespace Kernel::Drivers
         //set initial count to reset apic timer, and start HPET timer.
         WriteRegister(LocalApicRegisters::TimerInitialCount, 0xFFFF'FFFF);
 
-        uint64_t endTicks = PIT::ticks + APIC_TIMER_DESIRED_MS;
-        while (PIT::ticks < endTicks);
+        uint64_t* ticksPtr = &SystemClock::The()->clockTicks;
+        uint64_t endTicks = *ticksPtr + APIC_TIMER_DESIRED_MS;
+        while (*ticksPtr < endTicks);
 
         //get number of apic clock ticks, 
         timerInterval = 0xFFFF'FFFF - ReadRegister(LocalApicRegisters::TimerCurrentCount);

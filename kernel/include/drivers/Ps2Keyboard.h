@@ -20,7 +20,7 @@ namespace Kernel::Drivers
     {
     public:
         static Ps2Keyboard* The();
-        void HandlePacketByte(uint8_t packetByte);
+        void HandlePacketByte();
         
         bool IsPrintable(KeyboardKey key);
         char GetPrintable(KeyboardKey key, bool shifted);

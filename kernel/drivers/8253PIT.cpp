@@ -3,8 +3,6 @@
 
 namespace Kernel::Drivers
 {
-    uint64_t PIT::ticks;
-    
     void PIT::Init()
     {
         //Fixed 1MHz-ish timer

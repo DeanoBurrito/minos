@@ -128,7 +128,7 @@ namespace Kernel
         irqman->Init();
 
         //init cpu specific interrupts
-        Log("Installing isa interrupt handles (< 0x20)");
+        Log("Installing ISA interrupt handles (< 0x20)");
         irqman->AssignVector(INTERRUPT_VECTOR_DOUBLE_FAULT, (void*)InterruptHandlers::DoubleFault);
         irqman->AssignVector(INTERRUPT_VECTOR_GENERAL_PROTECTION_FAULT, (void*)InterruptHandlers::GeneralProtectionFault);
         irqman->AssignVector(INTERRUPT_VECTOR_PAGE_FAULT, (void*)InterruptHandlers::PageFault);
@@ -146,7 +146,7 @@ namespace Kernel
         irqman->AssignVector(INTERRUPT_VECTOR_TIMER, (void*)scheduler_HandleInterrupt);
 
         //setting up irq0 (pin2) to send us ticks
-        irqman->AssignVector(INTERRUPT_VECTOR_TIMER_CALIBRATE, (void*)InterruptHandlers::DefaultTimerHandler);
+        irqman->AssignVector(INTERRUPT_VECTOR_TIMER_CALIBRATE, (void*)InterruptHandlers::SystemClockHandler);
         auto pitRedirect = IOAPIC::CreateRedirectEntry(INTERRUPT_VECTOR_TIMER_CALIBRATE, Drivers::APIC::Local()->GetID(), IOAPIC_PIN_POLARITY_ACTIVE_HIGH, IOAPIC_TRIGGER_MODE_EDGE, true);
         Drivers::IOAPIC::ioApics.PeekFront()->WriteRedirectEntry(2, pitRedirect); //TODO: magic numbers here!
 
