@@ -3,10 +3,12 @@
 #include <drivers/CPU.h>
 #include <drivers/X86Extensions.h>
 
+#include <KLog.h>
+
 extern "C"
 {
     //top of stack to operate on
-    uint64_t* scheduler_nextThreadData;
+    void* scheduler_nextThreadData;
 
     void scheduler_selectNext() 
     {
@@ -22,8 +24,9 @@ extern "C"
 
 namespace Kernel::Multiprocessing
 {
-    void IdleThread()
+    void IdleThread(void* ignored)
     {
+        Log("Idle thread main");
         while (1)
             Drivers::CPU::Halt();
     }
@@ -34,19 +37,46 @@ namespace Kernel::Multiprocessing
         return &localScheduler;
     }
 
+    void Scheduler::RegisterThread(Thread* thread)
+    {
+        threads.PushBack(thread);
+    }
+
     void Scheduler::SelectNext()
     {
-        //save extended state, move current thread back into queue, load next thread's data
-        Drivers::X86Extensions::Local()->SaveState(currentThread->extendedSavedState); //TODO: scheduler is platform independent, abstract this pls.
+        //save the current state if we need to (nullptr == dont save), including the extended state.
+        Thread* currentThread = threads[currentIndex];
+        if (scheduler_nextThreadData)
+        {
+            Drivers::X86Extensions::Local()->SaveState(currentThread->extendedSavedState); //TODO: scheduler is platform independent, abstract this pls.
+            currentThread->stackTop = scheduler_nextThreadData;
+        }
 
-        //selection:
+        //selection: run any higher priority tasks first, if they're available to run
+        Thread* test = threads.First(); //first should always be idle thread
+        for (size_t index = 0; index < threads.Size(); index++)
+        {
+            Thread* selected = threads[index];
+            if (selected->priority > test->priority && selected->GetState() == ThreadState::Running)
+                test = threads[index];
+        }
 
+        currentThread = test;
+    
+        //set new stack top, and load extended state
+        scheduler_nextThreadData = currentThread->stackTop;
         Drivers::X86Extensions::Local()->LoadState(currentThread->extendedSavedState);
     }
 
     void Scheduler::Init()
     {
-        //TODO: idle thread so we always have a fallback
+        threads.Reserve(0x100);
+        scheduler_nextThreadData = nullptr; //we dont want to save the initial thread's state, as we'll never return.
+        currentIndex = 0;
+        
+        //setup idle thread (this will automatically register itself)
+        Thread* idleThread = Thread::Create(IdleThread, nullptr, 0);
+        idleThread->Start();
     }
 
     void Scheduler::Yield()

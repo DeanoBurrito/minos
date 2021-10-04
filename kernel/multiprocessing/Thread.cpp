@@ -5,12 +5,16 @@
 #include <Platform.h>
 #include <Memory.h>
 #include <InterruptScopeGuard.h>
+#include <multiprocessing/Scheduler.h>
 #include <KLog.h>
+
+#include <Formatting.h>
+#include <String.h>
 
 namespace Kernel::Multiprocessing
 {
     //just a convinience function
-    __attribute__((always_inline)) inline void StackPush(sl::UIntPtr sp, uint64_t word)
+    __attribute__((always_inline)) inline void StackPush(sl::UIntPtr &sp, uint64_t word)
     {
         sp.raw -= 8;
         sl::MemWrite(sp, word);
@@ -28,7 +32,7 @@ namespace Kernel::Multiprocessing
         PageTableManager::The()->MapMemory((void*)nextStackBegin, lastPage.ptr, MemoryMapFlags::WriteAllow); 
         lastPage.raw += PAGE_SIZE;
 
-        nextStackBegin += nextStackBegin / 100; //arbitrary, placeholder until processes
+        nextStackBegin += stackPages * PAGE_SIZE; //arbitrary, placeholder until processes
 
         for (size_t count = 1; count < stackPages; count++)
         {
@@ -38,19 +42,16 @@ namespace Kernel::Multiprocessing
         }
 
         //create thread structure on the new stack, and surround it with known protect values.
-        sl::UIntPtr sp = lastPage.raw - sizeof(uint64_t);
-        sl::MemWrite(sp, (uint64_t)THREAD_DATA_PROTECT_VALUE);
+        sl::UIntPtr sp = lastPage.raw;
+        StackPush(sp, THREAD_DATA_PROTECT_VALUE);
 
         sp.raw -= sizeof(Thread);
         Thread* thread = reinterpret_cast<Thread*>(sp.ptr);
-
-        sp.raw -= sizeof(uint64_t);
-        sl::MemWrite(sp, (uint64_t)THREAD_DATA_PROTECT_VALUE);
+        StackPush(sp, THREAD_DATA_PROTECT_VALUE);
 
         //write 2 zero words to top of stack, to stop any stack traces.
-        sp.raw -= sizeof(uint64_t) * 2;
-        sl::MemWrite(sp.raw + 8, (uint64_t)0);
-        sl::MemWrite(sp, (uint64_t)0);
+        StackPush(sp, 0);
+        StackPush(sp, 0);
 
         //now that we have a thread structure, keep track of anything we need to.
         thread->priority = priority;
@@ -58,11 +59,12 @@ namespace Kernel::Multiprocessing
         thread->stackBase = sp.ptr;
         size_t xStateBufferSize = Drivers::X86Extensions::Local()->GetStateBufferSize(); //TODO: would be nice to also store this above the thread on the stack?
         thread->extendedSavedState = new uint8_t[xStateBufferSize];
+        sl::memset(thread->extendedSavedState, 0, xStateBufferSize);
         
         //prep for scheduler: setup iretq frame, then push blank regs onto stack
-        uint64_t expectedSP = sp.raw - 5 - 15; //+5 for stack frame, +15 for registers (rsp not saved)
+        uint64_t execStack = sp.raw;
         StackPush(sp, 0x10); //stack selector (data segment)
-        StackPush(sp, expectedSP); //stack pointer
+        StackPush(sp, execStack); //stack pointer
         StackPush(sp, 0x202); //rflags: interrupts enabled, and bit 1 is always high.
         StackPush(sp, 0x8); //code selector
         StackPush(sp, (uint64_t)mainFunc); //rip: address to return execution to
@@ -75,17 +77,18 @@ namespace Kernel::Multiprocessing
         StackPush(sp, 0); //rcx
         StackPush(sp, 0); //rdx
         StackPush(sp, 0); //rsi 
-        StackPush(sp, (uint64_t)thread->stackTop); //rbp (same as rsp)
+        StackPush(sp, execStack); //rbp (same as rsp)
 
         for (size_t count = 0; count < 8; count++)
             StackPush(sp, 0); //r15 -> r8 (inclusive)
         
         thread->stackTop = sp.ptr;
-        //some sanity checks
-        if (sp.raw != expectedSP)
-            LogError("Thread stack top is not where expected!");
-        if (expectedSP != (uint64_t)thread->stackBase - (5 + 15))
-            LogError("Thread stack size is incorrect");
+        thread->executionState = ThreadState::Running;
+
+
+        string fstr = "New thread: s_base=0x%lx, s_top=0x%lx, p=%lu";
+        Log(sl::FormatToString(0, &fstr, (uint64_t)thread->stackBase, (uint64_t)thread->stackTop, (uint64_t)thread->priority).Data());
+        Log("Thread created.");
 
         return thread;
     }
@@ -94,5 +97,13 @@ namespace Kernel::Multiprocessing
     {}
 
     void Thread::Start()
-    {}
+    {
+        //register ourselves with scheduler
+        Scheduler::The()->RegisterThread(this);
+    }
+
+    ThreadState Thread::GetState()
+    {
+        return executionState;
+    }
 }

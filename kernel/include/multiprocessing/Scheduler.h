@@ -1,7 +1,7 @@
 #pragma once
 
 #include <multiprocessing/Thread.h>
-#include <templates/LinkedList.h>
+#include <templates/List.h>
 
 extern "C"
 {
@@ -13,11 +13,13 @@ namespace Kernel::Multiprocessing
     class Scheduler
     {
     private:
-        sl::LinkedList<Thread*> threads; //TODO: shouldnt be a pointer, emplace within list. This happens because we're using defaultValue.
-        Thread* currentThread;
+        sl::List<Thread*> threads; //TODO: shouldnt be a pointer, emplace within list. This happens because we're using defaultValue.
+        size_t currentIndex;
 
     public:
         static Scheduler* The();
+
+        void RegisterThread(Thread* thread);
 
         void Init();
         void SelectNext();

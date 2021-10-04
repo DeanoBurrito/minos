@@ -14,6 +14,12 @@ namespace Kernel::Multiprocessing
 
     typedef void (*ThreadMainFunction)(void* param);
 
+    enum class ThreadState
+    {
+        Running,
+        Waiting,
+    };
+
     class Thread
     {
     friend Scheduler;
@@ -29,11 +35,15 @@ namespace Kernel::Multiprocessing
         //platform specific state that's not stack-stored (x86's (f)xsave stuff)
         void* extendedSavedState;
 
+        ThreadState executionState;
+        //TODO: waiting list (what this thread needs before continuing)
+
         Thread();
 
     public:
         static Thread* Create(ThreadMainFunction mainFunc, void* arg, uint8_t priority, uint8_t stackPages = THREAD_DEFAULT_STACK_PAGES);
 
         void Start();
+        ThreadState GetState();
     };
 }
