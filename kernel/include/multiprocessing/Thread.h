@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <Memory.h>
 
 #define THREAD_DEFAULT_STACK_PAGES 4
 #define THREAD_MIN_STACK_PAGES 2
@@ -29,9 +30,9 @@ namespace Kernel::Multiprocessing
         size_t stackSize;
 
         //absolute bottom of stack (highest mem address)
-        void* stackBase;
+        sl::UIntPtr stackBase;
         //rsp usually
-        void* stackTop;
+        sl::UIntPtr stackTop;
         //platform specific state that's not stack-stored (x86's (f)xsave stuff)
         void* extendedSavedState;
 

@@ -40,8 +40,8 @@ scheduler_HandleInterrupt:
 
 NoSaveRegs:
     #just clean the stack in that case
+    #NOTE: this actually does nothing, because we havent saved the current stack pointer, so we cant return here.
     pop %rax
-    #NOTE: we could also pop the current frame here, since itll never get used (we havent saved its return address)
 
 RestoreRegs:
     #now that we dont need to worry about corrupting registers, we can call into cpp-land
@@ -49,8 +49,7 @@ RestoreRegs:
     call scheduler_sendEOI
 
     #load fresh thread info, start operating on their stack
-    mov (scheduler_nextThreadData), %rdi
-    mov 0(%rdi), %rsp
+    mov (scheduler_nextThreadData), %rsp
 
     #load new stack pointer, pop all regs back into place, and issue iret (previous interrupt_frame should be in place)
     pop %r15
