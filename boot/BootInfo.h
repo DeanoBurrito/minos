@@ -6,6 +6,11 @@
 #define PIXEL_FORMAT_RedGreenBlueReserved_8BPP 1
 #define PIXEL_FORMAT_BlueGreenRedReserved_8BPP 2
 
+#define BOOTLOADER_ID_UNKNOWN 0
+#define BOOTLOADER_ID_UEFI 1
+#define BOOTLODAER_ID_MULTIBOOT1 2
+#define BOOTLOADER_ID_STIVALE 3
+
 /*
     NOTE: I want everything here to be explicit in it's definition, as the bootloader/kernel could theoritically be compiled on separate platforms.
     However unlikely, its not impossible, hence the use of explicitly sized integers. No size_t's or pointers depending on machine word size.
@@ -50,5 +55,6 @@ typedef struct
     NativePtr rsdp;
 
     NativePtr kernelStartAddr;
-    uint64_t kernelSize; 
+    uint64_t kernelSize;
+    uint64_t bootloaderId;
 } BootInfo __attribute__((aligned(8)));

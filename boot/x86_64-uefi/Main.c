@@ -282,6 +282,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable
     bootInfo.rsdp = (uint64_t)rsdp;
     bootInfo.kernelStartAddr = kernelBegin;
     bootInfo.kernelSize = kernelLength;
+    bootInfo.bootloaderId = BOOTLOADER_ID_UEFI;
 
     init_gop(&bootInfo);
     Print(L"GOP: base=0x%x size=0x%x width=%d height=%d pps=%d format=%d\n\r", bootInfo.framebuffer.base, bootInfo.framebuffer.bufferSize, bootInfo.framebuffer.width, bootInfo.framebuffer.height, bootInfo.framebuffer.stride, bootInfo.framebuffer.pixelFormat);
