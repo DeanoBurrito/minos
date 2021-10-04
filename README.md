@@ -79,9 +79,9 @@ Various feature's I'd like to include are listed below, and organised into miles
 - [x] HPET driver - partial
 - [x] Initdisk support
 - [x] Complete virtual memory manager
-- [ ] Working kernel scheduler
+- [x] Working kernel scheduler
 - [x] FPU and SSE support
-- [x] Completed string formatting - missing doubles (who uses FP in kernel dev though tsk tsk)
+- [x] Completed string formatting
 - [ ] Slab allocator
 
 #### Milestone 1.1 - Kernel improvements
@@ -89,6 +89,7 @@ Various feature's I'd like to include are listed below, and organised into miles
 - [ ] Timers abstraction + API
 - [ ] Squash current bugs list
 - [ ] Sync primatives (semaphore, mutex, spinlock)
+- [ ] Fix HPET and APIC bugs specificially.
 
 ### Milestone 2 - Userland
 - [ ] Placeholder accounts - int based (0 = kernel, 1 = user)
