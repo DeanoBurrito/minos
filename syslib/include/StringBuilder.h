@@ -1,6 +1,6 @@
 #pragma once
 
-#include <templates/LinkedList.h>
+#include <collections/LinkedList.h>
 #include <Buffer.h>
 #include <String.h>
 

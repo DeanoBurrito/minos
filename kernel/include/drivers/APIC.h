@@ -1,8 +1,8 @@
 #pragma once
 
 #include <stdint.h>
-#include <templates/LinkedList.h>
-#include <templates/List.h>
+#include <collections/LinkedList.h>
+#include <collections/List.h>
 
 //MADT doesnt always specify that we need to, but we probably should before enabled LAPIC.
 #define FORCE_DISABLE_LEGACY_PIC true

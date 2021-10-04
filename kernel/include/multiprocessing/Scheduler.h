@@ -1,7 +1,7 @@
 #pragma once
 
 #include <multiprocessing/Thread.h>
-#include <templates/List.h>
+#include <collections/List.h>
 
 extern "C"
 {
