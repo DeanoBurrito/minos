@@ -42,6 +42,12 @@ namespace sl
     {
         return *reinterpret_cast<volatile WordType*>(where.ptr);
     }
+
+    //Allocates a number of bytes within the current stack frame.
+    __attribute__((always_inline)) inline void* StackAlloc(size_t size)
+    {
+        return __builtin_alloca(size);
+    }
     
     //std::move replacement
     template <typename T>

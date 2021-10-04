@@ -7,9 +7,9 @@ Refactoring:
 
     -Virtual memory mapping: move to only mapping what we need, rather than identity mapping everything.
         -Only need to recursively map the page table itself now.
+    
+    -Kernel::Bitmap is a hacky mess. Replace it with get/set macros or something. 
 
-    -Move bitmap used by page frame alloc into a setup of macros (get/set/setvalue/clear), since its not a general purpose bitmap.
-                
     -Refocus on adding features from the list below
 
 Templates/Containers:
@@ -23,9 +23,6 @@ Time API:
     -A refactoring of the systemclock api.
     -Dont forget RDTSC exists, and is very precise once calibrated!
     -Remove PIT::ticks and move any references to the new API instead.
-
-InterruptManager:
-    -A nice system to 'claim' gsi/irq numbers for certain subsystems, and query which ones are available.
 
 HPET:
     -Investigate what's actually going on here, PIT still seems to be active even after being disabled. HPET timers are not generating interrupts.
@@ -42,12 +39,6 @@ Logging:
     -Improve use of kernel Log()
     -Implement 2 stage logging. Log() only copies message details into a memory buffer. Actually accessing/displaying is implemented elsewhere, this should speed up Log().
     -Backing store for logging is circular queue - oldest messages get dropped once capacity is reached.
-
-Multiprocessing:
-    -Re-work sceduler. Its too complex for how simple it should be right now. 
-    -Trampoline for booting APs. Synchronising multiple cores.
-    -Implement processes: a single program unit (handles/virtual memory map), each with a number of threads.
-    -Semaphore, mutex and spinlocks. ScopeGuard that can operate on any of the above.
 
 String Formatting:
     -Add non-integer numbers (single/double/extended precision)

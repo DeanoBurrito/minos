@@ -2,6 +2,10 @@
 
 #include <stddef.h>
 
+//not actually required, purely for convinience. 
+#include <SlabAllocator.h>
+#include <HeapAllocator.h>
+
 /*
     This is inspired by a talk by Andrei Alexandrescu, in he talks about chaining multiple allocators
     together to make the most of their feature set. This is what CompositeALlocator is meant ot achieve:
@@ -72,7 +76,6 @@ namespace sl
     };
 
 #ifdef SL_ENABLE_TEST_ALLOCATORS
-    //No real use, other than testing
     class FailureAllocator
     {
     public:
@@ -83,7 +86,6 @@ namespace sl
         { return false; }
     };
 
-    //No real use, other than testing
     class SuccessAllocator
     {
     public:
@@ -92,6 +94,26 @@ namespace sl
 
         bool TryFree(void*)
         { return true; }
+    };
+
+    class AllocOnlyAllocator
+    {
+    public:
+        bool TryAlloc(void**, const size_t)
+        { return true; }
+
+        bool TryFree(void*)
+        { return false; }
+    };
+
+    class FreeOnlyAllocator
+    {
+    public:
+        bool TryAlloc(void**, const size_t)
+        { return true; }
+
+        bool TryFree(void*)
+        { return false; }
     };
 #endif
 }

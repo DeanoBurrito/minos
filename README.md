@@ -82,7 +82,7 @@ Various feature's I'd like to include are listed below, and organised into miles
 - [x] Working kernel scheduler
 - [x] FPU and SSE support
 - [x] Completed string formatting
-- [ ] Slab allocator
+- [x] Slab allocator and composite allocators
 
 #### Milestone 1.1 - Kernel improvements
 - [ ] Interrupts abstraction + API (template/inheritance based) 
@@ -109,11 +109,11 @@ Various feature's I'd like to include are listed below, and organised into miles
 - [ ] Userspace drivers and FUSE fs
 - [ ] Virtual (proc) filesystem
     
-### Milestone 4- AML interp
+### Milestone 4 - AML interp
 - [ ] ACPI/AML driver (lai is worth looking into)
 - This is going to be a big detour, hence its own milestone. 
 
-### Milestone 5- Driver-mania
+### Milestone 5 - Driver-mania
 - [ ] PCI(e) subsystem
 - [ ] AHCI and NVME drivers
 - [ ] Ext2 filesystem driver
@@ -128,4 +128,10 @@ Various feature's I'd like to include are listed below, and organised into miles
 - [ ] Multicore scheduling
 - [ ] Libc implementation (port mlibc?)
 
+</details>
+
+<details>
+    <summary>Credits and special mentions</summary>
+    Big thanks to the authors behind the osdev wiki, and the people on the unaffiliated osdev discord.
+    Likewise the Intel SDM authors, and especially my local coffee shop. 💌 (haha hope your browser supports unicode)
 </details>
