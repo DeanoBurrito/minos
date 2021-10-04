@@ -3,12 +3,10 @@
 #include <drivers/CPU.h>
 #include <drivers/X86Extensions.h>
 
-#include <KLog.h>
-
 extern "C"
 {
     //top of stack to operate on
-    void* scheduler_nextThreadData;
+    uint64_t scheduler_nextThreadData;
 
     void scheduler_selectNext() 
     {
@@ -26,7 +24,6 @@ namespace Kernel::Multiprocessing
 {
     void IdleThread(void* ignored)
     {
-        Log("Idle thread main");
         while (1)
             Drivers::CPU::Halt();
     }
@@ -49,7 +46,7 @@ namespace Kernel::Multiprocessing
         if (scheduler_nextThreadData)
         {
             Drivers::X86Extensions::Local()->SaveState(currentThread->extendedSavedState); //TODO: scheduler is platform independent, abstract this pls.
-            currentThread->stackTop = scheduler_nextThreadData;
+            currentThread->stackTop.raw = scheduler_nextThreadData;
         }
 
         //selection: run any higher priority tasks first, if they're available to run
@@ -57,21 +54,27 @@ namespace Kernel::Multiprocessing
         for (size_t index = 0; index < threads.Size(); index++)
         {
             Thread* selected = threads[index];
+            if (selected == nullptr || selected == test)
+                continue;
+            
             if (selected->priority > test->priority && selected->GetState() == ThreadState::Running)
+            {
+                currentIndex = index;
                 test = threads[index];
+            }
         }
 
         currentThread = test;
     
         //set new stack top, and load extended state
-        scheduler_nextThreadData = currentThread->stackTop;
+        scheduler_nextThreadData = currentThread->stackTop.raw;
         Drivers::X86Extensions::Local()->LoadState(currentThread->extendedSavedState);
     }
 
     void Scheduler::Init()
     {
         threads.Reserve(0x100);
-        scheduler_nextThreadData = nullptr; //we dont want to save the initial thread's state, as we'll never return.
+        scheduler_nextThreadData = 0; //we dont want to save the initial thread's state, as we'll never return.
         currentIndex = 0;
         
         //setup idle thread (this will automatically register itself)

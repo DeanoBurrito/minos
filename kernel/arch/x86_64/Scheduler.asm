@@ -9,7 +9,7 @@
 scheduler_HandleInterrupt:
     #save rdi and then rax to give us some scratch registers
     push %rdi
-    mov (scheduler_nextThreadData), %rdi
+    mov scheduler_nextThreadData, %rdi
 
     #check if current thread needs its registers saved
     test %rdi, %rdi
@@ -34,7 +34,7 @@ scheduler_HandleInterrupt:
     push %r15
 
     #now save rsp so we can return to this data
-    mov %rsp, (%rdi)
+    mov %rsp, scheduler_nextThreadData
 
     jmp RestoreRegs
 
@@ -49,7 +49,7 @@ RestoreRegs:
     call scheduler_sendEOI
 
     #load fresh thread info, start operating on their stack
-    mov (scheduler_nextThreadData), %rsp
+    mov scheduler_nextThreadData, %rsp
 
     #load new stack pointer, pop all regs back into place, and issue iret (previous interrupt_frame should be in place)
     pop %r15

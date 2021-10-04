@@ -8,9 +8,6 @@
 #include <multiprocessing/Scheduler.h>
 #include <KLog.h>
 
-#include <Formatting.h>
-#include <String.h>
-
 namespace Kernel::Multiprocessing
 {
     //just a convinience function
@@ -84,11 +81,6 @@ namespace Kernel::Multiprocessing
         
         thread->stackTop = sp.ptr;
         thread->executionState = ThreadState::Running;
-
-
-        string fstr = "New thread: s_base=0x%lx, s_top=0x%lx, p=%lu";
-        Log(sl::FormatToString(0, &fstr, (uint64_t)thread->stackBase, (uint64_t)thread->stackTop, (uint64_t)thread->priority).Data());
-        Log("Thread created.");
 
         return thread;
     }
