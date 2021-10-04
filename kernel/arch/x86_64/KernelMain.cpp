@@ -4,8 +4,8 @@
 #include <PageTableManager.h>
 #include <Memory.h>
 #include <drivers/CPU.h>
-#include <arch/x86_64//IDT.h>
 #include <arch/x86_64/GDT.h>
+#include <IrqManager.h>
 #include <arch/x86_64/Interrupts.h>
 #include <drivers/Serial.h>
 #include <KLog.h>
@@ -121,22 +121,19 @@ namespace Kernel
         Log(sl::UIntToString(defaultGdtDescriptor.offset, BASE_HEX).Data());
     }
 
-    IDTR idtr;
     void InitInterrupts(BootInfo* bootInfo)
     {
         Log("Initializing interrupts");
-
-        idtr.limit = 0x0FFF;
-        idtr.offset = (uint64_t)PageFrameAllocator::The()->RequestPage();
-        PageTableManager::The()->MapMemory((void*)idtr.offset, (void*)idtr.offset, MemoryMapFlags::WriteAllow | MemoryMapFlags::ExecuteAllow);
+        IrqManager* irqman = IrqManager::The();
+        irqman->Init();
 
         //init cpu specific interrupts
-        Log("Initializing platform interrupts");
-        idtr.SetEntry((void*)InterruptHandlers::DoubleFault, INTERRUPT_VECTOR_DOUBLE_FAULT, IDT_ATTRIBS_InterruptGate, 0x08);
-        idtr.SetEntry((void*)InterruptHandlers::GeneralProtectionFault, INTERRUPT_VECTOR_GENERAL_PROTECTION_FAULT, IDT_ATTRIBS_InterruptGate, 0x08);
-        idtr.SetEntry((void*)InterruptHandlers::PageFault, INTERRUPT_VECTOR_PAGE_FAULT, IDT_ATTRIBS_InterruptGate, 0x08);
-        idtr.SetEntry((void*)InterruptHandlers::FPUError, INTERRUPT_VECTOR_FPU_ERROR, IDT_ATTRIBS_InterruptGate, 0x08);
-        idtr.SetEntry((void*)InterruptHandlers::SIMDError, INTERRUPT_VECTOR_SIMD_ERROR, IDT_ATTRIBS_InterruptGate, 0x08);
+        Log("Installing isa interrupt handles (< 0x20)");
+        irqman->AssignVector(INTERRUPT_VECTOR_DOUBLE_FAULT, (void*)InterruptHandlers::DoubleFault);
+        irqman->AssignVector(INTERRUPT_VECTOR_GENERAL_PROTECTION_FAULT, (void*)InterruptHandlers::GeneralProtectionFault);
+        irqman->AssignVector(INTERRUPT_VECTOR_PAGE_FAULT, (void*)InterruptHandlers::PageFault);
+        irqman->AssignVector(INTERRUPT_VECTOR_FPU_ERROR, (void*)InterruptHandlers::FPUError);
+        irqman->AssignVector(INTERRUPT_VECTOR_SIMD_ERROR, (void*)InterruptHandlers::SIMDError);
 
         Log("Initializing software interrupts");
         //redirect entry for irq2 (ps2 keyboard)
@@ -144,21 +141,16 @@ namespace Kernel
         Drivers::IOAPIC::ioApics.PeekFront()->WriteRedirectEntry(1, keyboardRedirect);
 
         //ps2 keyboard
-        idtr.SetEntry((void*)InterruptHandlers::PS2KeyboardHandler, INTERRUPT_VECTOR_PS2KEYBOARD, IDT_ATTRIBS_InterruptGate, 0x08);
+        irqman->AssignVector(INTERRUPT_VECTOR_PS2KEYBOARD, (void*)InterruptHandlers::PS2KeyboardHandler);
         //scheduler timer callback
-        idtr.SetEntry((void*)scheduler_HandleInterrupt, INTERRUPT_VECTOR_TIMER, IDT_ATTRIBS_InterruptGate, 0x08);
+        irqman->AssignVector(INTERRUPT_VECTOR_TIMER, (void*)scheduler_HandleInterrupt);
 
         //setting up irq0 (pin2) to send us ticks
-        idtr.SetEntry((void*)InterruptHandlers::DefaultTimerHandler, INTERRUPT_VECTOR_TIMER_CALIBRATE, IDT_ATTRIBS_InterruptGate, 0x08);
+        irqman->AssignVector(INTERRUPT_VECTOR_TIMER_CALIBRATE, (void*)InterruptHandlers::DefaultTimerHandler);
         auto pitRedirect = IOAPIC::CreateRedirectEntry(INTERRUPT_VECTOR_TIMER_CALIBRATE, Drivers::APIC::Local()->GetID(), IOAPIC_PIN_POLARITY_ACTIVE_HIGH, IOAPIC_TRIGGER_MODE_EDGE, true);
         Drivers::IOAPIC::ioApics.PeekFront()->WriteRedirectEntry(2, pitRedirect); //TODO: magic numbers here!
 
-        //load idt and enable interrupts
-        CPU::LoadTable(CpuTable::X86_64_IDT, &idtr);
-        CPU::EnableInterrupts();
-
-        Log("IDT loaded at: 0x", false);
-        Log(sl::UIntToString(idtr.offset, BASE_HEX).Data());
+        irqman->Load();
     }
 
     void InitDrivers(BootInfo* bootInfo)
@@ -199,6 +191,7 @@ extern "C" __attribute__((noreturn)) void KernelMain(BootInfo* bootInfo)
 {
     using namespace Kernel;
 
+    Drivers::CPU::DisableInterrupts();
     InitMemory(bootInfo);
     InitPlatformEarly(bootInfo);
 

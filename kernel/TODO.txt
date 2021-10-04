@@ -36,7 +36,6 @@ Memory:
     -Kernel-Eternal mapping: memory that'll never be freed during system runtime (all the globals), mark it as reserved into of claimed.
 
 Logging:
-    -Improve use of kernel Log()
     -Implement 2 stage logging. Log() only copies message details into a memory buffer. Actually accessing/displaying is implemented elsewhere, this should speed up Log().
     -Backing store for logging is circular queue - oldest messages get dropped once capacity is reached.
 

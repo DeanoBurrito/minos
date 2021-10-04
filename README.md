@@ -85,8 +85,8 @@ Various feature's I'd like to include are listed below, and organised into miles
 - [x] Slab allocator and composite allocators
 
 #### Milestone 1.1 - Kernel improvements
-- [ ] Interrupts abstraction + API (template/inheritance based) 
-- [ ] Timers abstraction + API
+- [x] Interrupts abstraction + API 
+- [ ] Timers abstraction + API (template/inheritance based) 
 - [ ] Squash current bugs list
 - [ ] Sync primatives (semaphore, mutex, spinlock)
 - [ ] Fix HPET and APIC bugs specificially.
