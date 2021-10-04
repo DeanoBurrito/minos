@@ -84,6 +84,12 @@ Various feature's I'd like to include are listed below, and organised into miles
 - [x] Completed string formatting - missing doubles (who uses FP in kernel dev though tsk tsk)
 - [ ] Slab allocator
 
+#### Milestone 1.1 - Kernel improvements
+- [ ] Interrupts abstraction + API (template/inheritance based) 
+- [ ] Timers abstraction + API
+- [ ] Squash current bugs list
+- [ ] Sync primatives (semaphore, mutex, spinlock)
+
 ### Milestone 2 - Userland
 - [ ] Placeholder accounts - int based (0 = kernel, 1 = user)
 - [ ] Processes/Threads with permissions
@@ -91,7 +97,7 @@ Various feature's I'd like to include are listed below, and organised into miles
 - [ ] IPC and system calls
 - [ ] Loadable drivers (kernel/user via process permissions)
 
-### Milestone 2.1 - Revisting boot protocols
+#### Milestone 2.1 - Revisting boot protocols
 - [ ] Multiboot 1
 - [ ] Stivale 2
 - [ ] Migrate UEFI bootloader to be fully c++
@@ -104,7 +110,7 @@ Various feature's I'd like to include are listed below, and organised into miles
     
 ### Milestone 4- AML interp
 - [ ] ACPI/AML driver (lai is worth looking into)
-- This is going to be a big detour, hence its own milestone.
+- This is going to be a big detour, hence its own milestone. 
 
 ### Milestone 5- Driver-mania
 - [ ] PCI(e) subsystem
@@ -112,6 +118,7 @@ Various feature's I'd like to include are listed below, and organised into miles
 - [ ] Ext2 filesystem driver
 - [ ] Qemu networking driver
 - [ ] Qemu graphics driver
+- [ ] FAT filesystem driver
 
 ### Beyond That ...
 - [ ] Networking stack
