@@ -126,6 +126,7 @@ Various feature's I'd like to include are listed below, and organised into miles
 - [ ] FAT filesystem driver
 
 ### Beyond That ...
+- [ ] Port the original doom!
 - [ ] Networking stack
 - [ ] Expanded template library
 - [ ] Multicore booting
