@@ -25,7 +25,7 @@ LD = ld
 #auto populated vars
 CC_OBJS = $(patsubst %.c, $(BUILD_DIR)/%.o, $(C_SRCS))
 
-.PHONY: all clean iso run
+.PHONY: all clean iso run pack
 
 all: $(TARGET).efi
 
