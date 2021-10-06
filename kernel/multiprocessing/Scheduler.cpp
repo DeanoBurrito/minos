@@ -1,6 +1,8 @@
 #include <multiprocessing/Scheduler.h>
+#include <Panic.h>
 #include <drivers/APIC.h>
 #include <drivers/CPU.h>
+#include <drivers/SystemClock.h>
 #include <drivers/X86Extensions.h>
 
 extern "C"
@@ -51,11 +53,22 @@ namespace Kernel::Multiprocessing
 
         //selection: run any higher priority tasks first, if they're available to run
         Thread* test = threads.First(); //first should always be idle thread
+        currentIndex = 0;
         for (size_t index = 0; index < threads.Size(); index++)
         {
             Thread* selected = threads[index];
-            if (selected == nullptr || selected == test)
+            if (selected == nullptr)
                 continue;
+
+            //if selected is sleeping, check if we're hit their wake timer, waking them if required
+            if (selected->GetState() == ThreadState::Sleeping)
+            {
+                if (Drivers::SystemClock::The()->GetUptime() >= selected->wakeTime)
+                {
+                    //wake thread
+                    selected->executionState = ThreadState::Running;
+                }
+            }            
             
             if (selected->priority > test->priority && selected->GetState() == ThreadState::Running)
             {
@@ -65,6 +78,9 @@ namespace Kernel::Multiprocessing
         }
 
         currentThread = test;
+
+        if (!currentThread)
+            Panic("No scheduled threads - idle thread has been removed.");
     
         //set new stack top, and load extended state
         scheduler_nextThreadData = currentThread->stackTop.raw;
@@ -85,5 +101,12 @@ namespace Kernel::Multiprocessing
     void Scheduler::Yield()
     {
         ISSUE_INTERRUPT_SCHEDULER_YIELD;
+    }
+
+    Thread* Scheduler::GetExecutingThread()
+    {
+        if (currentIndex < threads.Size())
+            return threads[currentIndex];
+        return nullptr;
     }
 }

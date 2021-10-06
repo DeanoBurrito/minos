@@ -1,5 +1,5 @@
 #include <kshell/KShell.h>
-#include <multiprocessing/Scheduler.h>
+#include <multiprocessing/Thread.h>
 #include <StringExtras.h>
 #include <Memory.h>
 #include <drivers/Serial.h>
@@ -152,10 +152,7 @@ namespace Kernel::Shell
                     ProcessKey(incomingKeysBuffer[i]);
             }
             else
-            {
-                //no point in doing anything else, user has no requested input
-                Multiprocessing::Scheduler::The()->Yield();
-            }
+                Multiprocessing::Thread::Current()->Sleep(3); //sleep for a little bit
         }
     }
     

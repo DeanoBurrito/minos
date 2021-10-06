@@ -6,7 +6,7 @@ KDISK_FILE= $(KDISK_DIR)/$(BUILD_DIR)/kdisk.bin
 
 #internal project settings
 ARCH = x86_64
-BOOT_PLATFORM = stivale
+BOOT_PLATFORM = uefi
 BUILD_DIR = build
 TARGET_NAME = kernel-$(ARCH).elf
 TARGET = $(BUILD_DIR)/$(TARGET_NAME)

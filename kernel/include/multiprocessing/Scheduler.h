@@ -24,5 +24,7 @@ namespace Kernel::Multiprocessing
         void Init();
         void SelectNext();
         void Yield();
+
+        Thread* GetExecutingThread();
     };
 }

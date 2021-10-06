@@ -6,6 +6,7 @@
 #include <Memory.h>
 #include <InterruptScopeGuard.h>
 #include <multiprocessing/Scheduler.h>
+#include <drivers/SystemClock.h>
 #include <KLog.h>
 
 namespace Kernel::Multiprocessing
@@ -15,6 +16,11 @@ namespace Kernel::Multiprocessing
     {
         sp.raw -= 8;
         sl::MemWrite(sp, word);
+    }
+
+    Thread* Thread::Current()
+    {
+        return Scheduler::The()->GetExecutingThread();
     }
     
     Thread* Thread::Create(ThreadMainFunction mainFunc, void* arg, uint8_t priority, uint8_t stackPages)
@@ -44,6 +50,7 @@ namespace Kernel::Multiprocessing
 
         sp.raw -= sizeof(Thread);
         Thread* thread = reinterpret_cast<Thread*>(sp.ptr);
+        sl::memset(thread, 0, sizeof(Thread)); //default init all thread data
         StackPush(sp, THREAD_DATA_PROTECT_VALUE);
 
         //write 2 zero words to top of stack, to stop any stack traces.
@@ -97,5 +104,14 @@ namespace Kernel::Multiprocessing
     ThreadState Thread::GetState()
     {
         return executionState;
+    }
+
+    void Thread::Sleep(size_t millis)
+    {
+        //calculate wake-time in ms, stash it and then tell scheduler to add us to the sleep list
+        wakeTime = Drivers::SystemClock::The()->GetUptime() + millis;
+        executionState = ThreadState::Sleeping;
+
+        Scheduler::The()->Yield();
     }
 }

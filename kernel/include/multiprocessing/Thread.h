@@ -19,6 +19,7 @@ namespace Kernel::Multiprocessing
     {
         Running,
         Waiting,
+        Sleeping,
     };
 
     class Thread
@@ -37,14 +38,18 @@ namespace Kernel::Multiprocessing
         void* extendedSavedState;
 
         ThreadState executionState;
+        uint64_t wakeTime;
         //TODO: waiting list (what this thread needs before continuing)
 
         Thread();
 
     public:
+        static Thread* Current();
         static Thread* Create(ThreadMainFunction mainFunc, void* arg, uint8_t priority, uint8_t stackPages = THREAD_DEFAULT_STACK_PAGES);
 
         void Start();
         ThreadState GetState();
+
+        void Sleep(size_t millis);
     };
 }
