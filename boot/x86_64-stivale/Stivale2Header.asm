@@ -30,4 +30,3 @@ stivale2_header_tag_smp:
     .quad 0
     #set bit 1 to request x2apic over xapic (if avail)
     .quad 0
-
