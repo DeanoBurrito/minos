@@ -9,6 +9,7 @@ Refactoring:
         -Only need to recursively map the page table itself now.
     
     -Kernel::Bitmap is a hacky mess. Replace it with get/set macros or something. 
+    -Explore stivale2 linker script.
 
     -Refocus on adding features from the list below
 
