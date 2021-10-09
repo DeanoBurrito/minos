@@ -103,6 +103,8 @@ namespace Kernel
 
         string fstr = "Updated entry for irq entry 0x%lx: sel=0x%x, gate=0x%x, entry=0x%lx";
         Log(sl::FormatToString(0, &fstr, vector, entry->selector, IDT_GATE_TYPE_INTERRUPT, (uint64_t)handler).Data());
+
+        return true;
     }
 
     void IrqManager::ClearVector(IrqVector vector)
