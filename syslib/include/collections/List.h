@@ -112,7 +112,8 @@ namespace sl
             for (size_t i = 0; i < count; i++)
                 newBuffer[i] = buffer[i];
             
-            delete[] buffer;
+            if (buffer)
+                delete[] buffer;
             buffer = newBuffer;
             capacity = reserveFor;
         }
