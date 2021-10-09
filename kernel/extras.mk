@@ -9,6 +9,9 @@ run: iso
 debug: iso
 	@qemu-system-x86_64 $(QEMU_FLAGS) -s -S
 
+debug-hang: iso
+	@qemu-system-x86_64 $(QEMU_FLAGS) -s -S -no-reboot -no-shutdown
+
 # Interface for bootloader makefiles: pack command is used to assemble final iso
 # input is bootloader-dir/build/kernel.elf: this is the compiled kernel file, ready to go.
 # output is expected at bootloader-dir/build/packed.iso

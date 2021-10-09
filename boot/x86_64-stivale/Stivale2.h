@@ -201,7 +201,7 @@ struct stivale2_struct_tag_modules : public stivale2_hdr_tag
     stivale2_module* modules;
 } __attribute__((packed));
 
-#define STIVALE2_STRUCT_TAG_RSP_ID 0x9e1786930a375e78
+#define STIVALE2_STRUCT_TAG_RSDP_ID 0x9e1786930a375e78
 struct stivale2_struct_tag_rsdp : public stivale2_hdr_tag
 {
     uint64_t rsdp;
@@ -246,7 +246,7 @@ struct stivale2_struct_tag_kernel_file_v2 : public stivale2_hdr_tag
     uint64_t fileSize;
 } __attribute__((packed));
 
-#define STIVALE2_STRUCT_TAG_KERNEL_SLIDE_ID 0x37c13018a02c6ea2
+#define STIVALE2_STRUCT_TAG_KERNEL_SLIDE_ID 0xee80847d01506c57
 struct stivale2_struct_tag_kernel_slide : public stivale2_hdr_tag
 {
     uint64_t offset;
