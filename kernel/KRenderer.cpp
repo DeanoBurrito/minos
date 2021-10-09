@@ -67,6 +67,11 @@ namespace Kernel
 
     void KRenderer::DrawPixel(const Position where, const Colour col)
     {
+        if (where.x < 0 || where.x < 0)
+            return;
+        if (where.x >= static_cast<int64_t>(framebuffer.width) || where.y >= static_cast<int64_t>(framebuffer.height))
+            return;
+        
         //oof, thats a long one.
         int bytesPerPixel = framebuffer.bitsPerPixel / 8;
         *(unsigned int *)(where.x * bytesPerPixel + (where.y * framebuffer.pixelsPerScanline * bytesPerPixel) + framebuffer.baseAddress) = col.GetFormatted(framebuffer.pixelFormat);
