@@ -5,6 +5,8 @@
 #include <drivers/Serial.h>
 #include <KLog.h>
 #include <Panic.h>
+#include <drivers/SystemClock.h>
+#include <Limits.h>
 
 using namespace Kernel::Drivers;
 
@@ -42,6 +44,10 @@ namespace Kernel::Shell
         KRenderer::The()->Write("STATUS: ");
         SetStatus(nullptr);
         writeCursorPos = Position(0, 0);
+
+        cursorVisible = true;
+        nextCursorToggleMS = SystemClock::The()->GetUptime() + KSHELL_CURSOR_BLINK_MS;
+        statusClearTime = 0;
 
         WriteLine("Welcome to KShell! Nothing to do with KDE.");
     }
@@ -126,6 +132,21 @@ namespace Kernel::Shell
 
         KRenderer::The()->DrawRect(Position(left, top), Position(width, height), clearColour, true);
     }
+
+    void KShell::RedrawCursor()
+    {
+        Colour col = cursorVisible ? Colour(0xFFFFFFFF) : Colour(0x00000000);
+        
+        size_t bottom = KSHELL_PROMPT_LINE * characterSize.y + KSHELL_CURSOR_HEIGHT + KSHELL_CURSOR_SHIFT_Y;
+        size_t top = bottom - KSHELL_CURSOR_HEIGHT;
+        size_t left = dirtyLineLengths[KSHELL_PROMPT_LINE] * characterSize.x + KSHELL_CURSOR_SHIFT_X;
+        size_t right = left + KSHELL_CURSOR_WIDTH;
+        for (size_t x = left; x < right; x++)
+        {
+            for (size_t y = top; y < bottom; y++)
+                KRenderer::The()->DrawPixel(Position(x, y), col);
+        }
+    }
     
     void KShell::Main()
     {
@@ -134,6 +155,21 @@ namespace Kernel::Shell
 
         while (keepRunning)
         {
+            //blink cursor (so satisfying)
+            if (SystemClock::The()->GetUptime() >= nextCursorToggleMS)
+            {
+                nextCursorToggleMS += KSHELL_CURSOR_BLINK_MS;
+                cursorVisible = !cursorVisible;
+                RedrawCursor();
+            }
+
+            //clear status line if needed (and set it to never update until a new status is written)
+            if (SystemClock::The()->GetUptime() >= statusClearTime)
+            {
+                ClearLine(KSHELL_STATUS_LINE, 8, dirtyLineLengths[KSHELL_STATUS_LINE], KSHELL_STATUS_BG_COLOUR);
+                statusClearTime = UINT64_UPPER_LIMIT;
+            }
+            
             if (Ps2Keyboard::The()->KeysAvailable() || LogsUnread() > 0)
             {
                 //check for unread logs, display them if we need to
@@ -190,7 +226,7 @@ namespace Kernel::Shell
         if (text != nullptr)
             promptText = text;
         if (dirtyLineLengths[KSHELL_PROMPT_LINE] > 0)
-            ClearLine(KSHELL_PROMPT_LINE, 0, dirtyLineLengths[KSHELL_PROMPT_LINE], bgColour);
+            ClearLine(KSHELL_PROMPT_LINE, 0, dirtyLineLengths[KSHELL_PROMPT_LINE] + 1, bgColour); //+1 because cursor might be visible, we force it to redraw so this'll prevent ghosting
         
         KRenderer::The()->SetCursor(Position(0, KSHELL_PROMPT_LINE));
         KRenderer::The()->Write(promptText);
@@ -200,6 +236,8 @@ namespace Kernel::Shell
 
         dirtyLineLengths[KSHELL_PROMPT_LINE] = KRenderer::The()->GetCursor().x;
         KRenderer::The()->SetCursor(writeCursorPos);
+
+        RedrawCursor();
     }
 
     void KShell::SetStatus(const char* const text)
@@ -215,5 +253,7 @@ namespace Kernel::Shell
         
         dirtyLineLengths[KSHELL_STATUS_LINE] = KRenderer::The()->GetCursor().x;
         KRenderer::The()->SetCursor(writeCursorPos);
+
+        statusClearTime = SystemClock::The()->GetUptime() + KSHELL_STATUS_HOLD_MS;
     }
 }
