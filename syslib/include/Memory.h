@@ -2,7 +2,14 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <Platform.h>
+
+#if __SIZEOF_SIZE_T__ == 8
+    #define NativePtr uint64_t
+#elif __SIZEOF_SIZE_T == 4
+    #define NativePtr uint32_t
+#else
+    #error "syslib/include/Memory.h cannot determine NativePtr size, it is worth checking"
+#endif
 
 namespace sl
 {
