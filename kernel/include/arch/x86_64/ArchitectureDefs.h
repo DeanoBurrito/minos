@@ -5,6 +5,8 @@
     all over the code base.
 */
 
+#define NativePtr uint64_t
+
 //General magic numbers
 #define PAGE_SIZE 0x1000
 

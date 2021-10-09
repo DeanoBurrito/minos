@@ -22,6 +22,7 @@
     #define ATTRIB_PACKED __attribute__((packed))
     #define ATTRIB_INTERRUPT __attribute__((interrupt))
     #define ATTRIB_ALIGNED(x) __attribute__((aligned(x)))
+    #define FORCE_INLINE __attribute__((always_inline)) inline
 #else
     #error "kernel/Platform.h has no compiler selected, or build system is not overriding to a proper value."
 #endif
