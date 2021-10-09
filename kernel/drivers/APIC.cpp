@@ -254,8 +254,8 @@ namespace Kernel::Drivers
         //set initial count to reset apic timer, and start HPET timer.
         WriteRegister(LocalApicRegisters::TimerInitialCount, 0xFFFF'FFFF);
 
-        uint64_t* ticksPtr = &SystemClock::The()->clockTicks;
-        uint64_t endTicks = *ticksPtr + APIC_TIMER_DESIRED_MS;
+        volatile uint64_t* ticksPtr = &SystemClock::The()->clockTicks;
+        const uint64_t endTicks = *ticksPtr + APIC_TIMER_DESIRED_MS;
         while (*ticksPtr < endTicks);
 
         //get number of apic clock ticks, 

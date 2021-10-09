@@ -1,7 +1,4 @@
 Refactoring:
-    -The great unfucking: since compiler flags have been ignored for the past weeks (I still cant believe it), lots of code is getting optimized away.
-        -Investigate and get codebase back to compiling and running with -O2 and -O3 enabled.
-
     -Investigate why booting can fail immediately after HPET init. Always in the same spot, but on random builds.
         -Which means it's likely APIC init. Its not the timer calibration as that dosnt run until later.
 
