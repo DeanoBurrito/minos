@@ -4,6 +4,7 @@
 #include <Memory.h>
 #include <drivers/Serial.h>
 #include <KLog.h>
+#include <Panic.h>
 
 using namespace Kernel::Drivers;
 
@@ -100,6 +101,10 @@ namespace Kernel::Shell
         {
             echoSerialOut = !echoSerialOut;
             SetStatus("Serial echo toggled.");
+        }
+        if (sl::memcmp(inputLine, "die", 3) == 0)
+        {
+            Panic("Manual trigger.");
         }
         
         //TODO: command parsing

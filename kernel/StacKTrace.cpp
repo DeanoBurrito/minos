@@ -11,11 +11,11 @@ namespace Kernel
 
         StackTrace trace;
         NativePtr frameBase = 0;
-        NativePtr prevInstructionPointer = 0;
+        NativePtr prevInstructionPointer = 1; //set to 1 so we dont end the trace immediately
 
         asm volatile("mov %%rbp, %0" : "=r"(frameBase));
 
-        while (maxDepth > 0 && frameBase > 0)
+        while (maxDepth > 0 && frameBase != 0 && prevInstructionPointer != 0)
         {
             //NOTE: this is specific to system v x86_64 calling convention
             asm volatile("mov 8(%1), %0" : "=r"(prevInstructionPointer) : "r"(frameBase) : "memory");

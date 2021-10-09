@@ -2,6 +2,8 @@
 #include <KRenderer.h>
 #include <drivers/CPU.h>
 #include <Platform.h>
+#include <StackTrace.h>
+#include <StringExtras.h>
 
 PLATFORM_REQUIRED(MINOS_PLATFORM_X86_64)
 
@@ -33,6 +35,8 @@ namespace Kernel
 {
     void Panic(const char* reason)
     {
+        StackTrace trace = GetCurrentTrace();
+
         //reset display with red background
         KRenderer::The()->Clear(Colour(0xC0000000));
         KRenderer::The()->SetCursor({0, 1});
@@ -43,6 +47,12 @@ namespace Kernel
         KRenderer::The()->WriteLine("Reason:");
         KRenderer::The()->Write("    ");
         KRenderer::The()->WriteLine(reason);
+
+        for (size_t i = 0; i < trace.frames.Size(); i++)
+        {
+            KRenderer::The()->SetCursor(Position(3, i + 10));
+            KRenderer::The()->WriteLine(sl::UIntToString(trace.frames[i], 16).Data());
+        }
 
         //TODO: capture register state (of previous frame) and display it, as well as useful memory/dev info
 
