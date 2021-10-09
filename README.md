@@ -22,6 +22,8 @@ Each target does what you'd expect, but for the purpose of documentation:
 - `make all` builds the kernel in it's current config, and any required projects (syslib, initdisk).
 - `make iso` runs all, builds the current bootloader and creates a bootable iso.
 - `make run` same as iso, but launches qemu with the iso as a cdrom.
+- `make debug` same as run, it just asks qemu to listen on localhost:1234 for a gdb connection, and not to execute until we connect.
+- `make debug-hang` same as above, adds -no-reboot -no-shutdown. Mostly useless when gdb is usable.
 - `make clean` removes all build related files (for all projects), forcing a complete rebuild.
 
 # Supported platforms
@@ -31,6 +33,7 @@ and to add more x86_64 bootloaders.
 
 # Project Layout
 Currently there are a number of top-level directories, each of these is a mostly isolated sub-project.
+- `apps/`: Coming soon! (depending on your definition of soon)
 - `boot/`: This is where the bootloaders live. They're mutually exclusive when building, and can be selected in the kernel makefile. 
 - `kernel/`: Here is the kernel itself, this is where the exciting buiness happens. There's some shared headers in boot dir, in order to receive data from the bootloader.
 - `kernel-disk/`: Kernel init disk. Loaded with the kernel binary, contains code and data that is not essential enough to be built into the kernel itself.
@@ -94,6 +97,7 @@ Various feature's I'd like to include are listed below, and organised into miles
 #### Milestone 1.2 - KShell functionality
 - [ ] Proper command parsing/exec
 - [ ] Implement a few useful debugging commands (mem dump, process tree)
+- [x] Added a nice blinking cursor, and status text decays away.
 
 ### Milestone 2 - Userland
 - [ ] Placeholder accounts - int based (0 = kernel, 1 = user)
