@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <Platform.h>
 
 namespace sl
 {
@@ -29,7 +30,7 @@ namespace sl
     };
 
     //99% of the time this is what we want, just saving some typing in the future.
-    typedef IntPtr<uint64_t> UIntPtr;
+    typedef IntPtr<NativePtr> UIntPtr;
 
     template <typename WordType>
     __attribute__((always_inline)) inline void MemWrite(sl::UIntPtr where, WordType val)

@@ -59,9 +59,13 @@ namespace Kernel::Multiprocessing
 
         //now that we have a thread structure, keep track of anything we need to.
         thread->priority = priority;
+        //thread->waitingReasons.Reserve(THREAD_DEFAULT_WAIT_LIST_CAPACITY); //TODO: this crashes? but only when using larger numbers
         thread->stackSize = stackPages * PAGE_SIZE - (sizeof(uint64_t) * 4) - sizeof(Thread);
         thread->stackBase = sp.ptr;
-        size_t xStateBufferSize = Drivers::X86Extensions::Local()->GetStateBufferSize(); //TODO: would be nice to also store this above the thread on the stack?
+
+        //NOTE: this can be a huge datastructure on later CPUs (ZMM regs are 512 bits wide), so storing it on the stack is a bit of waste.
+        //TODO: a runtime-sized slab allocator for these. Since we cant know until we actually query the CPU how much state we'll need to save.
+        size_t xStateBufferSize = Drivers::X86Extensions::Local()->GetStateBufferSize();
         thread->extendedSavedState = new uint8_t[xStateBufferSize];
         sl::memset(thread->extendedSavedState, 0, xStateBufferSize);
         

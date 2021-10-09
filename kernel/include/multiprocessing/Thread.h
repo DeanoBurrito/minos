@@ -3,8 +3,11 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <Memory.h>
+#include <collections/List.h>
+#include <multiprocessing/ThreadWaitReason.h>
 
 #define THREAD_DEFAULT_STACK_PAGES 4
+#define THREAD_DEFAULT_WAIT_LIST_CAPACITY 32
 #define THREAD_MIN_STACK_PAGES 2
 #define THREAD_DATA_PROTECT_VALUE 0xDEADC0DE
 
@@ -38,8 +41,8 @@ namespace Kernel::Multiprocessing
         void* extendedSavedState;
 
         ThreadState executionState;
-        uint64_t wakeTime;
-        //TODO: waiting list (what this thread needs before continuing)
+        sl::List<ThreadWaitReason*> waitingReasons;
+        uint64_t wakeTime; //since sleeping is so common, keeping track of its state separately is much more efficient than searching the whole list each time.
 
         Thread();
 
