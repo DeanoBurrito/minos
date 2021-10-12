@@ -103,19 +103,28 @@ namespace Kernel::Shell
 
     void KShell::ProcessCommand()
     {   
+        //echo user input, then parse command
+        inputLine[inputLength] = 0;
+        WriteLine(inputLine);
+        
         if (inputLength >= 5 && sl::memcmp(inputLine, "serial", 6) == 0)
         {
             echoSerialOut = !echoSerialOut;
             SetStatus("Serial echo toggled.");
         }
-        if (sl::memcmp(inputLine, "die", 3) == 0)
+        if (inputLength > 2 && sl::memcmp(inputLine, "die", 3) == 0)
         {
             Panic("Manual trigger.");
         }
+        if (inputLength > 5 && sl::memcmp(inputLine, "uptime", 6) == 0)
+        {
+            WriteLine(sl::UIntToString(SystemClock::The()->GetUptime(), 10).Data());
+            SetStatus("Showing system uptime.");
+        }
         
         //TODO: command parsing
-        inputLine[inputLength] = 0;
-        WriteLine(inputLine);
+        
+        //clear input line and prompt
         sl::memset(inputLine, 0, inputLength);
         inputLength = inputCursor = 0;
         SetPrompt(nullptr);
