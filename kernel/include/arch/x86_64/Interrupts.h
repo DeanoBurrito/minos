@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <Platform.h>
 
 //These are defined by intel spec, and we cant change
 #define INTERRUPT_VECTOR_DOUBLE_FAULT 0x08
@@ -13,16 +14,6 @@
 #define INTERRUPT_VECTOR_PS2KEYBOARD 0x21
 #define INTERRUPT_VECTOR_TIMER 0x30
 #define INTERRUPT_VECTOR_TIMER_CALIBRATE 0x23
-
-//NOTE: this is ISA specific. Currently this is setup for x86_64
-struct interrupt_frame
-{
-    uint64_t ss;
-    uint64_t rsp;
-    uint64_t rflags;
-    uint64_t cs;
-    uint64_t rip;
-};
 
 namespace InterruptHandlers
 {

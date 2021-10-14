@@ -12,8 +12,26 @@
 
 PLATFORM_REQUIRED(MINOS_PLATFORM_X86_64);
 
+extern "C" 
+{
+    extern uint8_t IrqDefaultEntry;
+    extern uint8_t IrqDefaultEntryEnd;
+    
+    uint64_t irqSaveStack;
+    
+    void IrqManager_Dispatch(MinosInterruptFrame* frame)
+    {
+        Kernel::IrqManager::The()->SharedIrqDispatch(frame);
+    }
+}
+
 namespace Kernel
 {
+    void IrqManager::SharedIrqDispatch(MinosInterruptFrame* frame)
+    {
+        SendEOI();
+    }
+    
     IrqManager irqManagerInstance;
     IrqManager* IrqManager::The()
     {
@@ -30,6 +48,10 @@ namespace Kernel
         localIdtr.offset = reinterpret_cast<uint64_t>(PageFrameAllocator::The()->RequestPage());
         PageTableManager::The()->MapMemory((void*)localIdtr.offset, (void*)localIdtr.offset, MemoryMapFlags::WriteAllow | MemoryMapFlags::EternalClaim);
         sl::memset((void*)localIdtr.offset, 0, PAGE_SIZE);
+
+        irqSaveStack = 0;
+
+        //TODO: create storage for dummy idt entries, and patch code in-place.
     }
 
     void IrqManager::Load()
@@ -81,7 +103,7 @@ namespace Kernel
     }
 
     bool IrqManager::AssignVector(IrqVector vector, void* handler, bool exclusive)
-    { //TODO: implement non-exclusive irqs
+    { //TODO: implement non-exclusive irqs -> need a hashmap first
         if (vector > 0xFF)
             return false;
 
@@ -101,8 +123,8 @@ namespace Kernel
         entry->attributes.present = 1;
         entry->attributes.gateType = IDT_GATE_TYPE_INTERRUPT;
 
-        string fstr = "Updated entry for irq entry 0x%lx: sel=0x%x, gate=0x%x, entry=0x%lx";
-        Log(sl::FormatToString(0, &fstr, vector, entry->selector, IDT_GATE_TYPE_INTERRUPT, (uint64_t)handler).Data());
+        string fstr = "Updated entry for irq entry 0x%lx: sel=0x%x, gate=0x%x, entry=0x%lx, exclusive=%b";
+        Log(sl::FormatToString(0, &fstr, vector, entry->selector, IDT_GATE_TYPE_INTERRUPT, (uint64_t)handler).Data(), exclusive);
 
         return true;
     }

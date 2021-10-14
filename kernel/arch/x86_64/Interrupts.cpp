@@ -5,7 +5,6 @@
 #include <Panic.h>
 #include <KLog.h>
 #include <StringExtras.h>
-#include <Platform.h>
 
 PLATFORM_REQUIRED(MINOS_PLATFORM_X86_64)
 

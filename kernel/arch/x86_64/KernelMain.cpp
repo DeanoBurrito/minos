@@ -17,6 +17,7 @@
 #include <drivers/HPET.h>
 #include <drivers/8253PIT.h>
 #include <drivers/X86Extensions.h>
+#include <drivers/SystemClock.h>
 #include <multiprocessing/Scheduler.h>
 #include <kshell/KShell.h>
 #include <Formatting.h>
@@ -163,6 +164,7 @@ namespace Kernel
         Drivers::APIC::Local()->Init();
         Drivers::IOAPIC::InitAll();
         Drivers::X86Extensions::Local()->Init();
+        Drivers::SystemClock::The()->Init();
 
         KRenderer::The()->Init(bootInfo);
     }

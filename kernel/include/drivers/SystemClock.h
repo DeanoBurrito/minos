@@ -2,9 +2,17 @@
 
 #include <stdint.h>
 #include <DateTime.h>
+#include <collections/List.h>
 
 namespace Kernel::Drivers
 {   
+    struct ClockSourceStats
+    {
+        uint64_t errorFemtos; //as determined by our reference source
+        uint64_t ticks;
+        uint64_t tickFemtos; //real-time per tick
+    };
+    
     enum class ClockSource
     {
         X86_PIT,
@@ -18,14 +26,19 @@ namespace Kernel::Drivers
     class SystemClock
     {
     private:
+        ClockSource mainSource;
+
     public:
         static SystemClock* The();
 
         uint64_t clockTicks;
 
-        void Init(ClockSource source);
+        void Init();
 
         uint64_t GetUptime();
         sl::DateTime GetCurrentTime();
+        ClockSource GetCurrentSource();
+
+        sl::List<ClockSourceStats> GetStats();
     };
 }
