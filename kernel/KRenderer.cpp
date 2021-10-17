@@ -79,6 +79,7 @@ namespace Kernel
 
     void KRenderer::DrawLine(const Position start, const Position end, const Colour col)
     {
+        //TODO: line-drawing algo
     }
 
     void KRenderer::DrawRect(const Position topLeft, const Position size, const Colour col, const bool filled)
@@ -95,7 +96,15 @@ namespace Kernel
         }
         else
         {
-            //TODO: draw 4 lines
+            const int top = topLeft.y;
+            const int bottom = topLeft.y + size.y;
+            const int left = topLeft.x;
+            const int right = topLeft.x + size.x;
+
+            DrawLine({left, top}, {right, top}, col);
+            DrawLine({left, bottom}, {right, bottom}, col);
+            DrawLine({left, top}, {left, bottom}, col);
+            DrawLine({right, top}, {right, bottom}, col);
         }
     }
 
