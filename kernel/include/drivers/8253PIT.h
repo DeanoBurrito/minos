@@ -18,6 +18,5 @@ namespace Kernel::Drivers
 
     public:
         static void Init();
-        static void Disable();
     };
 }

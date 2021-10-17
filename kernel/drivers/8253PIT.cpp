@@ -11,9 +11,4 @@ namespace Kernel::Drivers
         CPU::PortWrite8(PORT_PIT_CHANNEL_0, 0xA9);
         CPU::PortWrite8(PORT_PIT_CHANNEL_0, 0x04);
     }
-
-    void PIT::Disable()
-    {
-        //TODO: 
-    }
 }

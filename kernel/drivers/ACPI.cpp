@@ -1,5 +1,6 @@
 #include <KLog.h>
 #include <StringExtras.h>
+#include <Formatting.h>
 #include <drivers/ACPI.h>
 #include <Memory.h>
 #include <stddef.h>
@@ -32,7 +33,7 @@ namespace Kernel::Drivers
 
         if (rsdp->revision < 2)
         {
-            Log("ACPI subsystem using revision 1. RSDP with 32bit pointers.");
+            Log("ACPI subsystem using revision 1 RSDP with 32bit pointers.");
             rootHeader = reinterpret_cast<SDTHeader*>(rsdp->rsdtAddress);
             revisionPtrSize = 4;
 
@@ -47,7 +48,7 @@ namespace Kernel::Drivers
         }
         else
         {
-            Log("ACPI subsystem using revision 2+. XSDT with 64bit pointers.");
+            Log("ACPI subsystem using revision 2+ XSDT with 64bit pointers.");
             rootHeader = reinterpret_cast<SDTHeader*>(rsdp->xsdtAddress);
             revisionPtrSize = 8;
 
@@ -60,12 +61,14 @@ namespace Kernel::Drivers
             tableSize = rsdp->length;
         }
 
-        //TODO: ensure tables are mapped into VM and physical pages locked.
+        //reserve ACPI table pages, and identity map them. We dont protect the RSDP as its no longer really needed.
+        size_t pagesCount = tableSize / PAGE_SIZE + 1;
+        PageFrameAllocator::The()->ReservePages(rootHeader, tableSize);
+        for (size_t i = 0; i < pagesCount; i++)
+            PageTableManager::The()->MapMemory(rootHeader + (i * PAGE_SIZE), rootHeader + (i * PAGE_SIZE), MemoryMapFlags::EternalClaim); //no need for write/exec (AML is interpreted as data)
 
-        Log("ACPI subsystem intializing with RSDP=0x", false);
-        Log(sl::UIntToString((uint64_t)rsdp, BASE_HEX).Data());
-
-        //PrintTables();
+        string fstr = "ACPI subsystem intializing with rsdp=0x%lx, rootTable=0x%lx";
+        Log(sl::FormatToString(0, &fstr, (uint64_t)rsdp, (uint64_t)rootHeader).Data());
     }
 
     void ACPI::PrintSDT(SDTHeader* header, char* reusableBuffer)
@@ -159,11 +162,12 @@ namespace Kernel::Drivers
         //print all the available tables
         for (int i = 0; i < entriesCount; i++)
         {
-            SDTHeader* localHeader; 
+            SDTHeader* localHeader;
+            sl::UIntPtr localPointer = (uint64_t)rootHeader + sizeof(SDTHeader) + (i * revisionPtrSize);
             if (rsdp->revision < 2)
-                localHeader = (SDTHeader*)*(uint32_t*)((uint64_t)rootHeader + sizeof(SDTHeader) + (i * revisionPtrSize));
+                localHeader = reinterpret_cast<SDTHeader*>(*localPointer.As<uint32_t>());
             else
-                localHeader = (SDTHeader*)*(uint64_t*)((uint64_t)rootHeader + sizeof(SDTHeader) + (i * revisionPtrSize));
+                localHeader = reinterpret_cast<SDTHeader*>(*localPointer.As<uint64_t>());
             char buff[9];
             PrintSDT(localHeader, buff);
         }
@@ -183,11 +187,12 @@ namespace Kernel::Drivers
         
         for (int i = 0; i < entriesCount; i++)
         {
-            SDTHeader* localHeader; //getting this depends on which revision of the ACPI spec we've been supplied with.
+            SDTHeader* localHeader;
+            sl::UIntPtr localPointer = (uint64_t)rootHeader + sizeof(SDTHeader) + (i * revisionPtrSize);
             if (rsdp->revision < 2)
-                localHeader = (SDTHeader*)*(uint32_t*)((uint64_t)rootHeader + sizeof(SDTHeader) + (i * revisionPtrSize));
+                localHeader = reinterpret_cast<SDTHeader*>(*localPointer.As<uint32_t>());
             else
-                localHeader = (SDTHeader*)*(uint64_t*)((uint64_t)rootHeader + sizeof(SDTHeader) + (i * revisionPtrSize));
+                localHeader = reinterpret_cast<SDTHeader*>(*localPointer.As<uint64_t>());
 
             //before we return ANY results, check if we're after the starting header
             if (!foundStart)
