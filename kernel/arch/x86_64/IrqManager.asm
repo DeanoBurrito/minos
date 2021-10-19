@@ -32,7 +32,14 @@ IrqDefaultEntry:
     push %r14
     push %r15
 
-    #TODO: save/restore segment registers ds/es/fs/gs
+    mov %ds, %rax
+    push %rax
+    mov %es, %rax
+    push %rax
+    mov %fs, %rax
+    push %rax
+    mov %gs, %rax
+    push %rax
 
     #if irqSaveStack is valid, save the current stack top there
     mov irqSaveStack, %rdi
@@ -55,6 +62,15 @@ IrqMakeCall:
 
 IrqRestoreRegs:
     #restore regs
+    pop %rax
+    mov %rax, %gs
+    pop %rax
+    mov %rax, %fs
+    pop %rax
+    mov %rax, %es
+    pop %rax
+    mov %rax, %ds
+
     pop %r15
     pop %r14
     pop %r13

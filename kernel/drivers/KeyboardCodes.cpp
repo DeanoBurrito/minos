@@ -20,7 +20,7 @@ namespace Kernel::Drivers
     KeyModifierFlags KeyModifierFromKey(const KeyboardKey& key)
     {
         switch (key)
-        {   //TODO: do we really need this? static data like this would be better an array of fixed data, rather than code.
+        {   //potentially something that could be moved to an array or hash map, but a jump table seems more efficient really.
         case KeyboardKey::LeftShift:
             return KeyModifierFlags::LeftShift;
         case KeyboardKey::RightShift:
