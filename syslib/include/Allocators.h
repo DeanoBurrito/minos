@@ -1,6 +1,8 @@
 #pragma once
 
 #include <stddef.h>
+#include <StringExtras.h>
+#include <StringBuilder.h>
 
 //not actually required, purely for convinience. 
 #include <SlabAllocator.h>
@@ -20,6 +22,20 @@
 
 namespace sl
 {
+    //emitted when memory allocation fails.
+    typedef void (*AllocError)(const char* msg);
+    //emitted when freeing memory fails.
+    typedef void (*FreeError)(const char* msg);
+    //emitted for both alloc and free failures.
+    typedef void (*GeneralAllocatorError)(const char* msg);
+
+    struct AllocatorDebugSettings
+    {   
+        AllocError allocFailCallback = nullptr;
+        FreeError freeFailCallback = nullptr;
+        GeneralAllocatorError epicFailCallback = nullptr;
+    };
+    
     //The best allocator (also the reference implementation)
     class NullAllocator
     {
@@ -45,7 +61,16 @@ namespace sl
         PrimaryAlloc primary;
         SecondaryAlloc secondary;
 
+        AllocatorDebugSettings debugSettings;
+
     public:
+        CompositeAllocator() = default;
+
+        CompositeAllocator(AllocatorDebugSettings& dbgSettings)
+        {
+            debugSettings = sl::move(dbgSettings);
+        }
+
         //clunky, but allows us to chain composite allocators
         bool TryAlloc(void** ptr, const size_t size)
         {
@@ -65,13 +90,36 @@ namespace sl
         {
             void* ptr;
             if (!TryAlloc(&ptr, size))
-                return nullptr; //TODO: emit an error
+            {
+                StringBuilder bob;
+                bob.Append("CompositeAllocator<T> failed to allocate 0x");
+                bob.Append(sl::move(sl::UIntToString(size, BASE_HEX)));
+                bob.Append(" bytes.");
+                const string message = bob.ToString();
+
+                if (debugSettings.allocFailCallback)
+                    debugSettings.allocFailCallback(message.Data());
+                if (debugSettings.epicFailCallback)
+                    debugSettings.epicFailCallback(message.Data());
+                return nullptr;
+            }
             return ptr;
         }
 
         void Free(const void* const ptr)
         {
-            TryFree(ptr); //TODO: emit an error
+            if (!TryFree(ptr))
+            {
+                StringBuilder bob;
+                bob.Append("CompositeAllocator<T> failed to free memory at address 0x");
+                bob.Append(sl::move(sl::UIntToString((uint64_t)ptr, BASE_HEX)));
+                const string message = bob.ToString();
+
+                if (debugSettings.freeFailCallback)
+                    debugSettings.freeFailCallback(message.Data());
+                if (debugSettings.epicFailCallback)
+                    debugSettings.epicFailCallback(message.Data());
+            }
         }
     };
 

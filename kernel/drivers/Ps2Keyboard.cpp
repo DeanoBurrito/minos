@@ -54,7 +54,9 @@ namespace Kernel::Drivers
                     currentModifiers = currentModifiers & ~KeyModifierFromKey(action.key);
                 }
                 else
-                { /* not sure what happened, if it wasnt pressed or released. TODO: emit error */ }
+                { 
+                    LogError("Unknown key action from PS2 keyboard - neither pressed nor released.");
+                }
             }
 
             action.flags = action.flags | currentModifiers; //store current modifiers with keypress
@@ -71,9 +73,11 @@ namespace Kernel::Drivers
         }
         else if (currentSet == ScancodeSet::Set2)
         {
+            LogError("PS2 scancode set 2 is not currently implemented, resetting current packet.");
         }
+        else
+            LogError("Unknown PS2 scancode set, all keypressed will be ignored until this is reset.");
 
-        //TODO: error handling with invalid set
         return true;
     }
     

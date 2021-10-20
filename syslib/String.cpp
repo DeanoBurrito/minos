@@ -92,12 +92,13 @@ namespace sl
         if (start + len > length)
             len = length - start;
 
-        //TODO: double copy here, would be nice to be able to move a char[] to a string.
         char* const tempBuffer = new char[len + 1];
         sl::memcopy(buffer, start, tempBuffer, 0, len);
         tempBuffer[len] = 0;
-        String temp(tempBuffer);
-        delete[] tempBuffer;
+        String temp(sl::move(tempBuffer));
+
+        if (tempBuffer) //moved-from object can be in any state, however we know we're just swapping pointers internally. 
+            delete[] tempBuffer;
 
         return temp;
     }
