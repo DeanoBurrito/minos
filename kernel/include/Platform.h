@@ -30,4 +30,6 @@
 //---- ARCHITECTURE DEFINITIONS ----
 #ifdef MINOS_PLATFORM_X86_64
     #include <arch/x86_64/ArchitectureDefs.h>
+#else
+    #error "kernel/Platform.h is missing a valid architecture definition."
 #endif

@@ -12,6 +12,7 @@
 
 //General magic numbers
 #define PAGE_SIZE 0x1000
+#define IDT_MAX_ENTRIES 255
 
 //MSRs
 #define X86_MSR_EFER 0xC0000080
@@ -32,12 +33,12 @@ struct interrupt_frame
 //minos x64 specific frame, we add a few extras, and always push an error code (even if unused)
 struct MinosInterruptFrame
 {
-    uint64_t vectorNumber;
-    uint64_t errorCode;
-
-    uint64_t rInstructionPointer;
-    uint64_t codeSelector;
-    uint64_t rFlags;
-    uint64_t rStackPointer;
     uint64_t stackSelector;
+    uint64_t rStackPointer;
+    uint64_t rFlags;
+    uint64_t codeSelector;
+    uint64_t rInstructionPointer;
+
+    uint64_t errorCode;
+    uint64_t vectorNumber;
 };
