@@ -13,30 +13,44 @@ namespace Kernel
     void InitLogging()
     {
         unreadLogs = sl::List<const char*>(LOGGING_DEFAULT_RESERVE_COUNT); //reserve some space, because we're going to use it for sure.
+
+        //disable all logging for now
+        for (size_t i = 0; i < LoggingType::Count; i++)
+            SetLogTypeEnabled((LoggingType)i, false);
     }
-    
-    bool serialLogEnabled = false;
-    void SetSerialLogging(bool enabled)
+
+    bool loggingTypeEnabled[LoggingType::Count];
+    void SetLogTypeEnabled(LoggingType type, bool enabled)
     {
-        serialLogEnabled = enabled;
+        if (type != LoggingType::Count)
+            loggingTypeEnabled[type] = enabled;
     }
 
     void Log(const char* message, bool endLine)
     {
         //unreadLogs.PushBack(msgCopy);
-        
-        if (serialLogEnabled)
-        {
-            for (int i = 0; message[i] != 0; i++)
-            {
-                SerialPort::COM1()->WriteByte(message[i]);
-            }
 
+        //TODO: logging to framebuffer
+        
+        if (loggingTypeEnabled[LoggingType::Serial])
+        {
+            for (size_t i = 0; message[i] != 0; i++)
+                SerialPort::COM1()->WriteByte(message[i]);
             if (endLine)
             {
-                //End line with CR LF
-                SerialPort::COM1()->WriteByte('\n');
                 SerialPort::COM1()->WriteByte('\r');
+                SerialPort::COM1()->WriteByte('\n');
+            }
+        }
+
+        if (loggingTypeEnabled[LoggingType::DebugCon])
+        {
+            for (size_t i = 0; message[i] != 0; i++)
+                Drivers::CPU::PortWrite8(PORT_DEBUGCON_ADDRESS, message[i]);
+            if (endLine)
+            {
+                Drivers::CPU::PortWrite8(PORT_DEBUGCON_ADDRESS, '\r');
+                Drivers::CPU::PortWrite8(PORT_DEBUGCON_ADDRESS, '\n'); //TODO: investigate debugcon being a littly weirdo?
             }
         }
     }

@@ -103,7 +103,8 @@ namespace Kernel
         //get serial logging up as early as we can
         InitLogging();
         SerialPort::COM1()->Init(PORT_COM1_ADDRESS);
-        SetSerialLogging(true);
+        SetLogTypeEnabled(LoggingType::Serial, true);
+        //SetLogTypeEnabled(LoggingType::DebugCon, true); //there is also debugcon - but this relies on qemu, and not real hw.
         Log("Platform early init finished. Serial logging enabled.");
 
         //print out memory stats (now that we are able to)
