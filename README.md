@@ -8,7 +8,7 @@ If compiling for a platform other than the one you're running on, you will need 
 the osdev wiki has a great guide on getting one setup [here](https://wiki.osdev.org/GCC_Cross-Compiler).
 Otherwise to build you will need the following:
 - A linux-like environment. Minos can be built on a full linux install, but WSL and cygwin work as well.
-- A compiler, the build system is setup to use a GCC cross compiler by default. This should be in your `$PATH`.
+- A compiler supporting c++17, the build system is setup to use a GCC cross compiler by default. This should be in your `$PATH`.
 - GNU make (or any compatable tool).
 - Xorriso and mtools for building images.
 - Gnu-efi is required for building the uefi bootloader, source available [here](https://sourceforge.net/p/gnu-efi/code/ci/master/tree/)
@@ -90,7 +90,7 @@ Various feature's I'd like to include are listed below, and organised into miles
 #### Milestone 1.1 - Kernel improvements
 - [x] Interrupts abstraction + API 
 - [ ] Timers abstraction + API (template/inheritance based) 
-- [ ] Squash current bugs list
+- [ ] Squash current bugs list + tech debt
 - [ ] Sync primatives (semaphore, mutex, spinlock)
 - [ ] Fix HPET and APIC bugs specificially.
 

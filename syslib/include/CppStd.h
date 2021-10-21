@@ -68,4 +68,20 @@ namespace sl
 
     template<size_t N>
     using MakeIndexSequence = MakeIntegerSequence<size_t, N>;
+
+    template<bool B, typename T = void>
+    struct EnableIf 
+    {};
+
+    template<typename T>
+    struct EnableIf<true, T>
+    {
+        using type = T;
+    };
+
+    template<typename T, typename U>
+    inline constexpr bool IsSame = false;
+
+    template<typename T>
+    inline constexpr bool IsSame<T, T> = true;
 }
