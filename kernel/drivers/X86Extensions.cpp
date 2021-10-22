@@ -63,34 +63,39 @@ namespace Kernel::Drivers
             
         //info gathered, now we setup the CPU.
         SetStateHandling(false); //use pro-active state handling by default
-        //setup cr0
-        uint64_t cr0Flags = 0; //EM(bit2) cleared - no emulation (TODO: we should ensure this bit is cleared)
-        cr0Flags |= 1 << 4; //use 387+ protocol (hardwired, but still)
-        cr0Flags |= 1 << 5; //NE: use native exceptions
-        cr0Flags |= 1 << 1; //MP: monitor processor, required for SSE
-        if (lazyStateHandling)
-            cr0Flags |= 1 << 3; //TS: #NM device not found exception through when accessing extended state
 
-        asm volatile("\
-            mov %%cr0, %%rax \n\
-            or %%rax, %0 \n\
-            mov %%rax, %%cr0 \n\
-        " :: "r"(cr0Flags) : "rax");
+        //cr0 setup
+        {
+            //setup cr0: read in existing value, forcibly clear bit 2 (EMulated), and apply flags we want
+            uint64_t cr0Flags = 0;
+            asm volatile("mov %%cr0, %0" : "=r"(cr0Flags));
+
+            cr0Flags = cr0Flags & (uint64_t)~(1 << 2); //clear EM (bit2), emulation of fpu not allowed for sse/avx
+            cr0Flags |= 1 << 4; //use 387+ protocol (hardwired, but still)
+            cr0Flags |= 1 << 5; //NE: use native exceptions
+            cr0Flags |= 1 << 1; //MP: monitor processor, required for SSE
+            if (lazyStateHandling)
+                cr0Flags |= 1 << 3; //TS: #NM device not found exception through when accessing extended state
+
+            asm volatile("mov %0, %%cr0" :: "r"(cr0Flags));
+        }
         
-        //setup cr4 (confirm fxsave use and #XM exception handlers)
-        uint64_t cr4Flags = 0;
-        cr4Flags |= 1 << 9; //OSFDSR - confirm os supports fxsave/fxrestore
-        cr4Flags |= 1 << 10; //OSXMMEXCPT - confirm os supports #XM (sse exceptions)
-        if (xSaveSupport)
-            cr4Flags |= 1 << 18; //enable XSAVE support
+        //cr4 setup
+        {
+            //setup cr4 (confirm fxsave use and #XM exception handlers)
+            uint64_t cr4Flags = 0;
+            asm volatile("mov %%cr4, %0" : "=r"(cr4Flags)); //no currently necessary (or works fine), just for consistency with cr0 ops.
 
-        asm volatile("\
-            mov %%cr4, %%rax \n\
-            or %%rax, %0 \n\
-            mov %%rax, %%cr4 \n\
-        " :: "r"(cr4Flags) : "rax");
+            cr4Flags |= 1 << 9; //OSFDSR - confirm os supports fxsave/fxrestore
+            cr4Flags |= 1 << 10; //OSXMMEXCPT - confirm os supports #XM (sse exceptions)
+            if (xSaveSupport)
+                cr4Flags |= 1 << 18; //enable XSAVE support
 
-        asm volatile("finit"); //init FPU
+            asm volatile("mov %0, %%cr4":: "r"(cr4Flags));
+        }
+
+        //fpu setup
+        asm volatile("finit");
         
         //if available, get the components supported by xsave
         if (xSaveSupport)
