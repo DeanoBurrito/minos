@@ -41,6 +41,12 @@ namespace sl
         return static_cast<T&&>(param);
     }
 
+    template<typename T>
+    constexpr  T* Launder(T* p)
+    {
+        return __builtin_launder(p);
+    }
+
     template<typename T, T... Ts>
     struct IntegerSequence
     {
