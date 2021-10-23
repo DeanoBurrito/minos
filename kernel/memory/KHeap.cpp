@@ -189,4 +189,9 @@ namespace Kernel
 
         return totalUsage;
     }
+
+    constexpr size_t KHeap::GetMinimumAllocSize()
+    {
+        return MALLOC_CHUNK_SIZE;
+    }
 }

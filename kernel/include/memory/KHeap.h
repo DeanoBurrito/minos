@@ -38,5 +38,6 @@ namespace Kernel
         void Free(void* address);
         
         size_t GetCurrentUsage();
+        constexpr size_t GetMinimumAllocSize();
     };
 }
