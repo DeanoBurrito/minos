@@ -21,6 +21,7 @@ Refactoring:
 
 Platform:
     -Replace existing uses in current code with new agnostic ones.
+    -Update attributes to use c++ standard attribute specifiers rather than gcc ones.
 
 Templates/Containers:
     -Have a standard interface, (begin()/end(), first()/last()). Go back and fix LinkedList and List implementations.

@@ -1,5 +1,13 @@
 #include <memory/KHeap.h>
 
+namespace std
+{
+    //thanks gcc - really good definition there.
+    enum class align_val_t : size_t {};
+}
+
+//TODO: implement the remaining global new/delete operators for the kernel
+
 void* operator new(size_t size)
 {
     return Kernel::KHeap::The()->Malloc(size);
