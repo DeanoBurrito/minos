@@ -89,7 +89,8 @@ Various feature's I'd like to include are listed below, and organised into miles
 
 #### Milestone 1.1 - Kernel improvements
 - [x] Interrupts abstraction + API 
-- [ ] Timers abstraction + API (template/inheritance based) 
+- [ ] Syslib improvements (hashtable/hashmap, circularqueue, tuple, optional).
+- [ ] Timers abstraction + API
 - [ ] Squash current bugs list + tech debt
 - [ ] Sync primatives (semaphore, mutex, spinlock)
 - [ ] Fix HPET and APIC bugs specificially.
