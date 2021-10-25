@@ -4,6 +4,10 @@
 
 namespace Kernel
 {
+    //also useful for letting syslib access the kernel allocator for internal use
+    void* KMalloc(size_t);
+    void KFree(void*);
+    
     class KHeap;
     
     class HeapSegmentHeader

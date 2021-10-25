@@ -8,6 +8,12 @@
 
 namespace Kernel
 {
+    void* KMalloc(size_t size)
+    { return KHeap::The()->Malloc(size); }
+
+    void KFree(void* ptr)
+    { KHeap::The()->Free(ptr); }
+    
     void HeapSegmentHeader::CombineForward(HeapSegmentHeader* lastSegment)
     {
         if (next == nullptr)
