@@ -2,6 +2,7 @@
 
 #include <CppStd.h>
 #include <stdint.h>
+#include <PlacementNew.h>
 
 namespace sl
 {

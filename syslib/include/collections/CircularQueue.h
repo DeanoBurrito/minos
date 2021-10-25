@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <Memory.h>
 #include <CppStd.h>
+#include <PlacementNew.h>
 
 namespace sl
 {
