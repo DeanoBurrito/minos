@@ -3,28 +3,34 @@
 # Minos
 
 # Building
-Minos is light on dependencies, and the build environment reflects that.
-If compiling for a platform other than the one you're running on, you will need a cross-compiler,
-the osdev wiki has a great guide on getting one setup [here](https://wiki.osdev.org/GCC_Cross-Compiler).
-Otherwise to build you will need the following:
-- A linux-like environment. Minos can be built on a full linux install, but WSL and cygwin work as well.
-- A compiler supporting c++17, the build system is setup to use a GCC cross compiler by default. This should be in your `$PATH`.
-- GNU make (or any compatable tool).
-- Xorriso and mtools for building images.
-- Gnu-efi is required for building the uefi bootloader, source available [here](https://sourceforge.net/p/gnu-efi/code/ci/master/tree/)
+Minos tries to keep the build system quite vanilla, and not require too many external dependencies.
+The build environment does has a few requirements though (namely a cross-compiler, gnu-efi or limine, and xorriso).
+Check a litle further down for the full list, however if you want the easy solution, run
+`scripts/setup-env.sh`. The script has a step that install libs required to build gcc via apt, this can be commented out
+and performed manually if not using apt.
+After install the toolchain, you'll need to point the root makefile to where you installed it.
+Now you're ready to go, `make all` will generate an iso and `make run` will launch qemu with the iso loaded (if installed).
 
-Some nice to have's for running and debugging:
-- Qemu is the default VM used for running, not required for building. OVMF is required for booting uefi-bootloader
-- GDB is always useful for debugging. Note: yours may need to be configured for cross-platform debugging
+### Required tools
+-Linux-like environment. I've used WSL2 successfully in the past, cygwin will sometimes work.
+-A compiler with support for > c++17. This is to build the cross compiler(s).
+-GNU make.
+-xorriso and mtools.
+-Some bootloaders require extra tools. The uefi one requires gnu-efi, and the stivale ones limine to be installed.
+-Qemu is not required, but is a nice to have for development. Unless you're hardcore.
+-Same goes for GDB.
 
-Once your environment is set up, the root makefile is current under the `kernel/` directory. 
-Each target does what you'd expect, but for the purpose of documentation:
-- `make all` builds the kernel in it's current config, and any required projects (syslib, initdisk).
-- `make iso` runs all, builds the current bootloader and creates a bootable iso.
-- `make run` same as iso, but launches qemu with the iso as a cdrom.
-- `make debug` same as run, it just asks qemu to listen on localhost:1234 for a gdb connection, and not to execute until we connect.
-- `make debug-hang` same as above, adds -no-reboot -no-shutdown. Mostly useless when gdb is usable.
-- `make clean` removes all build related files (for all projects), forcing a complete rebuild.
+### Make? Make what?
+Once the toolchain is set up, you're ready to go. The various make targets are described below. 
+Most will output a bootable iso to `iso/`.
+- `make all` builds the complete minos system. Kernel, userspace lib, and all the bundled apps.
+- `make no-apps` similar to above, except apps are neither built nor packed in the iso.
+- `make core` again similar to above, except only the kernel is built and packaged.
+- `make clean` cleans all project build files and generated isos, except for app build files.
+- `make clean-apps` cleans **all** build files. Better to run clean on any problematic apps themselves.
+- `make run` builds 'run-target' (an easily changable alias for an above target) and launches qemu.
+- `make debug` same as run, but stops qemu and waits for a gdb connection on port 1234.
+- `make validate-toolchain` checks that the makefile can access all the tools it needs. Will report basic errors.
 
 # Supported platforms
 Currently Minos only runs on x86_64 CPUs, and requires uefi support for the bootloader.
@@ -34,10 +40,10 @@ and to add more x86_64 bootloaders.
 # Project Layout
 Currently there are a number of top-level directories, each of these is a mostly isolated sub-project.
 - `apps/`: Coming soon! (depending on your definition of soon)
-- `boot/`: This is where the bootloaders live. They're mutually exclusive when building, and can be selected in the kernel makefile. 
-- `kernel/`: Here is the kernel itself, this is where the exciting buiness happens. There's some shared headers in boot dir, in order to receive data from the bootloader.
+- `boot/`: Bootloaders like here. They're mutually exclusive when building, the current one is selected in the root makefile.
+- `kernel/`: Here is the kernel itself, this is where the good stuff happens. There's a shared header from the boot dir (BootInfo.h).
 - `kernel-disk/`: Kernel init disk. Loaded with the kernel binary, contains code and data that is not essential enough to be built into the kernel itself.
-- `syslib/`: System library. Contains a collection of utility code, nothing specific to kernel or user development.
+- `syslib/`: System library. Contains utility code, replacements for parts of the C++ stdlib. Statically linked.
 - `userlib/`: Userspace library. Contains code for performing syscalls and other useful functions. 
 
 The `build/` and `include/` directories in each project same the same purpose, storing compiled and linked files, and for holding header files.
@@ -47,14 +53,6 @@ For the kernel, there are some more notable directories.
 - `arch/` contains cpu isa specific code (x86/x86_64/arm6/etc...), check the local readme for more details.
 - `arch/platform/` contains platform specific code (think raspbi 2 vs raspbi 4), where functionality may require more than a driver.
 - `kshell/` contains code relating to the kernel-mode shell. 
-
-# Build System
-Its super simple, its all makefiles. The root makefile is currently in the `kernel/` directory, 
-however there are plans to restructure that at some point.
-This kernel makefile has references to all the other projects, and will manage them as required.
-This includes the different bootloaders.
-
-If your environment is set up differently to mine, all the relevant variables are in the top-most sections (interal and external references)
 
 # Other Notes
 compile_flags.txt is specific to my install of all these tools, and may not work for you.
@@ -87,7 +85,10 @@ Various feature's I'd like to include are listed below, and organised into miles
 - [x] Completed string formatting
 - [x] Slab allocator and composite allocators
 
-#### Milestone 1.1 - Kernel improvements
+#### Milestone 1.1 - Better build system
+- [x] Implemented! :D
+
+#### Milestone 1.2 - Kernel improvements
 - [x] Interrupts abstraction + API 
 - [ ] Syslib improvements (hashtable/hashmap, circularqueue, tuple, optional).
 - [ ] Timers abstraction + API
@@ -95,7 +96,7 @@ Various feature's I'd like to include are listed below, and organised into miles
 - [ ] Sync primatives (semaphore, mutex, spinlock)
 - [ ] Fix HPET and APIC bugs specificially.
 
-#### Milestone 1.2 - KShell functionality
+#### Milestone 1.3 - KShell functionality
 - [ ] Proper command parsing/exec
 - [ ] Implement a few useful debugging commands (mem dump, process tree)
 - [x] Added a nice blinking cursor, and status text decays away.
