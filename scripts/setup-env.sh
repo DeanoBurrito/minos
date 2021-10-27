@@ -42,8 +42,8 @@ wget $SOURCE_GCC$FILE_GCC$FILE_EXTENSIONS
 echo "Extracting ..."
 tar -xvf $FILE_BINUTILS$FILE_EXTENSIONS
 tar -xvf $FILE_GCC$FILE_EXTENSIONS
-#rm -rf $FILE_BINUTILS$FILE_EXTENSIONS
-#rm -rf $FILE_GCC$FILE_EXTENSIONS
+rm -rf $FILE_BINUTILS$FILE_EXTENSIONS
+rm -rf $FILE_GCC$FILE_EXTENSIONS
 
 #now we install some dependencies
 echo "Installing dependencies ..."
@@ -51,6 +51,7 @@ sudo apt install build-essential bison flex libgmp3-dev libmpc-dev libmpfr-dev t
 
 #setup limine
 echo "Cloning limine ..."
+cd $INSTALL_LOCATION
 git clone https://github.com/limine-bootloader/limine.git --branch=v2.0-branch-binary --depth=1
 cd limine
 make install
