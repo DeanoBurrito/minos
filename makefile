@@ -18,6 +18,7 @@ PROJ_APPS_DIR = apps
 export SYSLIB_WHERE = $(abspath $(PROJ_SYSLIB_DIR))
 export USERLIB_WHERE = $(abspath $(PROJ_USERLIB_DIR))
 export KERNEL_FILENAME = kernel-$(ARCH).elf
+export KERNEL_FULL_FILEPATH = $(abspath $(PROJ_KERNEL_DIR)/$(BUILD_DIR)/$(KERNEL_FILENAME))
 
 #build configuration
 export CPU_ARCH = x86_64
@@ -33,12 +34,11 @@ export ISO_TARGET=$(abspath $(ISO_FILENAME))
 BOOTLOADER_ARCH = $(CPU_ARCH)-$(BOOT_ARCH)
 BOOTLOADER_ARCH_DIR = $(PROJ_BOOTLOADER_DIR)/$(BOOTLOADER_ARCH)
 
-ifeq (INCLUDE_DEBUG_INFO, 1)
-	CXX_DEBUG_FLAGS = -g
+ifeq ($(INCLUDE_DEBUG_INFO), 1)
+	export CXX_DEBUG_FLAGS = -g
 else
-	CXX_DEBUG_FLAGS =
+	export CXX_DEBUG_FLAGS =
 endif
-export CXX_DEBUG_FLAGS
 
 #bring in run and debug commands
 include run.mk
@@ -84,7 +84,7 @@ all: prep-build-env
 	@cd $(PROJ_KERNEL_DIR); make all -e KDISK_FILE="../$(PROJ_KDISK_DIR)/build/kdisk.bin";
 	@cd $(PROJ_USERLIB_DIR); make all;
 	@cd $(PROJ_APPS_DIR); make all;
-	@cd $(BOOTLOADER_ARCH_DIR); make pack -e BOOT_PACK_FILES=$(abspath LICENSE) -e BOOT_KERNEL_FILE=$(abspath $(PROJ_KERNEL_DIR)/$(BUILD_DIR)/$(KERNEL_FILENAME));
+	@cd $(BOOTLOADER_ARCH_DIR); make pack -e BOOT_PACK_FILES=$(abspath LICENSE) -e BOOT_KERNEL_FILE=$(KERNEL_FULL_FILEPATH);
 
 no-apps: prep-build-env
 	@echo "Starting minos build (userland) ..."
@@ -93,7 +93,7 @@ no-apps: prep-build-env
 	@cd $(PROJ_SYSLIB_DIR); make all;
 	@cd $(PROJ_KERNEL_DIR); make all -e KDISK_FILE="../$(PROJ_KDISK_DIR)/build/kdisk.bin";
 	@cd $(PROJ_USERLIB_DIR); make all;
-	@cd $(BOOTLOADER_ARCH_DIR); make pack -e BOOT_PACK_FILES=$(abspath LICENSE) -e BOOT_KERNEL_FILE=$(abspath $(PROJ_KERNEL_DIR)/$(BUILD_DIR)/$(KERNEL_FILENAME));
+	@cd $(BOOTLOADER_ARCH_DIR); make pack -e BOOT_PACK_FILES=$(abspath LICENSE) -e BOOT_KERNEL_FILE=$(KERNEL_FULL_FILEPATH);
 
 core: prep-build-env
 	@echo "Starting minos build (core) ..."
@@ -101,4 +101,4 @@ core: prep-build-env
 	@cd $(PROJ_KDISK_DIR); make all;
 	@cd $(PROJ_SYSLIB_DIR); make all;
 	@cd $(PROJ_KERNEL_DIR); make all -e KDISK_FILE="../$(PROJ_KDISK_DIR)/build/kdisk.bin";
-	@cd $(BOOTLOADER_ARCH_DIR); make pack -e BOOT_PACK_FILES=$(abspath LICENSE) -e BOOT_KERNEL_FILE=$(abspath $(PROJ_KERNEL_DIR)/$(BUILD_DIR)/$(KERNEL_FILENAME));
+	@cd $(BOOTLOADER_ARCH_DIR); make pack -e BOOT_PACK_FILES=$(abspath LICENSE) -e BOOT_KERNEL_FILE=$(KERNEL_FULL_FILEPATH);

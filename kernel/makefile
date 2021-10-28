@@ -8,7 +8,7 @@ TARGET = $(BUILD_DIR)/$(KERNEL_FILENAME)
 #flags
 CXX_INC_DIRS = -I ./include -I $(SYSLIB_WHERE)/include -I ../boot
 CXX_FLAGS = $(ARCH_CXX_FLAGS) -fno-omit-frame-pointer -ffreestanding -O$(OPTIMIZATION_LEVEL) -fno-rtti -fno-exceptions -mno-red-zone -mcmodel=large -Wall -DMINOS_PLATFORM=1 -std=c++17 $(CXX_DEBUG_FLAGS)
-LD_FLAGS = $(ARCH_LD_FLAGS) -ffreestanding -O2 -nostdlib -fno-rtti -fno-exceptions -g -zmax-page-size=0x1000
+LD_FLAGS = $(ARCH_LD_FLAGS) -ffreestanding -O2 -nostdlib -fno-rtti -fno-exceptions -zmax-page-size=0x1000 $(CXX_DEBUG_FLAGS)
 LD_LIBS = -L $(SYSLIB_WHERE)/build -lsyslib -lgcc
 LD_SCRIPT = $(ARCH_DIR)/linker.lds
 ASM_FLAGS =
