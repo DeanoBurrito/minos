@@ -17,7 +17,7 @@ PROJ_USERLIB_DIR = userlib
 PROJ_APPS_DIR = apps
 export SYSLIB_WHERE = $(abspath $(PROJ_SYSLIB_DIR))
 export USERLIB_WHERE = $(abspath $(PROJ_USERLIB_DIR))
-export KERNEL_FILENAME = kernel-$(ARCH).elf
+export KERNEL_FILENAME = kernel-$(CPU_ARCH).elf
 export KERNEL_FULL_FILEPATH = $(abspath $(PROJ_KERNEL_DIR)/$(BUILD_DIR)/$(KERNEL_FILENAME))
 
 #build configuration
