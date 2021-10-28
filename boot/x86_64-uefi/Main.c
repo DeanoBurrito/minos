@@ -137,9 +137,9 @@ void CollectAcpiInfo(BootInfo* bootInfo)
     EFI_CONFIGURATION_TABLE* efiConfigTable = ST->ConfigurationTable;
     for (size_t i = 0; i < ST->NumberOfTableEntries; i++)
     {
-        if (CompareGuid(&efiConfigTable->VendorGuid, &acpiTableId))
+        if (CompareGuid(&efiConfigTable->VendorGuid, &acpiTableId) == 0)
         {
-            if (memcmp2(rsdptrStr, (char*)efiConfigTable->VendorTable, 8))
+            if (memcmp2(rsdptrStr, (char*)efiConfigTable->VendorTable, 8) == 0)
             {
                 Print(EFISTRING(L"Found ACPI 2.0+ table with matching RSD_PTR_. Stashing value.\n\r"));
                 bootInfo->rsdp = (NativePtr)efiConfigTable->VendorTable;
