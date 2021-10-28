@@ -38,6 +38,25 @@ extern void _init();
 
 namespace Kernel
 {
+    //just a convinience function, really just a safe-wrapper around an array incase I forget to add the new entries here
+    const char* GetBootloaderName(uint64_t id)
+    {
+        switch (id)
+        {
+        case BOOTLOADER_ID_UNKNOWN:
+            return "Unknown";
+        case BOOTLOADER_ID_UEFI:
+            return "Minos UEFI";
+        case BOOTLOADER_ID_MULTIBOOT_V1:
+            return "Multiboot 1 (via stub)";
+        case BOOTLOADER_ID_STIVALE_V2:
+            return "Stivale 2 (via stub)";
+
+        default:
+            return "Custom/Unknown";
+        }
+    }
+    
     using namespace Kernel::Drivers;
 
     void InitMemory(BootInfo* bootInfo)
@@ -108,6 +127,7 @@ namespace Kernel
         SerialPort::COM1()->Init(PORT_COM1_ADDRESS);
         SetLogTypeEnabled(LoggingType::Serial, true);
         //SetLogTypeEnabled(LoggingType::DebugCon, true); //there is also debugcon - but this relies on qemu, and not real hw.
+        Log(".");
         Log("Platform early init finished. Serial logging enabled.");
 
         //gather any cpu specific details
@@ -146,8 +166,8 @@ namespace Kernel
         Log(sl::FormatToString(0, &fstr, memUsage.total, memUsage.free, memUsage.reserved, memUsage.used).Data());
 
         //print other fun facts
-        fstr = "Kernel loaded at 0x%llx, size 0x%llx bytes.";
-        Log(sl::FormatToString(0, &fstr, bootInfo->kernelStartAddr, bootInfo->kernelSize).Data());
+        fstr = "Kernel loaded at 0x%llx, size 0x%llx bytes, bootloader identified as %s";
+        Log(sl::FormatToString(0, &fstr, bootInfo->kernelStartAddr, bootInfo->kernelSize, GetBootloaderName(bootInfo->bootloaderId)).Data());
 
         Log("GDT loaded at: 0x", false);
         Log(sl::UIntToString(defaultGdtDescriptor.offset, BASE_HEX).Data());
