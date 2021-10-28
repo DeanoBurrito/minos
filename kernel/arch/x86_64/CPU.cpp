@@ -52,8 +52,9 @@ namespace Kernel::Drivers
             cpuIdVendorStr[11] = (ecx & 0xff'00'00'00) >> 24;
             cpuIdVendorStr[12] = 0; //null terminated because i value my sanity.
 
-            //cache leaf extended leaf 1
-            __get_cpuid(0x80000001, &eax, &ebx, &ecx, &edx);
+            //cache leaf 1
+            //TODO: compare extended and regular cpuid leaves, check if they match (use extended if they do)
+            __get_cpuid(1, &eax, &ebx, &ecx, &edx);
             cpuId_leaf1_ecx = ecx;
             cpuId_leaf1_edx = edx;
         }
