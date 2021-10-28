@@ -324,15 +324,148 @@ namespace Kernel::Drivers
         PortRead8(PORT_USUALLY_EMPTY);
     }
     
-    char* CPU::GetArchitectureName()
+    const char* CPU::GetArchitectureName()
     {
         return cpuArch;
     }
 
-    char* CPU::GetVendorName()
+    const char* CPU::GetVendorName()
     {
         if (cpuIdSupported)
             return cpuIdVendorStr;
         return (char*)"CPUID unsupported";
+    }
+
+    const char* CPU::GetFeatureShortName(CpuFeatureFlag flag)
+    {
+        switch (flag) 
+        {
+        case CpuFeatureFlag::SSE3:
+            return "sse3";
+        case CpuFeatureFlag::PCLMUL:
+            return "pclmul";
+        case CpuFeatureFlag::DTES64:
+            return "dtes64";
+        case CpuFeatureFlag::MONITOR:
+            return "monitor";
+        case CpuFeatureFlag::DS_CPL:
+            return "ds_cpl";
+        case CpuFeatureFlag::VMX:
+            return "vmx";
+        case CpuFeatureFlag::SMX:
+            return "smx";
+        case CpuFeatureFlag::EST:
+            return "est";
+        case CpuFeatureFlag::TM2:
+            return "tm2";
+        case CpuFeatureFlag::SSSE3:
+            return "ssse3";
+        case CpuFeatureFlag::CID:
+            return "cid";
+        case CpuFeatureFlag::FMA:
+            return "fma";
+        case CpuFeatureFlag::CX16:
+            return "cx16";
+        case CpuFeatureFlag::ETPRD:
+            return "etprd";
+        case CpuFeatureFlag::PDCM:
+            return "pdcm";
+        case CpuFeatureFlag::PCIDE:
+            return "pcide";
+        case CpuFeatureFlag::DCA:
+            return "dca";
+        case CpuFeatureFlag::SSE4_1:
+            return "sse4_1";
+        case CpuFeatureFlag::SSE4_2:
+            return "sse4_2";
+        case CpuFeatureFlag::x2APIC:
+            return "x2apic";
+        case CpuFeatureFlag::MOVBE:
+            return "movbe";
+        case CpuFeatureFlag::POPCNT:
+            return "popcnt";
+        case CpuFeatureFlag::AES:
+            return "aes";
+        case CpuFeatureFlag::XSAVE:
+            return "xsave";
+        case CpuFeatureFlag::OSXSAVE:
+            return "osxsave";
+        case CpuFeatureFlag::AVX:
+            return "avx";
+        case CpuFeatureFlag::FPU:
+            return "fpu (lol)";
+        case CpuFeatureFlag::VME:
+            return "vme";
+        case CpuFeatureFlag::DE:
+            return "de";
+        case CpuFeatureFlag::PSE:
+            return "pse";
+        case CpuFeatureFlag::TSC:
+            return "tsc";
+        case CpuFeatureFlag::MSR:
+            return "msr";
+        case CpuFeatureFlag::PAE:
+            return "pae";
+        case CpuFeatureFlag::MCE:
+            return "mce";
+        case CpuFeatureFlag::CX8:
+            return "cx8";
+        case CpuFeatureFlag::APIC:
+            return "apic";
+        case CpuFeatureFlag::SEP:
+            return "sep";
+        case CpuFeatureFlag::MTRR:
+            return "mtrr";
+        case CpuFeatureFlag::PGE:
+            return "pge";
+        case CpuFeatureFlag::MCA:
+            return "mca";
+        case CpuFeatureFlag::CMOV:
+            return "cmov";
+        case CpuFeatureFlag::PAT:
+            return "pat";
+        case CpuFeatureFlag::PSE36:
+            return "pse36";
+        case CpuFeatureFlag::PSN:
+            return "psn";
+        case CpuFeatureFlag::CLF:
+            return "clf";
+        case CpuFeatureFlag::NX:
+            return "nx";
+        case CpuFeatureFlag::DTES:
+            return "dtes";
+        case CpuFeatureFlag::ACPI:
+            return "acpi";
+        case CpuFeatureFlag::MMX:
+            return "mmx";
+        case CpuFeatureFlag::FXSR:
+            return "fxsr";
+        case CpuFeatureFlag::SSE:
+            return "sse";
+        case CpuFeatureFlag::SSE2:
+            return "sse2";
+        case CpuFeatureFlag::SS:
+            return "ss";
+        case CpuFeatureFlag::HTT:
+            return "htt";
+        case CpuFeatureFlag::TM1:
+            return "tm1";
+        case CpuFeatureFlag::IA64:
+            return "ia64";
+        case CpuFeatureFlag::PBE:
+            return "pbe";
+        default:
+            return "(no short name)";
+        }
+    }
+
+    const char* CPU::GetFeatureLongName(CpuFeatureFlag flag)
+    {
+        switch (flag) 
+        {
+        //TODO: add feature long names
+        default:
+            return "(no long name)";
+        }
     }
 }
