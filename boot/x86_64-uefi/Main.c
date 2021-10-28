@@ -246,6 +246,8 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable
     Print(EFISTRING(L"Mapping required info for kernel boot.\n\r"));
 
     BootInfo bootInfo;
+    bootInfo.bootloaderId = BOOTLOADER_ID_UEFI;
+
     EFI_FILE* kernelFile = LoadFile(NULL, EFISTRING(L"kernel.elf"), imageHandle);
     if (kernelFile == NULL)
         FatalError(EFISTRING(L"Could find kernel.elf on efi image. Aborting init."));
