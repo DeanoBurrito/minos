@@ -1,3 +1,5 @@
+#include "Limits.h"
+#include "String.h"
 #include <BootInfo.h>
 #include <KRenderer.h>
 #include <PageFrameAllocator.h>
@@ -10,6 +12,7 @@
 #include <drivers/Serial.h>
 #include <KLog.h>
 #include <StringExtras.h>
+#include <StringBuilder.h>
 #include <Panic.h>
 #include <memory/KHeap.h>
 #include <drivers/ACPI.h>
@@ -107,13 +110,40 @@ namespace Kernel
         //SetLogTypeEnabled(LoggingType::DebugCon, true); //there is also debugcon - but this relies on qemu, and not real hw.
         Log("Platform early init finished. Serial logging enabled.");
 
+        //gather any cpu specific details
+        CPU::Init();
+
+        //print available cpu features
+        constexpr size_t reasonableLineLength = 72;
+        sl::StringBuilder bob;
+        string printStr;
+        bob.Append("CPUID flags set: ");
+        
+        for (size_t i = 0; i < (size_t)CpuFeatureFlag::Count; i++)
+        {
+            if (Drivers::CPU::FeatureSupported((CpuFeatureFlag)i))
+            {
+                bob.Append(Drivers::CPU::GetFeatureShortName((CpuFeatureFlag)i));
+                bob.Append(" ");
+
+                //if line exceeds what we're comfortable printing, wrap it!
+                if (bob.Size() > reasonableLineLength)
+                {
+                    printStr = bob.ToString();
+                    bob.Clear();
+                    Log(printStr.Data());
+                }
+            }
+        }
+        //free up some heap
+        printStr = bob.ToString();
+        bob.Clear();
+        Log(printStr.Data());
+
         //print out memory stats (now that we are able to)
         Memory::MemoryUsage memUsage = PageFrameAllocator::The()->GetMemoryUsage();
         string fstr = "Memory: 0x%llx bytes total, 0x%llx free, 0x%llx reserved, 0x%llx in-use.";
         Log(sl::FormatToString(0, &fstr, memUsage.total, memUsage.free, memUsage.reserved, memUsage.used).Data());
-
-        //gather any cpu specific details
-        CPU::Init();
 
         //print other fun facts
         fstr = "Kernel loaded at 0x%llx, size 0x%llx bytes.";
