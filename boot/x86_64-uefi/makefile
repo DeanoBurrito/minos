@@ -10,7 +10,7 @@ CRT0 = $(GNUEFI_DIR)/x86_64/gnuefi/crt0-efi-x86_64.o
 
 #flags
 CC_INC_DIRS = -I $(GNUEFI_DIR)/inc
-CC_FLAGS = -fPIC -ffreestanding -fno-stack-protector -fno-stack-check -fshort-wchar -mno-red-zone -maccumulate-outgoing-args -Wall
+CC_FLAGS = -fPIC -ffreestanding -fno-stack-protector -fno-stack-check -fshort-wchar -mno-red-zone -maccumulate-outgoing-args -Wall $(CXX_DEBUG_FLAGS)
 LIBS_DIRS = -L $(GNUEFI_DIR)/x86_64/lib -L $(GNUEFI_DIR)/x86_64/gnuefi
 LD_LIBS = -lgnuefi -lefi
 LD_FLAGS = -shared -Bsymbolic

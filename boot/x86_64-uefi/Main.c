@@ -1,263 +1,262 @@
 #include <efi.h>
 #include <efilib.h>
-#include <elf.h>
 #include <stddef.h>
+#include <stdbool.h>
 #include "../BootInfo.h"
 
-void init_gop(BootInfo* bInfo)
+//NOTE: this is the host's elf.h
+#include <elf.h>
+
+//thanks gcc... :eyeroll:
+#define EFISTRING(str) (CHAR16*)(str)
+
+int memcmp2(void* a, void* b, size_t count)
 {
-    EFI_GUID gopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
-    EFI_GRAPHICS_OUTPUT_PROTOCOL* gop;
-    EFI_STATUS status;
-
-    status = uefi_call_wrapper(BS->LocateProtocol, 3, &gopGuid, NULL, (void**)&gop);
-    if (EFI_ERROR(status))
+    uint8_t* ax = (uint8_t*)a;
+    uint8_t* bx = (uint8_t*)b;
+    for (size_t i = 0; i < count; i++)
     {
-        Print(L"Unable to locate GOP protocol!\n\r");
-        return;
+        if (ax[i] < bx[i])
+            return -1;
+        if (ax[i] > bx[i])
+            return 1;
     }
-    else
-        Print(L"GOP located, stashing info...\n\r");
 
-    bInfo->framebuffer.base = gop->Mode->FrameBufferBase;
-    bInfo->framebuffer.bufferSize = gop->Mode->FrameBufferSize;
-    bInfo->framebuffer.width = gop->Mode->Info->HorizontalResolution;
-    bInfo->framebuffer.height = gop->Mode->Info->VerticalResolution;
-    bInfo->framebuffer.stride = gop->Mode->Info->PixelsPerScanLine;
+    return 0;
+}
+
+void FatalError(const CHAR16* reason)
+{
+    Print(EFISTRING(L"---- FATAL ERROR: ----\n\r"));
+    Print(reason);
+    Print(EFISTRING(L"\n\rAborting init.\n\r"));
+
+    while (1)
+        asm volatile("hlt");
+    
+    __builtin_unreachable();
+}
+
+EFI_FILE* LoadFile(EFI_FILE* parentDir, const CHAR16* path, EFI_HANDLE image)
+{
+    EFI_FILE* file = NULL;
+    EFI_LOADED_IMAGE_PROTOCOL* loadedImage;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* fsProtocol;
+
+    uefi_call_wrapper(BS->HandleProtocol, 3, image, &gEfiLoadedImageProtocolGuid, (void**)&loadedImage);
+    uefi_call_wrapper(BS->HandleProtocol, 3, loadedImage->DeviceHandle, &gEfiSimpleFileSystemProtocolGuid, (void**)&fsProtocol);
+
+    if (!parentDir)
+        uefi_call_wrapper(fsProtocol->OpenVolume, 2, fsProtocol, &parentDir);
+
+    EFI_STATUS status = uefi_call_wrapper(parentDir->Open, 5, parentDir, &file, path, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
+    if (status != EFI_SUCCESS)
+        Print(EFISTRING(L"Could not open file: %s"), path);
+    
+    return file;
+}
+
+UINTN LoadKernel(EFI_FILE* kernelFile, BootInfo* bootInfo)
+{
+    Elf64_Ehdr elfHeader;
+    UINTN efiInfoSize;
+    EFI_FILE_INFO* fileInfo;
+    UINTN elfHeaderSize = sizeof(Elf64_Ehdr);
+
+    //read elf header info memory
+    uefi_call_wrapper(kernelFile->GetInfo, 4, kernelFile, &gEfiFileInfoGuid, &efiInfoSize, NULL);
+    uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, efiInfoSize, (void**)&fileInfo);
+    uefi_call_wrapper(kernelFile->GetInfo, 4, kernelFile, &gEfiFileInfoGuid, &efiInfoSize, (void**)fileInfo);
+    uefi_call_wrapper(kernelFile->Read, 3, kernelFile, &elfHeaderSize, &elfHeader);
+
+    //check elf magic values match
+    if (memcmp2(&elfHeader.e_ident[EI_MAG0], ELFMAG, SELFMAG) != 0)
+        FatalError(EFISTRING(L"Kernel elf header magic invalid."));
+    if (elfHeader.e_ident[EI_CLASS] != ELFCLASS64)
+        FatalError(EFISTRING(L"Kernel elf not 64-bit."));
+    if (elfHeader.e_ident[EI_DATA] != ELFDATA2LSB)
+        FatalError(EFISTRING(L"Kernel elf has wrong endianness."));
+    if (elfHeader.e_type != ET_EXEC)
+        FatalError(EFISTRING(L"Kernel elf is not marked as executable (hahaha what, how?)."));
+    if (elfHeader.e_machine != EM_X86_64)
+        FatalError(EFISTRING(L"Kernel elf is not compiled for x86_64."));
+    if (elfHeader.e_version != EV_CURRENT)
+        FatalError(EFISTRING(L"Kernel elf has incorrect elf version."));
+
+    Print(EFISTRING(L"Kernel elf header parsed, looks good."));
+    
+    Elf64_Phdr* phdrs;
+    UINTN phdrsSize = elfHeader.e_phnum * elfHeader.e_phentsize;
+    uefi_call_wrapper(kernelFile->SetPosition, 2, kernelFile, elfHeader.e_phoff);
+
+    uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, phdrsSize, (void**)&phdrs);
+    uefi_call_wrapper(kernelFile->Read, 3, kernelFile, &phdrsSize, phdrs);
+
+#define NEXT_PHDR (Elf64_Phdr*)((uint64_t)currentPhdr + elfHeader.e_phentsize)
+
+    //lots of pointer and back conversions: basically we just want to touch each phdr
+    Elf64_Phdr* phdrsEnd = (Elf64_Phdr*)((uint64_t)phdrs + phdrsSize);
+    uint64_t kernelLowest = 0xFFFFFFFFFFFFFFFF;
+    uint64_t kernelHighest = 0;
+    for (Elf64_Phdr* currentPhdr = phdrs; (uint64_t)currentPhdr < (uint64_t)phdrsEnd; currentPhdr = NEXT_PHDR)
+    {
+        if (currentPhdr->p_type != PT_LOAD)
+            continue;
+
+        //TODO: add an address slide, so we can load the kernel at any address easily (higher half?)
+        size_t numPagesRequired = (currentPhdr->p_memsz + 0x1000 - 1) / 0x1000;
+        Elf64_Addr phdrMemoryDest = currentPhdr->p_paddr;
+        UINTN phdrSize = currentPhdr->p_filesz;
+
+        uefi_call_wrapper(BS->AllocatePages, 4, AllocateAddress, EfiLoaderData, numPagesRequired, &phdrMemoryDest);
+        uefi_call_wrapper(kernelFile->SetPosition, 2, kernelFile, currentPhdr->p_offset);
+        uefi_call_wrapper(kernelFile->Read, 3, kernelFile, &phdrSize, (void*)phdrMemoryDest);
+
+        //update lowest and highest address used by the kernel (this assumes we load without gaps)
+        if (phdrMemoryDest < kernelLowest)
+            kernelLowest = phdrMemoryDest;
+        if (phdrMemoryDest + (numPagesRequired * 0x1000) > kernelHighest)
+            kernelHighest = phdrMemoryDest + (numPagesRequired * 0x1000);
+    }
+
+    //set the actual start and length values
+    bootInfo->kernelStartAddr = kernelLowest;
+    bootInfo->kernelSize = kernelHighest - kernelLowest;
+
+    return elfHeader.e_entry + bootInfo->kernelStartAddr; //offset the entry based on where the kernel binary ends up in memory
+}
+
+void CollectAcpiInfo(BootInfo* bootInfo)
+{
+    EFI_GUID acpiTableId = ACPI_20_TABLE_GUID; 
+    char* rsdptrStr = (char*)"RSD PTR ";
+
+    EFI_CONFIGURATION_TABLE* efiConfigTable = ST->ConfigurationTable;
+    for (size_t i = 0; i < ST->NumberOfTableEntries; i++)
+    {
+        if (CompareGuid(&efiConfigTable->VendorGuid, &acpiTableId))
+        {
+            if (memcmp2(rsdptrStr, (char*)efiConfigTable->VendorTable, 8))
+            {
+                Print(EFISTRING(L"Found ACPI 2.0+ table with matching RSD_PTR_. Stashing value."));
+                bootInfo->rsdp = (NativePtr)efiConfigTable->VendorTable;
+                return;
+            }
+            else
+                Print(EFISTRING(L"Found ACPI 2.0+ table, but RSD_PTR_ is missing. No beuno."));
+        }
+
+        efiConfigTable++;
+    }
+
+    FatalError(EFISTRING(L"Could not find ACPI 2.0+ tables."));
+}
+
+void CollectGopInfo(BootInfo* bootInfo)
+{
+    EFI_GUID gopId = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
+    EFI_GRAPHICS_OUTPUT_PROTOCOL* gop;
+
+    EFI_STATUS status = uefi_call_wrapper(BS->LocateProtocol, 3, &gopId, NULL, (void**)&gop);
+    if (status != EFI_SUCCESS)
+        FatalError(EFISTRING(L"Could not get GOP framebuffer."));
+
+    bootInfo->framebuffer.base = gop->Mode->FrameBufferBase;
+    bootInfo->framebuffer.bufferSize = gop->Mode->FrameBufferSize;
+    bootInfo->framebuffer.width = gop->Mode->Info->HorizontalResolution;
+    bootInfo->framebuffer.height = gop->Mode->Info->VerticalResolution;
+    bootInfo->framebuffer.stride = gop->Mode->Info->PixelsPerScanLine;
 
     switch (gop->Mode->Info->PixelFormat)
     {
     case PixelRedGreenBlueReserved8BitPerColor:
-        bInfo->framebuffer.pixelFormat = PIXEL_FORMAT_RedGreenBlueReserved_8BPP;
+        bootInfo->framebuffer.pixelFormat = PIXEL_FORMAT_RedGreenBlueReserved_8BPP;
         break;
     case PixelBlueGreenRedReserved8BitPerColor:
-        bInfo->framebuffer.pixelFormat = PIXEL_FORMAT_BlueGreenRedReserved_8BPP;
+        bootInfo->framebuffer.pixelFormat = PIXEL_FORMAT_BlueGreenRedReserved_8BPP;
         break;
+
     default:
-        bInfo->framebuffer.pixelFormat = PIXEL_FORMAT_Unknown;
+        FatalError(EFISTRING(L"Unable to determine GOP framebuffer pixel format."));
         break;
     }
 }
 
-void loop()
+UINTN CollectMemmapInfo(BootInfo* bootInfo)
 {
-    EFI_INPUT_KEY key;
-    EFI_STATUS status;
-    while ((status = ST->ConIn->ReadKeyStroke(ST->ConIn, &key)) == EFI_NOT_READY);
-}
+    EFI_MEMORY_DESCRIPTOR* memMap = NULL;
+    UINTN mapSize, mapKey, descriptorSize, descriptorVersion;
 
-EFI_FILE* load_file(EFI_FILE* directory, CHAR16* path, EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
-{
-    EFI_FILE* loadedFile;
+    //populate above fields
+    uefi_call_wrapper(BS->GetMemoryMap, 5, &mapSize, memMap, &mapKey, &descriptorSize, &descriptorVersion);
+    uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, mapSize, (void**)&memMap);
+    uefi_call_wrapper(BS->GetMemoryMap, 5, &mapSize, memMap, &mapKey, &descriptorSize, &descriptorVersion);
 
-    EFI_LOADED_IMAGE_PROTOCOL* loadedImage;
-    uefi_call_wrapper(systemTable->BootServices->HandleProtocol, 3, imageHandle, &gEfiLoadedImageProtocolGuid, (void**)&loadedImage);
-
-    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* fileSystem;
-    uefi_call_wrapper(systemTable->BootServices->HandleProtocol, 3, loadedImage->DeviceHandle, &gEfiSimpleFileSystemProtocolGuid, (void**)&fileSystem);
-
-    if (directory == NULL)
-    {
-        uefi_call_wrapper(fileSystem->OpenVolume, 2, fileSystem, &directory);
-    }
+    //allocate a buffer for us to store our own version of the memory map
+    bootInfo->memoryDescriptorsCount = mapSize / descriptorSize;
+    uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, bootInfo->memoryDescriptorsCount * sizeof(MemoryRegionDescriptor), (void**)&bootInfo->memoryDescriptors);
     
-    EFI_STATUS status = uefi_call_wrapper(directory->Open, 5, directory, &loadedFile, path, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
-    if (status != EFI_SUCCESS)
-        return NULL;
-
-    return loadedFile;
-}
-
-UINTN init_memmap(BootInfo *bInfo)
-{
-    EFI_MEMORY_DESCRIPTOR *map = NULL;
-    UINTN mapSize;
-    UINTN mapKey;
-    UINTN descriptorSize;
-    UINT32 descriptorVersion;
-
-    uefi_call_wrapper(ST->BootServices->GetMemoryMap, 5, &mapSize, map, &mapKey, &descriptorSize, &descriptorVersion);
-    uefi_call_wrapper(ST->BootServices->AllocatePool, 3, EfiLoaderData, mapSize, (void**)&map);
-    uefi_call_wrapper(ST->BootServices->GetMemoryMap, 5, &mapSize, map, &mapKey, &descriptorSize, &descriptorVersion);
-
-    //marshal descriptors into boot info
-    bInfo->memoryDescriptorsCount = mapSize / descriptorSize;
-    uefi_call_wrapper(ST->BootServices->AllocatePool, 3, EfiLoaderData, bInfo->memoryDescriptorsCount * sizeof(MemoryRegionDescriptor), (void**)&bInfo->memoryDescriptors);
-    MemoryRegionDescriptor* descriptor = bInfo->memoryDescriptors;
-
-    for (size_t i  = 0; i < bInfo->memoryDescriptorsCount; i++)
+    MemoryRegionDescriptor* desc = bootInfo->memoryDescriptors;
+    for (size_t i = 0; i < bootInfo->memoryDescriptorsCount; i++)
     {
-        descriptor->physicalStart = map->PhysicalStart;
-        descriptor->virtualStart = map->VirtualStart;
-        descriptor->numberOfPages = map->NumberOfPages;
-        
-        switch (map->Type)
+        desc->physicalStart = memMap->PhysicalStart;
+        desc->virtualStart = memMap->VirtualStart;
+        desc->numberOfPages = memMap->NumberOfPages;
+
+        switch (memMap->Type)
         {
-        case EfiConventionalMemory: //usable RAM
-            descriptor->flags.free = 1;
-            descriptor->flags.mustMap = 0;
-            break;
-            
-        case EfiLoaderData: //already in use, but we should map it anyway
-        case EfiLoaderCode: //(current program lives in these two)
-            descriptor->flags.free = 0;
-            descriptor->flags.mustMap = 1;
+        case EfiConventionalMemory: //the good stuff, usable memory
+            desc->flags.free = true;
+            desc->flags.mustMap = false;
             break;
 
-        case EfiACPIReclaimMemory:
-        case EfiACPIMemoryNVS: //we'll need ACPI anyway, so may as well have them mapped up front
-            descriptor->flags.free = 0;
-            descriptor->flags.mustMap = 1;
+        case EfiLoaderData: //not free, but we should map these
+        case EfiLoaderCode:
+            desc->flags.free = false;
+            desc->flags.mustMap = true;
             break;
 
-        default: //anything else has default flags (not free and no need to map)
-            descriptor->flags.raw = 0;
-            break;
+        default:
+            desc->flags.raw = 0; //dont do anything with it. We dont care what it is.
         }
-        
-        descriptor++;
-        map = (EFI_MEMORY_DESCRIPTOR*)((uint64_t)map + descriptorSize);
+
+        //update for next cycle
+        desc++;
+        memMap = (EFI_MEMORY_DESCRIPTOR*)((uint64_t)memMap + descriptorSize);
     }
 
     return mapKey;
 }
 
-int memcmp(const void* aPtr, const void* bPtr, size_t n)
+void PrintBootInfo(BootInfo* bootInfo)
 {
-    const unsigned char *a = aPtr, *b = bPtr;
-    for (size_t i = 0; i < n; i++)
-    {
-        if (a[i] < b[i])
-            return -1;
-        if (a[i] > b[i])
-            return 1;
-    }
     
-    return 0;
-}
-
-int strcmp(CHAR8* a, CHAR8* b, UINTN len)
-{
-    for (UINTN i = 0; i < len; i++)
-    {
-        if (a[0] != b[0])
-            return 0;
-    }
-    return 1;
 }
 
 EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
 {
     InitializeLib(imageHandle, systemTable);
-    Print(L"EFI bootloader initialized, mapping system table and loading kernel...\n\r");
-
-    EFI_FILE* kernelFile = load_file(NULL, L"kernel.elf", imageHandle, systemTable);
-    if (kernelFile == NULL)
-    {
-        Print(L"Unable to load kernel file!\n\r");
-        loop();
-    }
-    else
-        Print(L"Kernel file handle located, loading...\n\r");
-    
-    //read elf64 header
-    Elf64_Ehdr header;
-    {
-        UINTN fileInfoSize;
-        EFI_FILE_INFO* fileInfo;
-
-        uefi_call_wrapper(kernelFile->GetInfo, 4, kernelFile, &gEfiFileInfoGuid, &fileInfoSize, NULL);
-        uefi_call_wrapper(systemTable->BootServices->AllocatePool, 3, EfiLoaderData, fileInfoSize, (void**)&fileInfo);
-        uefi_call_wrapper(kernelFile->GetInfo, 4, kernelFile, &gEfiFileInfoGuid, &fileInfoSize, (void**)fileInfo);
-
-        UINTN size = sizeof(header);
-        uefi_call_wrapper(kernelFile->Read, 3, kernelFile, &size, &header);
-    }
-
-    if (memcmp(&header.e_ident[EI_MAG0], ELFMAG, SELFMAG) != 0 
-        || header.e_ident[EI_CLASS] != ELFCLASS64
-        || header.e_ident[EI_DATA] != ELFDATA2LSB
-        || header.e_type != ET_EXEC
-        || header.e_machine != EM_X86_64
-        || header.e_version != EV_CURRENT)
-        {
-            Print(L"Bad kernel format. Elf header is malformed.\n\r");
-            loop();
-        }
-    else
-        Print(L"Kernel header processed, verified.\n\r");
-    
-    Elf64_Phdr* phdrs;
-    {
-        uefi_call_wrapper(kernelFile->SetPosition, 2, kernelFile, header.e_phoff);
-
-        UINTN size = header.e_phnum * header.e_phentsize;
-        uefi_call_wrapper(systemTable->BootServices->AllocatePool, 3, EfiLoaderData, size, (void**)&phdrs);
-        uefi_call_wrapper(kernelFile->Read, 3, kernelFile, &size, phdrs);
-    }
-
-    uint64_t kernelBegin = 0xdeadc0dedeadc0de; //so we can tell if we're loaded at 0x0
-    uint64_t kernelLength = 0;
-    for (Elf64_Phdr* phdr = phdrs; (char*)phdr < (char*)phdrs + header.e_phnum * header.e_phentsize; phdr = (Elf64_Phdr*)((char*)phdr + header.e_phentsize))
-    {
-        switch (phdr->p_type)
-        {
-            case PT_LOAD:
-            {
-                int pages = (phdr->p_memsz + 0x1000 - 1) / 0x1000;
-                Elf64_Addr segment = phdr->p_paddr;
-                uefi_call_wrapper(systemTable->BootServices->AllocatePages, 4, AllocateAddress, EfiLoaderData, pages, &segment);
-
-                if (kernelBegin == 0xdeadc0dedeadc0de)
-                    kernelBegin = segment;
-                if (segment < kernelBegin)
-                    kernelBegin = segment;
-                kernelLength += pages * 0x1000;
-
-                uefi_call_wrapper(kernelFile->SetPosition, 2, kernelFile, phdr->p_offset);
-                UINTN size = phdr->p_filesz;
-                uefi_call_wrapper(kernelFile->Read, 3, kernelFile, &size, (void*)segment);
-                break;
-            }
-        }
-    }
-
-    //Get RSDP so we can use ACPI and other goodies in the kernel
-    EFI_CONFIGURATION_TABLE* configTable = systemTable->ConfigurationTable;
-    void* rsdp = NULL;
-    EFI_GUID acpiTableGuid = ACPI_20_TABLE_GUID;
-    for (UINTN index = 0; index < systemTable->NumberOfTableEntries; index++)
-    {
-        if (CompareGuid(&configTable[index].VendorGuid, &acpiTableGuid))
-        {
-            if (strcmp((CHAR8*)"RSD PTR ", (CHAR8*)configTable->VendorTable, 8))
-            {
-                rsdp = configTable->VendorTable;
-                Print(L"RSDP: 0x%x\r\n", rsdp);
-                break;
-            }
-        }
-
-        configTable++;
-    }
+    Print(EFISTRING(L"Minos UEFI pre-kernel initialized.\n\r"));
+    Print(EFISTRING(L"Mapping required info for kernel boot.\n\r"));
 
     BootInfo bootInfo;
-    bootInfo.rsdp = (uint64_t)rsdp;
-    bootInfo.kernelStartAddr = kernelBegin;
-    bootInfo.kernelSize = kernelLength;
-    bootInfo.bootloaderId = BOOTLOADER_ID_UEFI;
-
-    init_gop(&bootInfo);
-    Print(L"GOP: base=0x%x size=0x%x width=%d height=%d pps=%d format=%d\n\r", bootInfo.framebuffer.base, bootInfo.framebuffer.bufferSize, bootInfo.framebuffer.width, bootInfo.framebuffer.height, bootInfo.framebuffer.stride, bootInfo.framebuffer.pixelFormat);
-
-    UINTN memoryMapKey = init_memmap(&bootInfo);
-    Print(L"\n\r");
-
-    //VERY IMPORTANT: if we neglect this, UEFI will assume continued ownership of system, and we'll be in all sorts of chaos ;-;
-    systemTable->BootServices->ExitBootServices(imageHandle, memoryMapKey);
+    EFI_FILE* kernelFile = LoadFile(NULL, EFISTRING(L"kernel.elf"), imageHandle);
+    if (kernelFile == NULL)
+        FatalError(EFISTRING(L"Could find kernel.elf on efi image. Aborting init."));
     
-    void (*KernelMain)(BootInfo*) = ((__attribute__((sysv_abi)) void (*)(BootInfo*) ) header.e_entry);
+    UINTN kernelEntryAddress = LoadKernel(kernelFile, &bootInfo);
+    CollectAcpiInfo(&bootInfo);
+    CollectGopInfo(&bootInfo);
+    UINTN memoryMapKey = CollectMemmapInfo(&bootInfo);
+
+    PrintBootInfo(&bootInfo);
+
+    //super important, otherwise we'll get killed by uefi watchdog after 5 minutes
+    BS->ExitBootServices(imageHandle, memoryMapKey);
+
+    //now we're really in the wilds.
+    void (*KernelMain)(BootInfo*) = ((__attribute__((sysv_abi)) void(*)(BootInfo*)) kernelEntryAddress);
     KernelMain(&bootInfo);
-    
-    return EFI_SUCCESS;
+
+    __builtin_unreachable();
 }
