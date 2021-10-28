@@ -51,7 +51,9 @@ EFI_FILE* LoadFile(EFI_FILE* parentDir, const CHAR16* path, EFI_HANDLE image)
 
     EFI_STATUS status = uefi_call_wrapper(parentDir->Open, 5, parentDir, &file, path, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
     if (status != EFI_SUCCESS)
-        Print(EFISTRING(L"Could not open file: %s"), path);
+        Print(EFISTRING(L"Could not open file: %s\n\r"), path);
+    else
+        Print(EFISTRING(L"File loaded: %s\n\r"), path);
     
     return file;
 }
@@ -83,7 +85,7 @@ UINTN LoadKernel(EFI_FILE* kernelFile, BootInfo* bootInfo)
     if (elfHeader.e_version != EV_CURRENT)
         FatalError(EFISTRING(L"Kernel elf has incorrect elf version."));
 
-    Print(EFISTRING(L"Kernel elf header parsed, looks good."));
+    Print(EFISTRING(L"Kernel elf header parsed, looks good.\n\r"));
     
     Elf64_Phdr* phdrs;
     UINTN phdrsSize = elfHeader.e_phnum * elfHeader.e_phentsize;
@@ -123,6 +125,7 @@ UINTN LoadKernel(EFI_FILE* kernelFile, BootInfo* bootInfo)
     bootInfo->kernelStartAddr = kernelLowest;
     bootInfo->kernelSize = kernelHighest - kernelLowest;
 
+    Print(EFISTRING(L"Successfully parsed and loaded kernel elf.\n\r"));
     return elfHeader.e_entry + bootInfo->kernelStartAddr; //offset the entry based on where the kernel binary ends up in memory
 }
 
@@ -138,18 +141,18 @@ void CollectAcpiInfo(BootInfo* bootInfo)
         {
             if (memcmp2(rsdptrStr, (char*)efiConfigTable->VendorTable, 8))
             {
-                Print(EFISTRING(L"Found ACPI 2.0+ table with matching RSD_PTR_. Stashing value."));
+                Print(EFISTRING(L"Found ACPI 2.0+ table with matching RSD_PTR_. Stashing value.\n\r"));
                 bootInfo->rsdp = (NativePtr)efiConfigTable->VendorTable;
                 return;
             }
             else
-                Print(EFISTRING(L"Found ACPI 2.0+ table, but RSD_PTR_ is missing. No beuno."));
+                Print(EFISTRING(L"Found ACPI 2.0+ table, but RSD_PTR_ is missing. No beuno.\n\r"));
         }
 
         efiConfigTable++;
     }
 
-    FatalError(EFISTRING(L"Could not find ACPI 2.0+ tables."));
+    FatalError(EFISTRING(L"Could not find ACPI 2.0+ tables.\n\r"));
 }
 
 void CollectGopInfo(BootInfo* bootInfo)
@@ -180,6 +183,8 @@ void CollectGopInfo(BootInfo* bootInfo)
         FatalError(EFISTRING(L"Unable to determine GOP framebuffer pixel format."));
         break;
     }
+
+    Print(EFISTRING(L"Stashed framebuffer info.\n\r"));
 }
 
 UINTN CollectMemmapInfo(BootInfo* bootInfo)
@@ -225,6 +230,7 @@ UINTN CollectMemmapInfo(BootInfo* bootInfo)
         memMap = (EFI_MEMORY_DESCRIPTOR*)((uint64_t)memMap + descriptorSize);
     }
 
+    Print(EFISTRING(L"Successfully parsed memory map.\n\r"));
     return mapKey;
 }
 
@@ -252,6 +258,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable
     PrintBootInfo(&bootInfo);
 
     //super important, otherwise we'll get killed by uefi watchdog after 5 minutes
+    Print(EFISTRING(L"Exiting boot services, then jumping to kernel code.\n\r"));
     BS->ExitBootServices(imageHandle, memoryMapKey);
 
     //now we're really in the wilds.
