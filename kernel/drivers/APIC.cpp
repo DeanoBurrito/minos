@@ -160,7 +160,7 @@ namespace Kernel::Drivers
             return;
         }
 
-        if ((madt->flags & MADT_FLAGS_DUAL8259_INSTALLED) != 0 || FORCE_DISABLE_LEGACY_PIC)
+        if ((madt->flags & MADT_FLAGS_DUAL8259_INSTALLED) != 0)
         {
             //remap PICs so any spurious interrupts dont cause exceptions, then disable them outright.
             PIC::Remap();
@@ -293,5 +293,35 @@ namespace Kernel::Drivers
     uint8_t APIC::GetID()
     {
         return (uint8_t)ReadRegister(LocalApicRegisters::ID);
+    }
+
+    void APIC::SendInitIPI(uint64_t apicId)
+    {
+        ICREntry entry;
+        entry.level = 1; //must be high
+        entry.destination = apicId;
+        entry.deliveryMode = 0b101; //TODO: magic numbers and APIC cleanup
+
+        SendIPI(entry);
+    }
+
+    void APIC::SendStartupIPI(uint64_t apicId, uint8_t vector)
+    {
+        ICREntry entry;
+        entry.level = 1;
+        entry.destination = apicId;
+        entry.deliveryMode = 0b110;
+        entry.remoteVector = vector;
+
+        SendIPI(entry);
+    }
+
+    void APIC::SendIPI(ICREntry details)
+    {
+        if (details.deliveryMode != 0b101) //only INIT can issue a de-assert, all others MUST be assert
+            details.level = 1;
+
+        WriteRegister(LocalApicRegisters::InterruptCommand1, details.squish >> 32);
+        WriteRegister(LocalApicRegisters::InterruptCommand0, details.squish);
     }
 }

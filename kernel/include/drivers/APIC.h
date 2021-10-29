@@ -4,8 +4,6 @@
 #include <collections/LinkedList.h>
 #include <collections/List.h>
 
-//MADT doesnt always specify that we need to, but we probably should before enabled LAPIC.
-#define FORCE_DISABLE_LEGACY_PIC true
 #define APIC_BASE_MSR 0x1B
 #define APIC_TIMER_DESIRED_MS 10
 
@@ -171,12 +169,32 @@ namespace Kernel::Drivers
         void WriteRedirectEntry(uint8_t entryNum, const IOApicRedirectEntry& entry);
         IOApicRedirectEntry ReadRedirectEntry(uint8_t entryNum);
     };
+
+    //convinience class for writing to ICR, for sending IPIs
+    union ICREntry
+    {   
+        uint64_t squish = 0;
+
+        struct
+        {
+            uint8_t remoteVector;
+            uint8_t deliveryMode : 3;
+            uint8_t destinationMode : 1;
+            uint8_t deliveryStatus : 1;
+            uint8_t reserved0 : 1;
+            uint8_t level : 1;
+            uint8_t triggerMode : 1;
+            uint8_t reserved1 : 2;
+            uint8_t destinationShorthand : 2;
+            uint64_t reserved2 : 36;
+            uint8_t destination;
+        };
+    } __attribute__((packed));
     
     class APIC
     {
     private:
         uint32_t* localApicAddr;
-        uint8_t id;
         uint64_t timerInterval;
 
         void SetLocalBase(uint64_t addr);
@@ -197,5 +215,9 @@ namespace Kernel::Drivers
         void SendEOI();
         void StartTimer(uint8_t interruptVectorNumber);
         uint8_t GetID();
+
+        void SendInitIPI(uint64_t apicId);
+        void SendStartupIPI(uint64_t apicId, uint8_t vector);
+        void SendIPI(ICREntry details);
     };
 }

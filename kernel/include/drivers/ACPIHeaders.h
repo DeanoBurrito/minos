@@ -41,7 +41,7 @@ namespace Kernel::Drivers
         uint64_t reserved;
     } __attribute__((packed));
 
-#define MADT_FLAGS_DUAL8259_INSTALLED 1 << 1
+#define MADT_FLAGS_DUAL8259_INSTALLED 1 << 0
 
     //"multiple apic descriptor table", signature "APIC"
     struct MADTHeader
