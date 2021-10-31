@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <Memory.h>
 
 namespace Kernel::Drivers
 {
@@ -75,26 +76,55 @@ namespace Kernel::Drivers
 #define COMPARATOR_CAPABILITY_OFFSET(n) (0x100 + 0x20 * (n))
 #define COMPARATOR_VALUE_OFFSET(n) (0x108 + 0x20 * (n))
 #define COMPARATOR_FSB_ROUTE(n) (0x110 + 0x20 * (n))
+
+    class HPET;
+
+    //friendly wrapper around a hpet dev
+    class HPETComparator
+    {
+    friend HPET;
+    private:
+        const uint8_t index;
+        const TimerConfigCapabilities capabilities; //TODO: replace bitfield with plain uint, since bitfields are unreliable
+        TimerConfigCapabilities currentConfig;
+
+        HPETComparator(const TimerConfigCapabilities caps, const uint8_t id);
+
+    public:
+        uint32_t GetAllowedRoutingBitmap() const;
+        bool IsEnabled() const;
+        bool HasPeriodicMode() const;
+        bool EmitsLevelTriggers() const;
+        bool FullWidthTimer() const;
+        bool SupportsFSBRouting() const;
+
+        bool EnableFSBRouting(const bool yes = true);
+        //this directs the comparator to trigger this irq, ioapic will still need to unmask this.
+        bool SetIrq(const uint8_t vector);
+        uint8_t GetIrq() const;
+    };
     
     class HPET
     {
+    friend HPETComparator;
     private:
         uint64_t comparatorCount;
         GeneralCapabilitiesID capabilities;
-        uint64_t baseAddress;
+        sl::UIntPtr baseAddress;
+        HPETComparator* comparators;
 
-        uint64_t ReadRegister(uint64_t reg);
-        void WriteRegister(uint64_t reg, uint64_t value);
+        uint64_t ReadRegister(uint64_t reg) const;
+        void WriteRegister(uint64_t reg, uint64_t value) const;
 
     public:
         static HPET* The();
 
         void Init();
-        void PrintInfo();
-        uint8_t GetTimerCount();
+        void PrintInfo() const;
+        uint8_t GetComparatorCount() const;
+        uint32_t GetInterruptStatus() const;
 
-        TimerConfigCapabilities GetTimerCapabilities(uint8_t index);
-        void SetTimerCapabilities(uint8_t index, TimerConfigCapabilities caps);
-        void SetTimerValue(uint8_t index, uint64_t femtoseconds, bool makeRelative = false);
+        [[nodiscard]]
+        HPETComparator* GetComparator(uint8_t index = 0);
     };
 }
