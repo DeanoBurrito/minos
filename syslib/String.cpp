@@ -3,7 +3,7 @@
 
 namespace sl
 {
-    String::String() : buffer(nullptr)
+    String::String() : buffer(nullptr), length(0)
     {}
 
     String::String(const char* const cstr)

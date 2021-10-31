@@ -34,7 +34,10 @@ namespace Kernel::Drivers
 
         if (cpuIdSupported)
         {
-            uint32_t eax, ebx, ecx, edx;
+            uint32_t eax = 0;
+            uint32_t ebx = 0;
+            uint32_t ecx = 0;
+            uint32_t edx = 0;
 
             //leaf 0, cpu vendor name
             __get_cpuid(0, &eax, &ebx, &ecx, &edx);
