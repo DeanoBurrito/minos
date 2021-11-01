@@ -73,7 +73,7 @@ namespace Kernel::Drivers
 
     void HPET::WriteRegister(uint64_t reg, uint64_t value) const
     {
-        sl::MemWrite<uint64_t>(reg, value);
+        sl::MemWrite<uint64_t>(baseAddress.raw + reg, value);
     }
 
     void HPET::Init()
@@ -136,7 +136,7 @@ namespace Kernel::Drivers
             Log(sl::FormatToString(0, &format, i, comparator->EmitsLevelTriggers(), comparator->FullWidthTimer(), comparator->SupportsFSBRouting(), comparator->GetAllowedRoutingBitmap()).Data());
 
             //TODO: since only certain ioapic pins are allowed for routing, we should negotiate and reserve them here.
-        } 
+        }
 
         //enable main counter, disable legacy routing.
         WriteRegister((uint64_t)HPETRegister::GeneralConfig, 0b01);
