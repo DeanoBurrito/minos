@@ -34,6 +34,24 @@ namespace sl
         {
             return reinterpret_cast<AsType*>(ptr);
         }
+
+        template <typename AsType>
+        AsType* As(const size_t byteOffset)
+        {
+            return reinterpret_cast<AsType*>((void*)(raw + byteOffset));
+        }
+
+        template <typename AsType>
+        AsType* As() const
+        {
+            return reinterpret_cast<const AsType*>(ptr);
+        }
+
+        template <typename AsType>
+        AsType* As(const size_t byteOffset) const
+        {
+            return reinterpret_cast<const AsType*>((void*)(raw + byteOffset));
+        }
     };
 
     //99% of the time this is what we want, just saving some typing in the future.
