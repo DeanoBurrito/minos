@@ -23,14 +23,14 @@ namespace Kernel::Drivers
             The base address where we select what register to access, base + 0x10 is where we do i/o with the selected register.
             The same is true for reading the register
         */
-        *(uint32_t*)virtualAddr = offset;
-        return (*(uint32_t*)(virtualAddr + 0x10));
+        sl::MemWrite<uint32_t>(virtualAddr, offset);
+        return sl::MemRead<uint32_t>(virtualAddr + 0x10);
     }
 
     void IOAPIC::WriteRegister(uint64_t offset, uint32_t value)
     {
-        *(uint32_t*)virtualAddr = offset;
-        *(uint32_t*)(virtualAddr + 0x10) = value;
+        sl::MemWrite<uint32_t>(virtualAddr, offset);
+        sl::MemWrite<uint32_t>(virtualAddr + 0x10, value);
     }
     
     void IOAPIC::InitAll()
@@ -160,7 +160,7 @@ namespace Kernel::Drivers
             return;
         }
 
-        if ((madt->flags & MADT_FLAGS_DUAL8259_INSTALLED) != 0 || FORCE_DISABLE_LEGACY_PIC)
+        if ((madt->flags & MADT_FLAGS_DUAL8259_INSTALLED) != 0)
         {
             //remap PICs so any spurious interrupts dont cause exceptions, then disable them outright.
             PIC::Remap();
@@ -238,12 +238,12 @@ namespace Kernel::Drivers
 
     uint32_t APIC::ReadRegister(LocalApicRegisters reg)
     {
-        return *(localApicAddr + ((uint64_t)reg * 4));
+        return sl::MemRead<uint32_t>(localApicAddr + ((uint64_t)reg * 4));
     }
 
     void APIC::WriteRegister(LocalApicRegisters reg, uint32_t value)
     {
-        localApicAddr[((uint64_t)reg) * 4] = value;
+        sl::MemWrite<uint32_t>(localApicAddr + ((uint64_t)reg * 4), value);
     }
 
     void APIC::CalibrateTimer()
@@ -293,5 +293,35 @@ namespace Kernel::Drivers
     uint8_t APIC::GetID()
     {
         return (uint8_t)ReadRegister(LocalApicRegisters::ID);
+    }
+
+    void APIC::SendInitIPI(uint64_t apicId)
+    {
+        ICREntry entry;
+        entry.level = 1; //must be high
+        entry.destination = apicId;
+        entry.deliveryMode = 0b101; //TODO: magic numbers and APIC cleanup
+
+        SendIPI(entry);
+    }
+
+    void APIC::SendStartupIPI(uint64_t apicId, uint8_t vector)
+    {
+        ICREntry entry;
+        entry.level = 1;
+        entry.destination = apicId;
+        entry.deliveryMode = 0b110;
+        entry.remoteVector = vector;
+
+        SendIPI(entry);
+    }
+
+    void APIC::SendIPI(ICREntry details)
+    {
+        if (details.deliveryMode != 0b101) //only INIT can issue a de-assert, all others MUST be assert
+            details.level = 1;
+
+        WriteRegister(LocalApicRegisters::InterruptCommand1, details.squish >> 32);
+        WriteRegister(LocalApicRegisters::InterruptCommand0, details.squish);
     }
 }

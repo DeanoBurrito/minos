@@ -4,6 +4,6 @@
 -Ikernel/include
 -Isyslib/include
 -Iboot/
--I../cx-tools/lib/gcc/x86_64-elf/10.2.0/include
+-I../minos-tools/lib/gcc/x86_64-elf/11.2.0/include
 
 -DMINOS_PLATFORM=MINOS_PLATFORM_X86_64

@@ -1,16 +1,11 @@
 #internal settings
-BUILD_DIR = build
 TARGET_NAME = libsyslib.a
 TARGET = $(BUILD_DIR)/$(TARGET_NAME)
 
 #flags
 CXX_INC_DIRS = -I ./include
-CXX_FLAGS = -fno-omit-frame-pointer -ffreestanding -O2 -fno-rtti -fno-exceptions -mno-red-zone -mcmodel=large -Wall
+CXX_FLAGS = -fno-omit-frame-pointer -ffreestanding -O$(OPTIMIZATION_LEVEL) -fno-rtti -fno-exceptions -mno-red-zone -mcmodel=large -Wall $(CXX_DEBUG_FLAGS)
 CPP_SRCS = $(shell find -name "*.cpp")
-
-#toolchain selection
-CXX = x86_64-elf-g++
-AR = x86_64-elf-ar
 
 #auto populated vars
 CPP_OBJS = $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(CPP_SRCS))

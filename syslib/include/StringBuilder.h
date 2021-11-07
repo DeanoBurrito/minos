@@ -17,6 +17,7 @@ namespace sl
         StringBuilder();
         StringBuilder(string str);
 
+        ~StringBuilder();
         StringBuilder(const StringBuilder& copy) = delete;
         StringBuilder& operator=(const StringBuilder& copy) = delete;
         StringBuilder(StringBuilder&& from);

@@ -8,8 +8,8 @@
 
 #define BOOTLOADER_ID_UNKNOWN 0
 #define BOOTLOADER_ID_UEFI 1
-#define BOOTLODAER_ID_MULTIBOOT1 2
-#define BOOTLOADER_ID_STIVALE 3
+#define BOOTLOADER_ID_MULTIBOOT_V1 2
+#define BOOTLOADER_ID_STIVALE_V2 3
 
 /*
     NOTE: I want everything here to be explicit in it's definition, as the bootloader/kernel could theoritically be compiled on separate platforms.

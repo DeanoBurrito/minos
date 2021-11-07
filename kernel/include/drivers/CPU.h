@@ -69,6 +69,8 @@ namespace Kernel::Drivers
         TM1,
         IA64,
         PBE,
+
+        Count,
     };
 
     enum class CpuTable : uint8_t
@@ -106,7 +108,10 @@ namespace Kernel::Drivers
 
         static void PortIOWait(); //waits until IO bus has completed any outstanding operations.
 
-        static char* GetArchitectureName();
-        static char* GetVendorName();
+        static const char* GetArchitectureName();
+        static const char* GetVendorName();
+
+        static const char* GetFeatureShortName(CpuFeatureFlag flag);
+        static const char* GetFeatureLongName(CpuFeatureFlag flag);
     };
 }

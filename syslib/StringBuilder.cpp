@@ -16,6 +16,11 @@ namespace sl
         delete convertedString;
     }
 
+    StringBuilder::~StringBuilder()
+    {
+        Clear();
+    }
+
     StringBuilder::StringBuilder(StringBuilder&& from)
     {
         buffers.Clear();

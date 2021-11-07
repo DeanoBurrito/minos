@@ -1,3 +1,5 @@
+#include "Limits.h"
+#include "String.h"
 #include <BootInfo.h>
 #include <KRenderer.h>
 #include <PageFrameAllocator.h>
@@ -10,6 +12,7 @@
 #include <drivers/Serial.h>
 #include <KLog.h>
 #include <StringExtras.h>
+#include <StringBuilder.h>
 #include <Panic.h>
 #include <memory/KHeap.h>
 #include <drivers/ACPI.h>
@@ -28,13 +31,31 @@ PLATFORM_REQUIRED(MINOS_PLATFORM_X86_64)
 
 extern "C"
 {
-extern uint64_t _KernelStart;
-extern uint64_t _KernelEnd;
-extern void _init();
+    //call global constructors - defined by crtbegin/end
+    extern void _init();
 }
 
 namespace Kernel
 {
+    //just a convinience function, really just a safe-wrapper around an array incase I forget to add the new entries here
+    const char* GetBootloaderName(uint64_t id)
+    {
+        switch (id)
+        {
+        case BOOTLOADER_ID_UNKNOWN:
+            return "Unknown";
+        case BOOTLOADER_ID_UEFI:
+            return "Minos UEFI";
+        case BOOTLOADER_ID_MULTIBOOT_V1:
+            return "Multiboot 1 (via stub)";
+        case BOOTLOADER_ID_STIVALE_V2:
+            return "Stivale 2 (via stub)";
+
+        default:
+            return "Custom/Unknown";
+        }
+    }
+    
     using namespace Kernel::Drivers;
 
     void InitMemory(BootInfo* bootInfo)
@@ -43,8 +64,7 @@ namespace Kernel
         PageFrameAllocator::The()->Init(bootInfo);
 
         //make sure kernel and framebuffer have their physical pages reserved.
-        uint64_t kernelSizePages = (uint64_t)&_KernelEnd - (uint64_t)&_KernelStart;
-        kernelSizePages = kernelSizePages / PAGE_SIZE + 1; //round up to nearest page size
+        uint64_t kernelSizePages = bootInfo->kernelSize / PAGE_SIZE + 1; //round up to nearest page
         PageFrameAllocator::The()->ReservePages((void*)bootInfo->kernelStartAddr, kernelSizePages);
         
         uint64_t framebufferSizePages = bootInfo->framebuffer.bufferSize / PAGE_SIZE + 1;
@@ -55,7 +75,7 @@ namespace Kernel
 
         //identity map kernel and framebuffer
         uint64_t framebufferEnd = bootInfo->framebuffer.base + bootInfo->framebuffer.bufferSize;
-        for (sl::UIntPtr kernelPtr = bootInfo->kernelStartAddr; kernelPtr.raw < (uint64_t)&_KernelEnd; kernelPtr.raw += PAGE_SIZE)
+        for (sl::UIntPtr kernelPtr = bootInfo->kernelStartAddr; kernelPtr.raw < bootInfo->kernelStartAddr + bootInfo->kernelStartAddr; kernelPtr.raw += PAGE_SIZE)
             PageTableManager::The()->MapMemory(kernelPtr.ptr, kernelPtr.ptr, MemoryMapFlags::WriteAllow | MemoryMapFlags::ExecuteAllow);
         for (sl::UIntPtr fbPtr = bootInfo->framebuffer.base; fbPtr.raw < framebufferEnd; fbPtr.raw += PAGE_SIZE)
             PageTableManager::The()->MapMemory(fbPtr.ptr, fbPtr.ptr, MemoryMapFlags::WriteAllow);
@@ -105,19 +125,47 @@ namespace Kernel
         SerialPort::COM1()->Init(PORT_COM1_ADDRESS);
         SetLogTypeEnabled(LoggingType::Serial, true);
         //SetLogTypeEnabled(LoggingType::DebugCon, true); //there is also debugcon - but this relies on qemu, and not real hw.
+        Log(".");
         Log("Platform early init finished. Serial logging enabled.");
+
+        //gather any cpu specific details
+        CPU::Init();
+
+        //print available cpu features
+        constexpr size_t reasonableLineLength = 72;
+        sl::StringBuilder bob;
+        string printStr;
+        bob.Append("CPUID flags set: ");
+        
+        for (size_t i = 0; i < (size_t)CpuFeatureFlag::Count; i++)
+        {
+            if (Drivers::CPU::FeatureSupported((CpuFeatureFlag)i))
+            {
+                bob.Append(Drivers::CPU::GetFeatureShortName((CpuFeatureFlag)i));
+                bob.Append(" ");
+
+                //if line exceeds what we're comfortable printing, wrap it!
+                if (bob.Size() > reasonableLineLength)
+                {
+                    printStr = bob.ToString();
+                    bob.Clear();
+                    Log(printStr.Data());
+                }
+            }
+        }
+        //free up some heap
+        printStr = bob.ToString();
+        bob.Clear();
+        Log(printStr.Data());
 
         //print out memory stats (now that we are able to)
         Memory::MemoryUsage memUsage = PageFrameAllocator::The()->GetMemoryUsage();
         string fstr = "Memory: 0x%llx bytes total, 0x%llx free, 0x%llx reserved, 0x%llx in-use.";
         Log(sl::FormatToString(0, &fstr, memUsage.total, memUsage.free, memUsage.reserved, memUsage.used).Data());
 
-        //gather any cpu specific details
-        CPU::Init();
-
         //print other fun facts
-        fstr = "Kernel loaded at 0x%llx, size 0x%llx bytes.";
-        Log(sl::FormatToString(0, &fstr, bootInfo->kernelStartAddr, bootInfo->kernelSize).Data());
+        fstr = "Kernel loaded at 0x%llx, size 0x%llx bytes, bootloader identified as %s";
+        Log(sl::FormatToString(0, &fstr, bootInfo->kernelStartAddr, bootInfo->kernelSize, GetBootloaderName(bootInfo->bootloaderId)).Data());
 
         Log("GDT loaded at: 0x", false);
         Log(sl::UIntToString(defaultGdtDescriptor.offset, BASE_HEX).Data());
