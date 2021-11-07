@@ -23,14 +23,14 @@ namespace Kernel::Drivers
             The base address where we select what register to access, base + 0x10 is where we do i/o with the selected register.
             The same is true for reading the register
         */
-        *(uint32_t*)virtualAddr = offset;
-        return (*(uint32_t*)(virtualAddr + 0x10));
+        sl::MemWrite<uint32_t>(virtualAddr, offset);
+        return sl::MemRead<uint32_t>(virtualAddr + 0x10);
     }
 
     void IOAPIC::WriteRegister(uint64_t offset, uint32_t value)
     {
-        *(uint32_t*)virtualAddr = offset;
-        *(uint32_t*)(virtualAddr + 0x10) = value;
+        sl::MemWrite<uint32_t>(virtualAddr, offset);
+        sl::MemWrite<uint32_t>(virtualAddr + 0x10, value);
     }
     
     void IOAPIC::InitAll()
@@ -238,12 +238,12 @@ namespace Kernel::Drivers
 
     uint32_t APIC::ReadRegister(LocalApicRegisters reg)
     {
-        return *(localApicAddr + ((uint64_t)reg * 4));
+        return sl::MemRead<uint32_t>(localApicAddr + ((uint64_t)reg * 4));
     }
 
     void APIC::WriteRegister(LocalApicRegisters reg, uint32_t value)
     {
-        localApicAddr[((uint64_t)reg) * 4] = value;
+        sl::MemWrite<uint32_t>(localApicAddr + ((uint64_t)reg * 4), value);
     }
 
     void APIC::CalibrateTimer()
