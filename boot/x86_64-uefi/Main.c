@@ -97,22 +97,24 @@ UINTN LoadKernel(EFI_FILE* kernelFile, BootInfo* bootInfo)
 #define NEXT_PHDR (Elf64_Phdr*)((uint64_t)currentPhdr + elfHeader.e_phentsize)
 
     //lots of pointer and back conversions: basically we just want to touch each phdr
-    Elf64_Phdr* phdrsEnd = (Elf64_Phdr*)((uint64_t)phdrs + phdrsSize);
+    //NOTE: we dont check if there's actually enough space to load kernel here, we're just blindly loading program headers
+    uint64_t phdrsEnd = (uint64_t)phdrs + phdrsSize;
     uint64_t kernelLowest = 0xFFFFFFFFFFFFFFFF;
     uint64_t kernelHighest = 0;
-    for (Elf64_Phdr* currentPhdr = phdrs; (uint64_t)currentPhdr < (uint64_t)phdrsEnd; currentPhdr = NEXT_PHDR)
+    for (Elf64_Phdr* currentPhdr = phdrs; (uint64_t)currentPhdr < phdrsEnd; currentPhdr = NEXT_PHDR)
     {
         if (currentPhdr->p_type != PT_LOAD)
             continue;
 
-        //TODO: add an address slide, so we can load the kernel at any address easily (higher half?)
         size_t numPagesRequired = (currentPhdr->p_memsz + 0x1000 - 1) / 0x1000;
-        Elf64_Addr phdrMemoryDest = currentPhdr->p_paddr;
+        Elf64_Addr phdrMemoryDest = currentPhdr->p_vaddr;
         UINTN phdrSize = currentPhdr->p_filesz;
 
         uefi_call_wrapper(BS->AllocatePages, 4, AllocateAddress, EfiLoaderData, numPagesRequired, &phdrMemoryDest);
         uefi_call_wrapper(kernelFile->SetPosition, 2, kernelFile, currentPhdr->p_offset);
         uefi_call_wrapper(kernelFile->Read, 3, kernelFile, &phdrSize, (void*)phdrMemoryDest);
+
+        //TODO: ensure data that we didnt load from file is zero-initialized (.bss)
 
         //update lowest and highest address used by the kernel (this assumes we load without gaps)
         if (phdrMemoryDest < kernelLowest)
@@ -120,6 +122,11 @@ UINTN LoadKernel(EFI_FILE* kernelFile, BootInfo* bootInfo)
         if (phdrMemoryDest + (numPagesRequired * 0x1000) > kernelHighest)
             kernelHighest = phdrMemoryDest + (numPagesRequired * 0x1000);
     }
+#undef NEXT_PHDR
+    
+    //TODO: check if kernel binary supports relocations - we're going to be in trouble if it dosnt.
+    //TODO: apply elf relocations
+    //TODO: add address slide
 
     //set the actual start and length values
     bootInfo->kernelStartAddr = kernelLowest;
@@ -211,6 +218,8 @@ UINTN CollectMemmapInfo(BootInfo* bootInfo)
         switch (memMap->Type)
         {
         case EfiConventionalMemory: //the good stuff, usable memory
+        case EfiBootServicesData:
+        case EfiBootServicesCode:
             desc->flags.free = true;
             desc->flags.mustMap = false;
             break;
@@ -236,7 +245,28 @@ UINTN CollectMemmapInfo(BootInfo* bootInfo)
 
 void PrintBootInfo(BootInfo* bootInfo)
 {
+    Print(EFISTRING(L"---- Boot Info ----\n\r"));
     
+    Print(EFISTRING(L"Bootloader ID: %x\n\r"), bootInfo->bootloaderId);
+    Print(EFISTRING(L"Kernel: start=0x%x, len=0x%x\n\r"), bootInfo->kernelStartAddr, bootInfo->kernelSize);
+    Print(EFISTRING(L"Rsdp: 0x%x\n\r"), bootInfo->rsdp);
+
+    Print(EFISTRING(L"Memory descriptors: \n\r"));
+    MemoryRegionDescriptor* desc = bootInfo->memoryDescriptors;
+    for (size_t i = 0; i < bootInfo->memoryDescriptorsCount; i++)
+    {
+        Print(EFISTRING(L"[%u] phys=0x%x, virt=0x%x, pages=0x%x, free=%x\n\r"), 
+            i, desc->physicalStart, desc->virtualStart, desc->numberOfPages, desc->flags.free);
+        desc++;
+    }
+
+    Print(EFISTRING(L"Framebuffer: w=%u, h=%u, base=0x%x, stride=%u, format=0x%x\n\r"), 
+        bootInfo->framebuffer.width, 
+        bootInfo->framebuffer.height, 
+        bootInfo->framebuffer.base, 
+        bootInfo->framebuffer.pixelFormat);
+
+    Print(EFISTRING(L"--- END ----\n\r"));
 }
 
 EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
@@ -257,7 +287,8 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable
     CollectGopInfo(&bootInfo);
     UINTN memoryMapKey = CollectMemmapInfo(&bootInfo);
 
-    PrintBootInfo(&bootInfo);
+    //Commenting this out for most builds, as it can be super slow to print all the boot info
+    //PrintBootInfo(&bootInfo);
 
     //super important, otherwise we'll get killed by uefi watchdog after 5 minutes
     Print(EFISTRING(L"Exiting boot services, then jumping to kernel code.\n\r"));
