@@ -27,6 +27,13 @@ extern "C"
 
 namespace Kernel
 {
+    void IrqManager::CreateEntry(IrqVector vectorNum, bool pushDummyErrorCode, void* codeBase)
+    {
+        //copy asm template over to new base + offset
+
+        //insert dummy EC if needed, and current vector number
+    }
+    
     void IrqManager::SharedIrqDispatch(MinosInterruptFrame* frame)
     {
         SendEOI();
@@ -52,6 +59,25 @@ namespace Kernel
         irqSaveStack = 0;
 
         //TODO: create storage for dummy idt entries, and patch code in-place.
+        void* codeSpace = nullptr; //TODO: calculate how much space we need and mmap it!
+        for (size_t i = 0; i < IDT_MAX_ENTRIES; i++)
+        {
+            if (i < 22)
+            {
+                //the following ISA interrupts have error codes:
+                //8 (DF), 10 (TS), 11 (NP), 12 (SS), 13 (GP), 14 (PF), 17 (AC), 21 (CP)
+                if (i == 8 || (i >= 10 && i <= 14) || i == 17 || i == 21)
+                {
+                    CreateEntry(i, false, codeSpace);
+                    continue;
+                }
+            }
+            else if (i == 22)
+                i = 32; //entries 22-31 (inclusive) are reserved by intel, skip to first user allowable.
+            
+            CreateEntry(i, true, codeSpace);
+            //TODO: install in IDT, now we have a shared irq!
+        }
     }
 
     void IrqManager::Load()

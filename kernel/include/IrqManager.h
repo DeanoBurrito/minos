@@ -5,19 +5,20 @@
 #include <multiprocessing/Scheduler.h>
 #include <Platform.h>
 
-#define IRQ_VECTOR_NONE 0
-
 namespace Kernel
 {
     typedef size_t IrqVector;
-    typedef void (*IrqHandler)(IrqVector);
+    typedef void (*IrqHandler)(MinosInterruptFrame*);
     
     //Responsible for handling the platform specific parts of setting up interrupts,
     //and helps manage complex routing
     class IrqManager
     {
     private:
-        //TODO: hashtable with no key for exclusive, or list of void* handlers for shared
+        //TODO: table of callbacks for each entry
+
+        //copies over and modifies handler code to the requested address, pushing specific vector num.
+        void CreateEntry(IrqVector vectorNum, bool pushDummyErrorCode, void* codeBase);
 
     public:
         static IrqManager* The();
