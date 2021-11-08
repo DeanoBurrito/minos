@@ -10,7 +10,7 @@
 //thanks gcc... :eyeroll:
 #define EFISTRING(str) (CHAR16*)(str)
 
-int memcmp2(void* a, void* b, size_t count)
+int minos_memcmp(void* a, void* b, size_t count)
 {
     uint8_t* ax = (uint8_t*)a;
     uint8_t* bx = (uint8_t*)b;
@@ -23,6 +23,22 @@ int memcmp2(void* a, void* b, size_t count)
     }
 
     return 0;
+}
+
+void minos_memset(void* addr, uint8_t value, size_t count)
+{
+    uint8_t* ptr = (uint8_t*)addr;
+    for (size_t i = 0; i < count; i++)
+        ptr[i] = value;
+}
+
+void minos_memcpy(void* destination, const void* source, size_t count)
+{
+    const uint8_t* src = (const uint8_t*)source;
+    uint8_t* dest = (uint8_t*)destination;
+
+    for (size_t i = 0; i < count; i++)
+        dest[i] = src[i];
 }
 
 void FatalError(const CHAR16* reason)
@@ -58,82 +74,174 @@ EFI_FILE* LoadFile(EFI_FILE* parentDir, const CHAR16* path, EFI_HANDLE image)
     return file;
 }
 
-UINTN LoadKernel(EFI_FILE* kernelFile, BootInfo* bootInfo)
+bool ElfHasRelocations(void* file)
 {
-    Elf64_Ehdr elfHeader;
-    UINTN efiInfoSize;
-    EFI_FILE_INFO* fileInfo;
-    UINTN elfHeaderSize = sizeof(Elf64_Ehdr);
+    //check for presence of .rela.* sections
+    Elf64_Ehdr* elfHeader = (Elf64_Ehdr*)file;
+    for (size_t i = 0; i < elfHeader->e_shnum; i++)
+    {
+        uint64_t shdrAddr = (uint64_t)file + elfHeader->e_shoff + (i * elfHeader->e_shentsize);
+        Elf64_Shdr* section = (Elf64_Shdr*)shdrAddr;
 
-    //read elf header info memory
+        if (section->sh_type != SHT_RELA)
+            continue; //not a useful section to us, ignore it
+
+        //found at least 1 rela section. This heuristic could probably be improved, but it works for now.
+        return true;
+    }
+    
+    //found no .rela.* sections.
+    return false;
+}
+
+void RelocateElfPhdr(void* elfFile, void* buffer, size_t bufferSize, uint64_t vaddr, uint64_t slide)
+{
+    Elf64_Ehdr* elfHeader = (Elf64_Ehdr*)elfFile;
+    for (size_t i = 0; i < elfHeader->e_shnum; i++)
+    {
+        uint64_t shdrAddr = (uint64_t)elfFile + elfHeader->e_shoff + (i * elfHeader->e_shentsize);
+        Elf64_Shdr* section = (Elf64_Shdr*)shdrAddr;
+
+        if (section->sh_type != SHT_RELA)
+            continue;
+
+        //process .rela.* header
+        for (size_t offset = 0; offset < section->sh_size; offset += section->sh_entsize)
+        {
+            uint64_t relaAddr = (uint64_t)elfFile + section->sh_offset + (i * section->sh_entsize);
+            Elf64_Rela* rela = (Elf64_Rela*)relaAddr;
+
+            switch (rela->r_info)
+            {
+            case R_X86_64_RELATIVE:
+                {
+                    //check relocation applies to this phdr
+                    if (rela->r_offset < vaddr)
+                        continue;
+                    if (rela->r_offset + 8 > vaddr + bufferSize)
+                        continue;
+
+                    //here we go, construct a pointer and apply the relocation
+                    //big thanks to the authors of limine bootloader, for helping debug this
+                    uint64_t* ptr = (uint64_t*)((uint8_t*)buffer - vaddr + rela->r_offset);
+                    *ptr = slide + rela->r_addend;
+
+                    break;
+                }
+
+            default:
+                {
+                    Print(EFISTRING(L"type is: %u"), rela->r_info);
+                    FatalError(EFISTRING(L"Kernel elf relocation failed, encountered unknown .rela entry type."));
+                    break;
+                }
+            }
+        }
+    }
+}
+
+UINTN LoadKernel(EFI_FILE* kernelFile, BootInfo* bootInfo, uint64_t slide)
+{
+    /* Process outline:
+        -load entire file into memory
+        -validate elf header is what we want
+        -work out where we want to actually load the kernel for when we start running it's code
+        -copy phdrs into this area
+        -apply relocations from shdrs as we go (if available)
+        -return entry point
+    */
+
+    //get kernel file info
+    EFI_FILE_INFO* fileInfo;
+    UINTN efiInfoSize;
     uefi_call_wrapper(kernelFile->GetInfo, 4, kernelFile, &gEfiFileInfoGuid, &efiInfoSize, NULL);
     uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, efiInfoSize, (void**)&fileInfo);
     uefi_call_wrapper(kernelFile->GetInfo, 4, kernelFile, &gEfiFileInfoGuid, &efiInfoSize, (void**)fileInfo);
-    uefi_call_wrapper(kernelFile->Read, 3, kernelFile, &elfHeaderSize, &elfHeader);
 
-    //check elf magic values match
-    if (memcmp2(&elfHeader.e_ident[EI_MAG0], ELFMAG, SELFMAG) != 0)
-        FatalError(EFISTRING(L"Kernel elf header magic invalid."));
-    if (elfHeader.e_ident[EI_CLASS] != ELFCLASS64)
-        FatalError(EFISTRING(L"Kernel elf not 64-bit."));
-    if (elfHeader.e_ident[EI_DATA] != ELFDATA2LSB)
-        FatalError(EFISTRING(L"Kernel elf has wrong endianness."));
-    if (elfHeader.e_type != ET_EXEC)
-        FatalError(EFISTRING(L"Kernel elf is not marked as executable (hahaha what, how?)."));
-    if (elfHeader.e_machine != EM_X86_64)
-        FatalError(EFISTRING(L"Kernel elf is not compiled for x86_64."));
-    if (elfHeader.e_version != EV_CURRENT)
-        FatalError(EFISTRING(L"Kernel elf has incorrect elf version."));
+    //allocate buffer to hold working copy of kernel file
+    void* loadedFile = NULL;
+    UINTN fileSize = fileInfo->FileSize;
+    uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, fileSize, (void**)&loadedFile);
+    uefi_call_wrapper(kernelFile->SetPosition, 2, kernelFile, 0); //not really necessary, but it helps me sleep at night
+    uefi_call_wrapper(kernelFile->Read, 3, kernelFile, &fileSize, loadedFile);
+
+    if (loadedFile == NULL)
+        FatalError(EFISTRING(L"Could not allocate buffer to load kernel into."));
+    else
+        Print(EFISTRING(L"Loaded kernel elf, %u bytes.\n\r"), fileSize);
+
+    //verify elf header details
+    Elf64_Ehdr* elfHeader = (Elf64_Ehdr*)loadedFile;
+    if (minos_memcmp(&elfHeader->e_ident[EI_MAG0], ELFMAG, SELFMAG) != 0)
+        FatalError(EFISTRING(L"Kernel elf header magic invalid.\n\r"));
+    if (elfHeader->e_ident[EI_CLASS] != ELFCLASS64)
+        FatalError(EFISTRING(L"Kernel elf not 64-bit.\n\r"));
+    if (elfHeader->e_ident[EI_DATA] != ELFDATA2LSB)
+        FatalError(EFISTRING(L"Kernel elf has wrong endianness.\n\r"));
+    if (elfHeader->e_type != ET_EXEC)
+        FatalError(EFISTRING(L"Kernel elf is not marked as executable (hahaha what, how?).\n\r"));
+    if (elfHeader->e_machine != EM_X86_64)
+        FatalError(EFISTRING(L"Kernel elf is not compiled for x86_64.\n\r"));
+    if (elfHeader->e_version != EV_CURRENT)
+        FatalError(EFISTRING(L"Kernel elf has incorrect elf version.\n\r"));
 
     Print(EFISTRING(L"Kernel elf header parsed, looks good.\n\r"));
-    
-    Elf64_Phdr* phdrs;
-    UINTN phdrsSize = elfHeader.e_phnum * elfHeader.e_phentsize;
-    uefi_call_wrapper(kernelFile->SetPosition, 2, kernelFile, elfHeader.e_phoff);
 
-    uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, phdrsSize, (void**)&phdrs);
-    uefi_call_wrapper(kernelFile->Read, 3, kernelFile, &phdrsSize, phdrs);
-
-#define NEXT_PHDR (Elf64_Phdr*)((uint64_t)currentPhdr + elfHeader.e_phentsize)
-
-    //lots of pointer and back conversions: basically we just want to touch each phdr
-    //NOTE: we dont check if there's actually enough space to load kernel here, we're just blindly loading program headers
-    uint64_t phdrsEnd = (uint64_t)phdrs + phdrsSize;
-    uint64_t kernelLowest = 0xFFFFFFFFFFFFFFFF;
-    uint64_t kernelHighest = 0;
-    for (Elf64_Phdr* currentPhdr = phdrs; (uint64_t)currentPhdr < phdrsEnd; currentPhdr = NEXT_PHDR)
+    bool doRelocations = false;
+    if (ElfHasRelocations(loadedFile))
     {
-        if (currentPhdr->p_type != PT_LOAD)
+        if (slide != 0)
+        {
+            doRelocations = true;
+            Print(EFISTRING(L"Kernel relocations enabled, offset=0x%x.\n\r"), slide);
+        }
+        else
+            Print(EFISTRING(L"Kernel has relocation info, but offset is 0.\n\r"));
+    }
+    else
+        Print(EFISTRING(L"Kernel has no relocation info.\n\r"));
+
+    uint64_t kernelLowest = (uint64_t)-1;
+    uint64_t kernelHighest = 0;
+
+    //parse program headers, loading them where we desire, and applying relocations as well
+    for (size_t i = 0; i < elfHeader->e_phnum; i++)
+    {
+        uint64_t phdrAddr = (uint64_t)loadedFile + elfHeader->e_phoff + (i * elfHeader->e_phentsize);
+        Elf64_Phdr* phdr = (Elf64_Phdr*)phdrAddr;
+
+        if (phdr->p_type != PT_LOAD)
             continue;
 
-        size_t numPagesRequired = (currentPhdr->p_memsz + 0x1000 - 1) / 0x1000;
-        Elf64_Addr phdrMemoryDest = currentPhdr->p_vaddr;
-        UINTN phdrSize = currentPhdr->p_filesz;
+        size_t numPagesRequired = (phdr->p_memsz + 0xFFF) / 0x1000;
+        uint64_t phdrLoadDest = phdr->p_vaddr + (doRelocations ? slide : 0);
 
-        uefi_call_wrapper(BS->AllocatePages, 4, AllocateAddress, EfiLoaderData, numPagesRequired, &phdrMemoryDest);
-        uefi_call_wrapper(kernelFile->SetPosition, 2, kernelFile, currentPhdr->p_offset);
-        uefi_call_wrapper(kernelFile->Read, 3, kernelFile, &phdrSize, (void*)phdrMemoryDest);
+        //allocate memory and load program data
+        uefi_call_wrapper(BS->AllocatePages, 4, AllocateAddress, EfiLoaderData, numPagesRequired, &phdrLoadDest);
+        minos_memcpy((void*)phdrLoadDest, (void*)((uint64_t)loadedFile + phdr->p_offset), phdr->p_filesz);
 
-        //TODO: ensure data that we didnt load from file is zero-initialized (.bss)
+        //TODO: zero any any data in phdr that isnt loaded from file (.bss needs it)
+        
+        //keep track of extremities of where kernel occupies
+        if (phdrLoadDest < kernelLowest)
+            kernelLowest = phdrLoadDest;
+        if (phdrLoadDest + (numPagesRequired * 0x1000) > kernelHighest)
+            kernelHighest = phdrLoadDest + (numPagesRequired * 0x1000);
 
-        //update lowest and highest address used by the kernel (this assumes we load without gaps)
-        if (phdrMemoryDest < kernelLowest)
-            kernelLowest = phdrMemoryDest;
-        if (phdrMemoryDest + (numPagesRequired * 0x1000) > kernelHighest)
-            kernelHighest = phdrMemoryDest + (numPagesRequired * 0x1000);
+        if (doRelocations)
+            RelocateElfPhdr(loadedFile, (void*)phdrLoadDest, numPagesRequired * 0x1000, phdr->p_vaddr, slide);
     }
-#undef NEXT_PHDR
-    
-    //TODO: check if kernel binary supports relocations - we're going to be in trouble if it dosnt.
-    //TODO: apply elf relocations
-    //TODO: add address slide
 
-    //set the actual start and length values
+    //get the entry address (while we can access it), and then free our working file buffer
+    UINTN entryAddr = elfHeader->e_entry + (doRelocations ? slide : 0);
+    uefi_call_wrapper(BS->FreePool, 1, loadedFile);
+
+    //stash necessary info in bootinfo, and return entry address
     bootInfo->kernelStartAddr = kernelLowest;
     bootInfo->kernelSize = kernelHighest - kernelLowest;
 
-    Print(EFISTRING(L"Successfully parsed and loaded kernel elf.\n\r"));
-    return elfHeader.e_entry + bootInfo->kernelStartAddr; //offset the entry based on where the kernel binary ends up in memory
+    Print(EFISTRING(L"Successfully loaded kernel, entry 0x%x\n\r"), entryAddr);
+    return entryAddr;
 }
 
 void CollectAcpiInfo(BootInfo* bootInfo)
@@ -146,7 +254,7 @@ void CollectAcpiInfo(BootInfo* bootInfo)
     {
         if (CompareGuid(&efiConfigTable->VendorGuid, &acpiTableId) == 0)
         {
-            if (memcmp2(rsdptrStr, (char*)efiConfigTable->VendorTable, 8) == 0)
+            if (minos_memcmp(rsdptrStr, (char*)efiConfigTable->VendorTable, 8) == 0)
             {
                 Print(EFISTRING(L"Found ACPI 2.0+ table with matching RSD_PTR_. Stashing value.\n\r"));
                 bootInfo->rsdp = (NativePtr)efiConfigTable->VendorTable;
@@ -282,7 +390,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable
     if (kernelFile == NULL)
         FatalError(EFISTRING(L"Could find kernel.elf on efi image. Aborting init."));
     
-    UINTN kernelEntryAddress = LoadKernel(kernelFile, &bootInfo);
+    UINTN kernelEntryAddress = LoadKernel(kernelFile, &bootInfo, 0);
     CollectAcpiInfo(&bootInfo);
     CollectGopInfo(&bootInfo);
     UINTN memoryMapKey = CollectMemmapInfo(&bootInfo);
