@@ -31,9 +31,8 @@ PLATFORM_REQUIRED(MINOS_PLATFORM_X86_64)
 
 extern "C"
 {
-extern uint64_t _KernelStart;
-extern uint64_t _KernelEnd;
-extern void _init();
+    //call global constructors - defined by crtbegin/end
+    extern void _init();
 }
 
 namespace Kernel
@@ -65,8 +64,7 @@ namespace Kernel
         PageFrameAllocator::The()->Init(bootInfo);
 
         //make sure kernel and framebuffer have their physical pages reserved.
-        uint64_t kernelSizePages = (uint64_t)&_KernelEnd - (uint64_t)&_KernelStart;
-        kernelSizePages = kernelSizePages / PAGE_SIZE + 1; //round up to nearest page size
+        uint64_t kernelSizePages = bootInfo->kernelSize / PAGE_SIZE + 1; //round up to nearest page
         PageFrameAllocator::The()->ReservePages((void*)bootInfo->kernelStartAddr, kernelSizePages);
         
         uint64_t framebufferSizePages = bootInfo->framebuffer.bufferSize / PAGE_SIZE + 1;
@@ -77,7 +75,7 @@ namespace Kernel
 
         //identity map kernel and framebuffer
         uint64_t framebufferEnd = bootInfo->framebuffer.base + bootInfo->framebuffer.bufferSize;
-        for (sl::UIntPtr kernelPtr = bootInfo->kernelStartAddr; kernelPtr.raw < (uint64_t)&_KernelEnd; kernelPtr.raw += PAGE_SIZE)
+        for (sl::UIntPtr kernelPtr = bootInfo->kernelStartAddr; kernelPtr.raw < bootInfo->kernelStartAddr + bootInfo->kernelStartAddr; kernelPtr.raw += PAGE_SIZE)
             PageTableManager::The()->MapMemory(kernelPtr.ptr, kernelPtr.ptr, MemoryMapFlags::WriteAllow | MemoryMapFlags::ExecuteAllow);
         for (sl::UIntPtr fbPtr = bootInfo->framebuffer.base; fbPtr.raw < framebufferEnd; fbPtr.raw += PAGE_SIZE)
             PageTableManager::The()->MapMemory(fbPtr.ptr, fbPtr.ptr, MemoryMapFlags::WriteAllow);

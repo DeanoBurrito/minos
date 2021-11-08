@@ -11,8 +11,9 @@ PHDRS
 }
 
 SECTIONS
-{
-    _KernelStart = .;
+{   
+    . = 0; /* for debugging purposes right now, will move to higher half soon */
+    
     .text : ALIGN(4096)
     {
         *(.text)
@@ -38,5 +39,4 @@ SECTIONS
     {
         *(.dynamic)
     } :data :dynamic
-    _KernelEnd = .;
 }
