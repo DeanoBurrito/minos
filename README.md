@@ -12,13 +12,13 @@ After install the toolchain, you'll need to point the root makefile to where you
 Now you're ready to go, `make all` will generate an iso and `make run` will launch qemu with the iso loaded (if installed).
 
 ### Required tools
--Linux-like environment. I've used WSL2 successfully in the past, cygwin will sometimes work.
--A compiler with support for > c++17. This is to build the cross compiler(s).
--GNU make.
--xorriso and mtools.
--Some bootloaders require extra tools. The uefi one requires gnu-efi, and the stivale ones limine to be installed.
--Qemu is not required, but is a nice to have for development. Unless you're hardcore.
--Same goes for GDB.
+- Linux-like environment. I've used WSL2 successfully in the past, cygwin will sometimes work.
+- A compiler with support for > c++17. This is to build the cross compiler(s).
+- GNU make.
+- xorriso and mtools.
+- Some bootloaders require extra tools. The uefi one requires gnu-efi, and the stivale ones limine to be installed.
+- Qemu is not required, but is a nice to have for development. Unless you're hardcore.
+- Same goes for GDB.
 
 ### Make? Make what?
 Once the toolchain is set up, you're ready to go. The various make targets are described below. 
