@@ -254,8 +254,8 @@ namespace Kernel::Drivers
 
     void CPU::WriteMSR(uint32_t id, uint64_t value)
     {
-        uint32_t hi = (value & 0xffff0000) >> 16;
-        uint32_t lo = (value & 0x0000ffff);
+        uint32_t hi = value >> 32;
+        uint32_t lo = value & 0xFFFF'FFFF;
         asm volatile("wrmsr"
                     :
                     : "a"(lo), "d"(hi), "c"(id));
@@ -267,7 +267,7 @@ namespace Kernel::Drivers
         asm volatile("rdmsr"
                     : "=a"(lo), "=d"(hi)
                     : "c"(id));
-        return lo | (hi << 16);
+        return lo | ((uint64_t)hi << 32); 
     }
 
     void CPU::PortWrite8(uint16_t port, uint8_t data)
