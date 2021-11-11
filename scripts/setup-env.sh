@@ -74,10 +74,11 @@ rm -rf build-binutils
 
 #setup gcc
 echo "Building GCC (this can also take a long time) ..."
+echo "  Please note libgcc is built with red zone disabled, and with large code model (64bit addressing)."
 cd $INSTALL_LOCATION/build-gcc
 ../$FILE_GCC/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers
 make -j $(nproc) all-gcc
-make -j $(nproc) all-target-libgcc
+make -j $(nproc) all-target-libgcc CFLAGS_FOR_TARGET='-O2 -mcmodel=large -mno-red-zone'
 make -j $(nproc) install-gcc
 make -j $(nproc) install-target-libgcc
 cd ..
