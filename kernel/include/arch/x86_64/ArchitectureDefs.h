@@ -7,9 +7,6 @@
     all over the code base.
 */
 
-//NativePtr - required for compilation
-#define NativePtr uint64_t
-
 //General magic numbers
 #define PAGE_SIZE 0x1000
 #define IDT_MAX_ENTRIES 255
