@@ -10,18 +10,32 @@
 
 namespace sl
 {
+    enum class HashSetResult
+    {
+        Failed = 0,
+        InsertedNew,
+        ReplacedExisting,
+        KeptExisting,
+    };
+
+    enum class HashSetOverwriteBehaviour
+    {
+        Keep,
+        Replace,
+    };
+    
     template<typename T, typename TraitsForT, typename Allocator = HeapAllocator>
     class HashTable
     {
     public:
-        template<typename BucketType>
-        class Iterator
+        template<typename HashTableType, typename Type, typename BucketType>
+        class IteratorBase
         {
-        friend HashTable;
+        friend HashTableType;
         private:
             BucketType* bucket = nullptr;
 
-            explicit Iterator(BucketType* bucket) : bucket(bucket) {}
+            explicit IteratorBase(BucketType* bucket) : bucket(bucket) {}
 
             void SkipToNext()
             {
@@ -41,16 +55,16 @@ namespace sl
             }
 
         public:
-            bool operator==(const Iterator& other) const
+            bool operator==(const IteratorBase& other) const
             { return bucket == other.bucket; }
 
-            bool operator!=(const Iterator& other) const
+            bool operator!=(const IteratorBase& other) const
             { return bucket != other.bucket; }
 
-            T& operator*() 
+            Type& operator*() 
             { return *bucket->Slot(); }
 
-            T* operator->()
+            Type* operator->()
             { return bucket->Slot(); }
 
             void operator++()
@@ -59,20 +73,6 @@ namespace sl
 
     private:
         static constexpr size_t LoadFactorPercent = 60;
-
-        enum class HashSetResult
-        {
-            Failed = 0,
-            InsertedNew,
-            ReplacedExisting,
-            KeptExisting,
-        };
-
-        enum class HashSetOverwriteBehaviour
-        {
-            Keep,
-            Replace,
-        };
 
         struct Bucket
         {
@@ -110,8 +110,8 @@ namespace sl
             newCapacity = Max(newCapacity, static_cast<size_t>(4));
 
             auto* oldBuckets = buckets;
-            size_t oldCapacity = capacity;
-            Itr oldItr = Begin();
+            //size_t oldCapacity = capacity;
+            Iterator oldItr = Begin();
 
             auto newBuckets = allocator.Alloc(SizeInBytes(newCapacity));
             if (!newBuckets)
@@ -126,7 +126,7 @@ namespace sl
             if (!oldBuckets)
                 return true;
 
-            for (auto it = sl::move(oldItr); it != End(); it++)
+            for (auto it = sl::move(oldItr); it != End(); ++it)
             {
                 InsertDuringRehash(sl::move(*it));
                 it->~T();
@@ -142,7 +142,7 @@ namespace sl
         }
 
         template<typename UnaryPredicate>
-        Bucket* LookupWithHash(unsigned hash, UnaryPredicate predicate) const
+        Bucket* LookupWithHash(uint32_t hash, UnaryPredicate predicate) const
         {
             if (IsEmpty())
                 return nullptr;
@@ -151,7 +151,7 @@ namespace sl
             {
                 auto& bucket = buckets[hash % capacity];
 
-                if (bucket.used && preciate(*bucket.Slot()))
+                if (bucket.used && predicate(*bucket.Slot()))
                     return &bucket;
                 
                 if (!bucket.used && !bucket.deleted)
@@ -169,13 +169,13 @@ namespace sl
                     return nullptr;
             }
 
-            auto hash = TraitsForT::hash(value);
+            auto hash = TraitsForT::Hash(value);
             Bucket* firstEmptyBucket = nullptr;
             for(;;)
             {
                 auto& bucket = buckets[hash % capacity];
 
-                if (bucket.used && TraitsForT::equals(*bucket.Slot(), value))
+                if (bucket.used && TraitsForT::Equals(*bucket.Slot(), value))
                     return &bucket;
 
                 if (!bucket.used)
@@ -292,20 +292,36 @@ namespace sl
             return Find(value) != End();
         }
 
-        using Itr = Iterator<Bucket>;
-        Itr Begin()
+        using Iterator = IteratorBase<HashTable, T, Bucket>;
+        Iterator Begin()
         {
             for (size_t i = 0; i < capacity; i++)
             {
                 if (buckets[i].used)
-                    return Itr(&buckets[i]);
-                return End();
+                    return Iterator(&buckets[i]);
             }
+            return End();
         }
 
-        Itr End()
+        Iterator End()
         {
-            return Itr(nullptr);
+            return Iterator(nullptr);
+        }
+
+        using ConstIterator = IteratorBase<const HashTable, const T, const Bucket>;
+        ConstIterator Begin() const
+        {
+            for (size_t i = 0; i < capacity; i++)
+            {
+                if (buckets[i].used)
+                    return ConstIterator(&buckets[i]);
+            }
+            return End();
+        }
+
+        ConstIterator End() const
+        {
+            return ConstIterator(nullptr);
         }
 
         void Clear()
@@ -348,19 +364,19 @@ namespace sl
         }
 
         template<typename UnaryPredicate>
-        Itr Find(unsigned hash, UnaryPredicate predicate)
+        Iterator Find(uint32_t hash, UnaryPredicate predicate)
         {
-            return Itr(LookupWithHash(hash, sl::move(predicate)));
+            return Iterator(LookupWithHash(hash, sl::move(predicate)));
         }
 
-        Itr Find(const T& value)
+        Iterator Find(const T& value)
         {
-            return Find(TraitsForT::hash(value), [&](auto& other) { return TraitsForT::equals(value, other); });
+            return Find(TraitsForT::Hash(value), [&](auto& other) { return TraitsForT::Equals(value, other); });
         }
 
         bool Remove(const T& value)
         {
-            Itr it = Find(value);
+            Iterator it = Find(value);
             if (it != End())
             {
                 Remove(it);
@@ -370,7 +386,7 @@ namespace sl
             return false;
         }
 
-        bool Remove(Itr iterator)
+        bool Remove(Iterator iterator)
         {
             if (!iterator.bucket)
                 return false;
