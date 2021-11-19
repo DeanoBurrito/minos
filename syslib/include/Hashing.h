@@ -35,4 +35,9 @@ namespace sl::Hashes
         key ^= (key >> 20);
         return key;
     }
+
+    constexpr uint32_t PairSimple(uint32_t a, uint32_t b)
+    {
+        return Simple32((Simple32(a) * 209) ^ (Simple32(b) * 413));
+    }
 }
