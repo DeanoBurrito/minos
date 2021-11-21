@@ -6,10 +6,10 @@ KERNEL_FILENAME =
 TARGET = $(BUILD_DIR)/$(KERNEL_FILENAME)
 
 #flags
-CXX_INC_DIRS = -I ./include -I $(SYSLIB_WHERE)/include -I ../boot
-CXX_FLAGS = $(ARCH_CXX_FLAGS) -fno-omit-frame-pointer -ffreestanding -O$(OPTIMIZATION_LEVEL) -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-rtti -fno-exceptions -mno-red-zone -mcmodel=large -Wall -DMINOS_PLATFORM=1 -std=c++17 $(CXX_DEBUG_FLAGS) -fpie
-LD_FLAGS = $(ARCH_LD_FLAGS) -ffreestanding -O2 -nostdlib -fno-rtti -fno-exceptions -zmax-page-size=0x1000 $(CXX_DEBUG_FLAGS) -Wl,-q -static -pie
-LD_LIBS = -L $(SYSLIB_WHERE)/build -lsyslib -lgcc
+CXX_INC_DIRS = -Iinclude -I$(SYSLIB_WHERE)/include -I../boot
+CXX_FLAGS = $(ARCH_CXX_FLAGS) -fno-stack-protector -fno-omit-frame-pointer -ffreestanding -O$(OPTIMIZATION_LEVEL) -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-rtti -fno-exceptions -mno-red-zone -mcmodel=large -Wall -DMINOS_PLATFORM=1 -std=c++17 $(CXX_DEBUG_FLAGS) -fpie
+LD_FLAGS = $(ARCH_LD_FLAGS) -nostdlib -zmax-page-size=0x1000 $(CXX_DEBUG_FLAGS) -static -pie --no-dynamic-linker -ztext
+LD_LIBS = -L$(SYSLIB_WHERE)/build -L$(TOOLS_DIR)/lib/gcc/x86_64-elf/11.2.0 -lsyslib -lgcc
 LD_SCRIPT = $(ARCH_DIR)/linker.lds
 ASM_FLAGS =
 CPP_SRCS = $(shell find -path ./arch -prune -false -o -name "*.cpp" | cut -c3-) $(ARCH_CPP_SRCS)
@@ -36,7 +36,7 @@ clean:
 
 $(TARGET): $(CPP_OBJS) $(ASM_OBJS) $(LD_SCRIPT) $(CRT_OBJS)
 	@echo LINKING $@
-	@$(LD) $(LD_FLAGS) -T $(LD_SCRIPT) $(BUILD_DIR)/crti.o $(CRTBEGIN_OBJ) $(CPP_OBJS) $(ASM_OBJS) $(CRTEND_OBJ) $(BUILD_DIR)/crtn.o -o $@ $(LD_LIBS) -Wl,--format -Wl,binary -Wl,$(KDISK_FILE)
+	@$(LD) -T $(LD_SCRIPT) $(BUILD_DIR)/crti.o $(CRTBEGIN_OBJ) $(CPP_OBJS) $(ASM_OBJS) $(CRTEND_OBJ) $(BUILD_DIR)/crtn.o -o $@ $(LD_FLAGS) $(LD_LIBS) --format binary $(KDISK_FILE)
 
 include overrides.mk
 

@@ -2,7 +2,7 @@
 TOOLCHAIN_DIR = ../minos-tools
 CXX_BIN = $(CPU_ARCH)-elf-g++
 ASM_BIN = $(CPU_ARCH)-elf-as
-LD_BIN = $(CPU_ARCH)-elf-gcc
+LD_BIN = $(CPU_ARCH)-elf-ld
 export TOOLS_DIR = $(abspath $(TOOLCHAIN_DIR))
 export CXX = $(abspath $(TOOLCHAIN_DIR)/bin/$(CXX_BIN))
 export ASM = $(abspath $(TOOLCHAIN_DIR)/bin/$(ASM_BIN))

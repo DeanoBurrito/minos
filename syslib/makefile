@@ -3,7 +3,7 @@ TARGET_NAME = libsyslib.a
 TARGET = $(BUILD_DIR)/$(TARGET_NAME)
 
 #flags
-CXX_INC_DIRS = -I ./include
+CXX_INC_DIRS = -I./include
 CXX_FLAGS = -fno-omit-frame-pointer -ffreestanding -O$(OPTIMIZATION_LEVEL) -fno-rtti -fno-exceptions -mno-red-zone -mcmodel=large -Wall $(CXX_DEBUG_FLAGS)
 CPP_SRCS = $(shell find -name "*.cpp")
 
