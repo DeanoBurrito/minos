@@ -1,3 +1,10 @@
+# Update:
+So this project was my first attempt at getting into osdev, and I've learnt a lot from it. 
+However due to a number of bad design decisions and experiments I've forgotten about in the code base, I feel it's time for a rewrite.
+The new os is located at https://github.com/deanoburrito/northport .
+I'll be leaving this up for archival purposes, although please do be careful if referencing the code. 
+Thanks! 
+
 ![](https://tokei.rs/b1/github/deanoburrito/minos)
 
 # Minos
